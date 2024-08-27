@@ -1,3 +1,5 @@
+"""Main script to run the training of a chosen environment with chosen algorithm."""
+
 import ray
 from ray.tune.registry import register_env
 
