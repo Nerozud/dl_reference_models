@@ -2,7 +2,6 @@
 
 import ray
 from ray.tune.registry import register_env
-
 from src.agents.ppo import get_ppo_config
 from src.trainers.tuner import tune_with_callback
 from src.environments.reference_model_1_1 import ReferenceModel
@@ -20,6 +19,6 @@ if __name__ == "__main__":
     ray.init()
 
     if ALGO_NAME == "PPO":
-        config = get_ppo_config()
+        config = get_ppo_config(ENV_NAME, render_env=True)
 
-    tune_with_callback(config, ALGO_NAME)
+    tune_with_callback(config, ALGO_NAME, ENV_NAME)
