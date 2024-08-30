@@ -2,11 +2,12 @@ from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.policy.policy import PolicySpec
 
 
-def get_ppo_config(env_name, render_env):
+def get_ppo_config(env_name, render_env: bool = False):
     """Get the PPO configuration."""
     config = (
         PPOConfig()
         .environment(env_name, render_env=render_env)
+        .framework("torch")
         .training(
             num_sgd_iter=10,
             clip_param=0.2,

@@ -26,7 +26,7 @@ from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
+from matplotlib import patches
 import gymnasium as gym
 
 
@@ -77,15 +77,19 @@ class ReferenceModel(MultiAgentEnv):
             dtype=np.uint8,
         )
 
-        self.starts = {
-            f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
-            for i in range(self.num_agents)
-        }
+        # self.starts = {
+        #     f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
+        #     for i in range(self.num_agents)
+        # }
+        # self.positions = self.starts.copy()
+        # self.goals = {
+        #     f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
+        #     for i in range(self.num_agents)
+        # }
+
+        self.starts = {"agent_0": (1, 1), "agent_1": (1, 7)}
         self.positions = self.starts.copy()
-        self.goals = {
-            f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
-            for i in range(self.num_agents)
-        }
+        self.goals = {"agent_0": (1, 8), "agent_1": (1, 0)}
 
         # POMPD, small grid around the agent
         # TODO: Implement the shape(vision range) depending on the env_config
@@ -99,22 +103,31 @@ class ReferenceModel(MultiAgentEnv):
         # 0 - noop, 1 - up, 2 - right, 3 - down, 4 - left
         self.action_space = gym.spaces.Discrete(5)
 
+        # Initialize rendering attributes
+        self.agent_patches = {}  # Initialize agent_patches as an empty dictionary
+        self.goal_patches = {}  # Initialize goal_patches as an empty dictionary
+        self.fig = None
+        self.ax = None
+
     def reset(self, *, seed=None, options=None):
         self.step_count = 0
         info = {}
         obs = {}
-        self.starts = {
-            f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
-            for i in range(self.num_agents)
-        }
+        # self.starts = {
+        #     f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
+        #     for i in range(self.num_agents)
+        # }
+        # self.positions = self.starts.copy()
+        # self.goals = {
+        #     f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
+        #     for i in range(self.num_agents)
+        # }
         self.positions = self.starts.copy()
-        self.goals = {
-            f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
-            for i in range(self.num_agents)
-        }
 
         for i in range(self.num_agents):
             obs[f"agent_{i}"] = self.get_obs(f"agent_{i}")
+
+        self.render()
 
         return obs, info
 
@@ -139,14 +152,7 @@ class ReferenceModel(MultiAgentEnv):
                 continue
 
             pos = self.positions[f"agent_{i}"]
-            if action == 1:  # up
-                next_pos = (pos[0] - 1, pos[1])
-            elif action == 2:  # right
-                next_pos = (pos[0], pos[1] + 1)
-            elif action == 3:  # down
-                next_pos = (pos[0] + 1, pos[1])
-            elif action == 4:  # left
-                next_pos = (pos[0], pos[1] - 1)
+            next_pos = self.get_next_position(action, pos)
 
             if (
                 0 <= next_pos[0] < self.grid.shape[0]
@@ -155,9 +161,8 @@ class ReferenceModel(MultiAgentEnv):
             ):
                 self.positions[f"agent_{i}"] = next_pos
             else:
-                rewards[f"agent_{i}"] = (
-                    rewards.get(f"agent_{i}", 0) - 1
-                )  # TODO: Instead use an action mask
+                rewards[f"agent_{i}"] -= 1
+                # TODO: Instead use an action mask
                 # print(
                 #     f"Invalid move for agent {i} with action {action} at position {pos}"
                 # )
@@ -174,7 +179,7 @@ class ReferenceModel(MultiAgentEnv):
             agent_id = f"agent_{i}"
 
             if np.array_equal(self.positions[agent_id], self.goals[agent_id]):
-                rewards[agent_id] = rewards.get(agent_id, 0) + 1
+                rewards[agent_id] += 1
                 terminated[agent_id] = True
             else:
                 terminated[agent_id] = False
@@ -197,6 +202,34 @@ class ReferenceModel(MultiAgentEnv):
             truncated["__all__"] = False
 
         return obs, rewards, terminated, truncated, info
+
+    def get_next_position(self, action, pos):
+        """
+        Get the next position based on the given action and current position.
+        Parameters:
+            action (int): The action to be taken.
+            pos (tuple): The current position.
+        Returns:
+            tuple: The next position.
+        Description:
+            This function calculates the next position based on given action and current position.
+            The possible actions are:
+                - 1: Move up
+                - 2: Move right
+                - 3: Move down
+                - 4: Move left
+            The next position is calculated by adding or subtracting 1 to the corresponding
+            coordinate of the current position.
+        """
+        if action == 1:  # up
+            next_pos = (pos[0] - 1, pos[1])
+        elif action == 2:  # right
+            next_pos = (pos[0], pos[1] + 1)
+        elif action == 3:  # down
+            next_pos = (pos[0] + 1, pos[1])
+        elif action == 4:  # left
+            next_pos = (pos[0], pos[1] - 1)
+        return next_pos
 
     def get_obs(self, agent_id: str):
         """
@@ -257,71 +290,93 @@ class ReferenceModel(MultiAgentEnv):
                     # If the cell is outside the grid, treat it as an obstacle
                     obs[i, j] = 1
 
+        self.render()
+
         return obs
 
     def render(self):
-        """
-        Render the environment using Matplotlib.
-        """
-        # Create a plot
-        _, ax = plt.subplots(figsize=(8, 4))
+        """Render the environment."""
+        if not hasattr(self, "fig") or self.fig is None:
+            # Initialize the rendering environment if it hasn't been done yet
+            plt.ion()
+            self.fig, self.ax = plt.subplots(figsize=(8, 4))
 
-        # Draw the grid
-        for i in range(self.grid.shape[0]):
-            for j in range(self.grid.shape[1]):
-                if self.grid[i, j] == 1:  # Obstacle cell
-                    ax.add_patch(patches.Rectangle((j, i), 1, 1, color="black"))
-                else:  # Empty cell
-                    ax.add_patch(
-                        patches.Rectangle((j, i), 1, 1, edgecolor="gray", fill=False)
-                    )
+            # Draw the grid
+            for i in range(self.grid.shape[0]):
+                for j in range(self.grid.shape[1]):
+                    if self.grid[i, j] == 1:  # Obstacle cell
+                        self.ax.add_patch(
+                            patches.Rectangle((j, i), 1, 1, color="black")
+                        )
+                    else:  # Empty cell
+                        self.ax.add_patch(
+                            patches.Rectangle(
+                                (j, i), 1, 1, edgecolor="gray", fill=False
+                            )
+                        )
 
-        # Draw agents and their goals
-        colors = [
-            "red",
-            "blue",
-            "green",
-            "purple",
-            "orange",
-        ]  # Add more colors if needed
-        for i in range(self.num_agents):
-            agent_id = f"agent_{i}"
-            pos = self.positions[agent_id]
-            goal = self.goals[agent_id]
+            # Initialize goal patches
+            self.goal_patches = {}
+            colors = [
+                "red",
+                "blue",
+                "green",
+                "purple",
+                "orange",
+            ]  # Add more colors if needed
+            for i in range(self.num_agents):
+                agent_id = f"agent_{i}"
+                goal = self.goals[agent_id]
+                goal_patch = patches.Polygon(
+                    [
+                        [goal[1] + 0.5, goal[0]],
+                        [goal[1], goal[0] + 0.5],
+                        [goal[1] + 0.5, goal[0] + 1],
+                        [goal[1] + 1, goal[0] + 0.5],
+                    ],
+                    color=colors[i % len(colors)],
+                    alpha=0.5,
+                    label=f"Goal {i}",
+                )
+                self.ax.add_patch(goal_patch)
+                self.goal_patches[agent_id] = goal_patch
 
-            # Draw the agent
-            ax.add_patch(
-                patches.Circle(
+            # Initialize agent patches
+            self.agent_patches = {}
+            for i in range(self.num_agents):
+                agent_id = f"agent_{i}"
+                pos = self.positions[agent_id]
+                agent_patch = patches.Circle(
                     (pos[1] + 0.5, pos[0] + 0.5),
                     0.3,
                     color=colors[i % len(colors)],
                     label=f"Agent {i}",
                 )
-            )
+                self.ax.add_patch(agent_patch)
+                self.agent_patches[agent_id] = agent_patch
 
-            # Draw the goal
-            ax.add_patch(
-                patches.Circle(
-                    (goal[1] + 0.5, goal[0] + 0.5),
-                    0.15,
-                    color=colors[i % len(colors)],
-                    alpha=0.5,
-                    label=f"Goal {i}",
-                )
-            )
+            # Set the limits and aspect
+            self.ax.set_xlim(0, self.grid.shape[1])
+            self.ax.set_ylim(0, self.grid.shape[0])
+            self.ax.set_aspect("equal")
 
-        # Set the limits and aspect
-        ax.set_xlim(0, self.grid.shape[1])
-        ax.set_ylim(0, self.grid.shape[0])
-        ax.set_aspect("equal")
+            # Add grid lines for clarity
+            self.ax.set_xticks(np.arange(0, self.grid.shape[1], 1))
+            self.ax.set_yticks(np.arange(0, self.grid.shape[0], 1))
+            self.ax.grid(True, which="both", color="gray", linestyle="-", linewidth=0.5)
 
-        # Add grid lines for clarity
-        ax.set_xticks(np.arange(0, self.grid.shape[1], 1))
-        ax.set_yticks(np.arange(0, self.grid.shape[0], 1))
-        ax.grid(True, which="both", color="gray", linestyle="-", linewidth=0.5)
+            # Reverse the y-axis to match typical grid layout (0,0 at top-left)
+            self.ax.invert_yaxis()
 
-        # Reverse the y-axis to match typical grid layout (0,0 at top-left)
-        ax.invert_yaxis()
+        else:
+            # Update agent positions
+            for agent_id, agent_patch in self.agent_patches.items():
+                pos = self.positions[agent_id]
+                agent_patch.set_center((pos[1] + 0.5, pos[0] + 0.5))
 
-        plt.legend()
-        plt.show()
+        # Redraw the updated plot
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+
+    def close(self):
+        plt.close()
