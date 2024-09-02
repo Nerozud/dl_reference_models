@@ -22,6 +22,7 @@ This module contains the ReferenceModel class, which is a multi-agent environmen
 
 import random
 import logging
+import time
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
 import numpy as np
@@ -64,6 +65,7 @@ class ReferenceModel(MultiAgentEnv):
         self.step_count = 0
         self.steps_per_episode = 100
         self.num_agents = env_config.get("num_agents", 2)
+        self.deterministic = env_config.get("deterministic", False)
         self._agent_ids = {f"agent_{i}" for i in range(self.num_agents)}
 
         # TODO: Implement the environment initialization depending on the env_config´
@@ -77,19 +79,20 @@ class ReferenceModel(MultiAgentEnv):
             dtype=np.uint8,
         )
 
-        # self.starts = {
-        #     f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
-        #     for i in range(self.num_agents)
-        # }
-        # self.positions = self.starts.copy()
-        # self.goals = {
-        #     f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
-        #     for i in range(self.num_agents)
-        # }
-
-        self.starts = {"agent_0": (1, 1), "agent_1": (1, 7)}
-        self.positions = self.starts.copy()
-        self.goals = {"agent_0": (1, 8), "agent_1": (1, 0)}
+        if self.deterministic:
+            self.starts = {"agent_0": (1, 1), "agent_1": (1, 7)}
+            self.positions = self.starts.copy()
+            self.goals = {"agent_0": (1, 8), "agent_1": (1, 0)}
+        else:
+            self.starts = {
+                f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
+                for i in range(self.num_agents)
+            }
+            self.positions = self.starts.copy()
+            self.goals = {
+                f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
+                for i in range(self.num_agents)
+            }
 
         # POMPD, small grid around the agent
         # TODO: Implement the shape(vision range) depending on the env_config
@@ -113,16 +116,19 @@ class ReferenceModel(MultiAgentEnv):
         self.step_count = 0
         info = {}
         obs = {}
-        # self.starts = {
-        #     f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
-        #     for i in range(self.num_agents)
-        # }
-        # self.positions = self.starts.copy()
-        # self.goals = {
-        #     f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
-        #     for i in range(self.num_agents)
-        # }
-        self.positions = self.starts.copy()
+
+        if self.deterministic:
+            self.positions = self.starts.copy()
+        else:
+            self.starts = {
+                f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
+                for i in range(self.num_agents)
+            }
+            self.positions = self.starts.copy()
+            self.goals = {
+                f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
+                for i in range(self.num_agents)
+            }
 
         for i in range(self.num_agents):
             obs[f"agent_{i}"] = self.get_obs(f"agent_{i}")
@@ -136,8 +142,12 @@ class ReferenceModel(MultiAgentEnv):
         rewards = {}
         info = {}
         obs = {}
+        terminated = {}
+        truncated = {}
+        reached_goal = {}
 
         if not action_dict or len(action_dict) != self.num_agents:
+            print("action_dict:", action_dict)
             action_dict = {agent_id: 0 for agent_id in self._agent_ids}
             logging.warning(
                 "No actions provided or missing agent actions. Defaulting to no-op actions: %s",
@@ -146,6 +156,7 @@ class ReferenceModel(MultiAgentEnv):
 
         for i in range(self.num_agents):
             rewards[f"agent_{i}"] = 0
+            reached_goal[f"agent_{i}"] = False
             action = action_dict[f"agent_{i}"]
 
             if action == 0:  # noop
@@ -169,32 +180,34 @@ class ReferenceModel(MultiAgentEnv):
 
             obs[f"agent_{i}"] = self.get_obs(f"agent_{i}")
 
-        terminated = {}
-        truncated = {}
-
-        # Track if all agents have reached their goals
-        all_agents_reached_goals = True
-
-        for i in range(len(self.positions)):
-            agent_id = f"agent_{i}"
-
-            if np.array_equal(self.positions[agent_id], self.goals[agent_id]):
-                rewards[agent_id] += 1
-                terminated[agent_id] = True
+            if np.array_equal(self.positions[f"agent_{i}"], self.goals[f"agent_{i}"]):
+                reached_goal[f"agent_{i}"] = True
+                print(
+                    f"Agent {i} reached its goal, because {self.positions[f'agent_{i}']} == {self.goals[f'agent_{i}']}"
+                )
             else:
-                terminated[agent_id] = False
-                all_agents_reached_goals = False
+
+                print(
+                    f"Agent {i} did not reach its goal, because {self.positions[f'agent_{i}']} != {self.goals[f'agent_{i}']}"
+                )
 
         # If all agents have reached their goals, end the episode (not truncated)
-        if all_agents_reached_goals:
+        if all(reached_goal.values()):
+            for i in range(self.num_agents):
+                rewards[f"agent_{i}"] += 1
             terminated["__all__"] = True
             truncated["__all__"] = False
-            print("All agents reached their goals in", self.step_count, "steps")
+            print(
+                "All agents reached their goals in",
+                self.step_count,
+                "steps with a reward of",
+                rewards,
+            )
             print("Positions:", self.positions)
             print("Goals:", self.goals)
-
-        # If the step limit is reached, end the episode and mark it as truncated
-        elif self.step_count >= self.steps_per_episode:
+        elif (
+            self.step_count >= self.steps_per_episode
+        ):  # If the step limit is reached, end the episode and mark it as truncated
             terminated["__all__"] = True
             truncated["__all__"] = True
         else:
@@ -210,7 +223,7 @@ class ReferenceModel(MultiAgentEnv):
             action (int): The action to be taken.
             pos (tuple): The current position.
         Returns:
-            tuple: The next position.
+            numpy.ndarray: The next position.
         Description:
             This function calculates the next position based on given action and current position.
             The possible actions are:
@@ -222,13 +235,13 @@ class ReferenceModel(MultiAgentEnv):
             coordinate of the current position.
         """
         if action == 1:  # up
-            next_pos = (pos[0] - 1, pos[1])
+            next_pos = np.array([pos[0] - 1, pos[1]], dtype=np.uint8)
         elif action == 2:  # right
-            next_pos = (pos[0], pos[1] + 1)
+            next_pos = np.array([pos[0], pos[1] + 1], dtype=np.uint8)
         elif action == 3:  # down
-            next_pos = (pos[0] + 1, pos[1])
+            next_pos = np.array([pos[0] + 1, pos[1]], dtype=np.uint8)
         elif action == 4:  # left
-            next_pos = (pos[0], pos[1] - 1)
+            next_pos = np.array([pos[0], pos[1] - 1], dtype=np.uint8)
         return next_pos
 
     def get_obs(self, agent_id: str):
