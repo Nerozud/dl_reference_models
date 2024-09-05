@@ -1,5 +1,6 @@
 """Main script to run the training of a chosen environment with chosen algorithm."""
 
+import os
 import ray
 from ray.tune.registry import register_env
 from src.agents.ppo import get_ppo_config
@@ -14,14 +15,17 @@ env_setup = {
     "deterministic": False,
 }
 
+
+def env_creator(env_config=None):
+    """Create an environment instance."""
+    return ReferenceModel(env_config)
+
+
 if __name__ == "__main__":
 
-    def env_creator(env_config=None):
-        """Create an environment instance."""
-        return ReferenceModel(env_config)
+    ray.init(_temp_dir="D:\\tmp")
 
     register_env(ENV_NAME, env_creator)
-    ray.init()
 
     if ALGO_NAME == "PPO":
         config = get_ppo_config(ENV_NAME, render_env=True, env_config=env_setup)

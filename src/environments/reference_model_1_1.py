@@ -22,8 +22,17 @@ This module contains the ReferenceModel class, which is a multi-agent environmen
 
 import random
 import logging
-import time
+
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
+
+# from ray.rllib.utils.typing import (
+#     AgentID,
+#     EnvCreator,
+#     EnvID,
+#     EnvType,
+#     MultiAgentDict,
+#     MultiEnvDict,
+# )
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -96,15 +105,30 @@ class ReferenceModel(MultiAgentEnv):
 
         # POMPD, small grid around the agent
         # TODO: Implement the shape(vision range) depending on the env_config
-        self.observation_space = gym.spaces.Box(
-            low=0,
-            high=4,
-            shape=(3, 3),
-            dtype=np.uint8,
-        )
+        # self.observation_space = gym.spaces.Box(
+        #     low=0,
+        #     high=4,
+        #     shape=(3, 3),
+        #     dtype=np.uint8,
+        # )
 
-        # 0 - noop, 1 - up, 2 - right, 3 - down, 4 - left
-        self.action_space = gym.spaces.Discrete(5)
+        # Assuming all agents have the same observation space
+        self.observation_spaces = {
+            agent_id: gym.spaces.Box(
+                low=0,
+                high=4,
+                shape=(3, 3),
+                dtype=np.uint8,
+            )
+            for agent_id in self._agent_ids
+        }
+        self.observation_space = gym.spaces.Dict(self.observation_spaces)
+
+        # Assuming all agents have the same action space
+        self.action_spaces = {
+            agent_id: gym.spaces.Discrete(5) for agent_id in self._agent_ids
+        }
+        self.action_space = gym.spaces.Dict(self.action_spaces)
 
         # Initialize rendering attributes
         self.agent_patches = {}  # Initialize agent_patches as an empty dictionary
@@ -159,9 +183,6 @@ class ReferenceModel(MultiAgentEnv):
             reached_goal[f"agent_{i}"] = False
             action = action_dict[f"agent_{i}"]
 
-            if action == 0:  # noop
-                continue
-
             pos = self.positions[f"agent_{i}"]
             next_pos = self.get_next_position(action, pos)
 
@@ -182,14 +203,13 @@ class ReferenceModel(MultiAgentEnv):
 
             if np.array_equal(self.positions[f"agent_{i}"], self.goals[f"agent_{i}"]):
                 reached_goal[f"agent_{i}"] = True
-                print(
-                    f"Agent {i} reached its goal, because {self.positions[f'agent_{i}']} == {self.goals[f'agent_{i}']}"
-                )
-            else:
-
-                print(
-                    f"Agent {i} did not reach its goal, because {self.positions[f'agent_{i}']} != {self.goals[f'agent_{i}']}"
-                )
+                # print(
+                #     f"Agent {i} reached its goal, because {self.positions[f'agent_{i}']} == {self.goals[f'agent_{i}']}"
+                # )
+            # else:
+            # print(
+            #     f"Agent {i} did not reach its goal, because {self.positions[f'agent_{i}']} != {self.goals[f'agent_{i}']}"
+            # )
 
         # If all agents have reached their goals, end the episode (not truncated)
         if all(reached_goal.values()):
@@ -214,6 +234,9 @@ class ReferenceModel(MultiAgentEnv):
             terminated["__all__"] = False
             truncated["__all__"] = False
 
+        self.render()
+
+        # print("Stepping env with number of obs:", len(obs))
         return obs, rewards, terminated, truncated, info
 
     def get_next_position(self, action, pos):
@@ -227,6 +250,7 @@ class ReferenceModel(MultiAgentEnv):
         Description:
             This function calculates the next position based on given action and current position.
             The possible actions are:
+                - 0: No-op
                 - 1: Move up
                 - 2: Move right
                 - 3: Move down
@@ -234,7 +258,9 @@ class ReferenceModel(MultiAgentEnv):
             The next position is calculated by adding or subtracting 1 to the corresponding
             coordinate of the current position.
         """
-        if action == 1:  # up
+        if action == 0:  # no-op
+            next_pos = np.array([pos[0], pos[1]], dtype=np.uint8)
+        elif action == 1:  # up
             next_pos = np.array([pos[0] - 1, pos[1]], dtype=np.uint8)
         elif action == 2:  # right
             next_pos = np.array([pos[0], pos[1] + 1], dtype=np.uint8)
@@ -265,10 +291,13 @@ class ReferenceModel(MultiAgentEnv):
         """
 
         pos = self.positions[agent_id]
-        obs = np.zeros(self.observation_space.shape, dtype=self.observation_space.dtype)
+        obs = np.zeros(
+            self.observation_spaces[agent_id].shape,
+            dtype=self.observation_spaces[agent_id].dtype,
+        )
 
-        for i in range(self.observation_space.shape[0]):
-            for j in range(self.observation_space.shape[1]):
+        for i in range(self.observation_spaces[agent_id].shape[0]):
+            for j in range(self.observation_spaces[agent_id].shape[1]):
                 # Calculate the corresponding position on the grid
                 x = pos[0] - 1 + i
                 y = pos[1] - 1 + j
@@ -302,8 +331,6 @@ class ReferenceModel(MultiAgentEnv):
                 else:
                     # If the cell is outside the grid, treat it as an obstacle
                     obs[i, j] = 1
-
-        self.render()
 
         return obs
 
@@ -393,3 +420,47 @@ class ReferenceModel(MultiAgentEnv):
 
     def close(self):
         plt.close()
+
+    # def observation_space_contains(self, x: MultiAgentDict) -> bool:
+    #     """Check if the observation space contains the given key.
+
+    #     Args:
+    #         x: Observations to check.
+
+    #     Returns:
+    #         True if the observation space contains the given all observations in x.
+    #     """
+    #     for agent_id, obs in x.items():
+    #         if not self.observation_space.contains(obs):
+    #             return False
+    #     return True
+
+    # def action_space_contains(self, x: MultiAgentDict) -> bool:
+    #     """Checks if the action space contains the given action.
+
+    #     Args:
+    #         x: Actions to check.
+
+    #     Returns:
+    #         True if the action space contains all actions in x.
+    #     """
+    #     for agent_id, action in x.items():
+    #         if not self.action_space.contains(action):
+    #             return False
+    #     return True
+
+    # def action_space_sample(self, agent_ids: list = None) -> MultiAgentDict:
+    #     """Returns a random action for each environment, and potentially each
+    #         agent in that environment.
+
+    #     Args:
+    #         agent_ids: List of agent ids to sample actions for. If None or
+    #             empty list, sample actions for all agents in the
+    #             environment.
+
+    #     Returns:
+    #         A random action for each environment.
+    #     """
+    #     if agent_ids is None:
+    #         agent_ids = list(self._agent_ids)
+    #     return {agent_id: self.action_space.sample() for agent_id in agent_ids}

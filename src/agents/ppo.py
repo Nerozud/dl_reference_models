@@ -20,12 +20,8 @@ def get_ppo_config(env_name, render_env: bool = False, env_config=None):
             },
         )
         .multi_agent(
-            policies={
-                "shared_policy": PolicySpec(
-                    policy_class=None, observation_space=None, action_space=None
-                )
-            },
-            policy_mapping_fn=lambda agent_id, episode, worker, **kwargs: "shared_policy",
+            policies={"shared_policy": PolicySpec()},
+            policy_mapping_fn=lambda agent_id, *args, **kwargs: "shared_policy",
         )
     )
     return config

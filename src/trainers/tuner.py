@@ -1,6 +1,8 @@
 """Tuner module for training models with Ray Tune."""
 
+import os
 from ray import tune, air
+
 from ray.air.integrations.wandb import WandbLoggerCallback
 
 
@@ -18,10 +20,18 @@ def tune_with_callback(config, algo_name, env_name):
     tuner = tune.Tuner(
         algo_name,
         param_space=config,
+        tune_config=tune.TuneConfig(
+            trial_dirname_creator=lambda trial: f"{algo_name}-{env_name}-{trial.trial_id}",
+            trial_name_creator=lambda trial: f"{algo_name}-{trial.trial_id}",
+        ),
         run_config=air.RunConfig(
-            # local_dir="./trained_models",
+            local_dir=os.path.abspath("./experiments/trained_models"),
             # stop=MaximumIterationStopper(max_iter=100),
-            callbacks=[WandbLoggerCallback(project=env_name)],
+            callbacks=[
+                WandbLoggerCallback(
+                    project=env_name, dir=os.path.abspath("./experiments")
+                )
+            ],
         ),
     )
     tuner.fit()
