@@ -1,3 +1,5 @@
+""" Proximal Policy Optimization (PPO) agent configuration. """
+
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.policy.policy import PolicySpec
 
@@ -16,7 +18,7 @@ def get_ppo_config(env_name, render_env: bool = False, env_config=None):
             lambda_=0.95,
             entropy_coeff=0.001,
             model={
-                "fcnet_hiddens": [64, 64],
+                "fcnet_hiddens": [32, 32],
             },
         )
         .multi_agent(

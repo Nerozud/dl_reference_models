@@ -1,23 +1,3 @@
-"""
-This module contains a TestEnvironment class that represents a test environment for agents. It provides a method to get observations for a given agent.
-Example usage:
-    # Get observations for Agent 0
-    # Get observations for Agent 1
-    # Print the observations
-    print(obs_agent_0)
-    print(obs_agent_1)
-        Initializes the TestEnvironment class.
-        The grid represents the environment grid with obstacles (0) and free spaces (1).
-        The observation_space represents the observation space for each agent.
-        The positions dictionary stores the positions of each agent.
-        The goals dictionary stores the goals for each agent.
-        Gets the observations for the specified agent.
-        Args:
-            agent_id (str): The ID of the agent.
-        Returns:
-            np.ndarray: The observations for the agent.
-"""
-
 import numpy as np
 
 
@@ -64,6 +44,34 @@ class TestEnvironment:
 
         return obs
 
+    def get_action_mask(self, agent_id: str, obs):
+        """Get the action mask for a given agent."""
+        action_mask = np.zeros(5, dtype=int)
+
+        action_mask[0] = 1  # No-op action is always possible
+
+        pos = [1, 1]  # should be flexible depending on grid obs shape
+        x, y = pos
+        print("pos", pos, "x", x, "y", y)
+        print("obs", obs)
+        if x > 0 and (obs[x - 1, y] == 0 or obs[x - 1, y] == 3 or obs[x - 1, y] == 4):
+            action_mask[1] = 1  # Move up
+
+        if y < obs.shape[1] - 1 and (
+            obs[x, y + 1] == 0 or obs[x, y + 1] == 3 or obs[x, y + 1] == 4
+        ):
+            action_mask[2] = 1  # Move right
+
+        if x < obs.shape[0] - 1 and (
+            obs[x + 1, y] == 0 or obs[x + 1, y] == 3 or obs[x + 1, y] == 4
+        ):
+            action_mask[3] = 1  # Move down
+
+        if y > 0 and (obs[x, y - 1] == 0 or obs[x, y - 1] == 3 or obs[x, y - 1] == 4):
+            action_mask[4] = 1  # Move left
+
+        return action_mask
+
 
 # Initialize the test environment
 env = TestEnvironment()
@@ -75,11 +83,23 @@ assert np.array_equal(
     obs_agent_0, expected_obs_agent_0
 ), f"Test failed for agent_0, got {obs_agent_0}, expected {expected_obs_agent_0}"
 
+expected_action_mask_agent_0 = np.array([1, 0, 1, 1, 1])
+action_mask_agent_0 = env.get_action_mask("agent_0", obs_agent_0)
+assert np.array_equal(
+    action_mask_agent_0, expected_action_mask_agent_0
+), f"Test failed for agent_0, got {action_mask_agent_0}, expected {expected_action_mask_agent_0}"
+
 # Test case 2: Agent 1
 expected_obs_agent_1 = np.array([[1, 1, 1], [0, 0, 1], [1, 1, 1]])
 obs_agent_1 = env.get_obs("agent_1")
 assert np.array_equal(
     obs_agent_1, expected_obs_agent_1
 ), f"Test failed for agent_1, got {obs_agent_1}, expected {expected_obs_agent_1}"
+
+expected_action_mask_agent_1 = np.array([1, 0, 0, 0, 0])
+action_mask_agent_1 = env.get_action_mask("agent_1", obs_agent_1)
+assert np.array_equal(
+    action_mask_agent_1, expected_action_mask_agent_1
+), f"Test failed for agent_1, got {action_mask_agent_1}, expected {expected_action_mask_agent_1}"
 
 print("All tests passed!")

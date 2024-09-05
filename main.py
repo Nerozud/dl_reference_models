@@ -1,6 +1,5 @@
 """Main script to run the training of a chosen environment with chosen algorithm."""
 
-import os
 import ray
 from ray.tune.registry import register_env
 from src.agents.ppo import get_ppo_config
@@ -12,7 +11,8 @@ ALGO_NAME = "PPO"
 
 env_setup = {
     "num_agents": 2,
-    "deterministic": False,
+    "deterministic": True,
+    "training_execution_mode": "CTDE",  # CTDE or CTE or DTE
 }
 
 
@@ -23,7 +23,9 @@ def env_creator(env_config=None):
 
 if __name__ == "__main__":
 
-    ray.init(_temp_dir="D:\\tmp")
+    ray.init(
+        _temp_dir="D:\\tmp"
+    )  # make sure everything is on the same drive C: or D: etc.
 
     register_env(ENV_NAME, env_creator)
 

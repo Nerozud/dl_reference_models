@@ -25,15 +25,6 @@ import logging
 
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
-# from ray.rllib.utils.typing import (
-#     AgentID,
-#     EnvCreator,
-#     EnvID,
-#     EnvType,
-#     MultiAgentDict,
-#     MultiEnvDict,
-# )
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import patches
@@ -114,11 +105,16 @@ class ReferenceModel(MultiAgentEnv):
 
         # Assuming all agents have the same observation space
         self.observation_spaces = {
-            agent_id: gym.spaces.Box(
-                low=0,
-                high=4,
-                shape=(3, 3),
-                dtype=np.uint8,
+            agent_id: gym.spaces.Dict(
+                {
+                    "observations": gym.spaces.Box(
+                        low=0,
+                        high=4,
+                        shape=(3, 3),
+                        dtype=np.uint8,
+                    ),
+                    "action_mask": gym.spaces.MultiBinary(5),
+                }
             )
             for agent_id in self._agent_ids
         }
@@ -155,7 +151,11 @@ class ReferenceModel(MultiAgentEnv):
             }
 
         for i in range(self.num_agents):
-            obs[f"agent_{i}"] = self.get_obs(f"agent_{i}")
+            obs[f"agent_{i}"] = {}
+            obs[f"agent_{i}"]["observations"] = self.get_obs(f"agent_{i}")
+            obs[f"agent_{i}"]["action_mask"] = self.get_action_mask(
+                f"agent_{i}", obs[f"agent_{i}"]["observations"]
+            )
 
         self.render()
 
@@ -193,13 +193,17 @@ class ReferenceModel(MultiAgentEnv):
             ):
                 self.positions[f"agent_{i}"] = next_pos
             else:
-                rewards[f"agent_{i}"] -= 1
+                # rewards[f"agent_{i}"] -= 1
                 # TODO: Instead use an action mask
-                # print(
-                #     f"Invalid move for agent {i} with action {action} at position {pos}"
-                # )
+                print(
+                    f"Invalid move for agent {i} with action {action} at position {pos}"
+                )
 
-            obs[f"agent_{i}"] = self.get_obs(f"agent_{i}")
+            obs[f"agent_{i}"] = {}
+            obs[f"agent_{i}"]["observations"] = self.get_obs(f"agent_{i}")
+            obs[f"agent_{i}"]["action_mask"] = self.get_action_mask(
+                f"agent_{i}", obs[f"agent_{i}"]["observations"]
+            )
 
             if np.array_equal(self.positions[f"agent_{i}"], self.goals[f"agent_{i}"]):
                 reached_goal[f"agent_{i}"] = True
@@ -292,12 +296,12 @@ class ReferenceModel(MultiAgentEnv):
 
         pos = self.positions[agent_id]
         obs = np.zeros(
-            self.observation_spaces[agent_id].shape,
-            dtype=self.observation_spaces[agent_id].dtype,
+            self.observation_spaces[agent_id]["observations"].shape,
+            dtype=self.observation_spaces[agent_id]["observations"].dtype,
         )
 
-        for i in range(self.observation_spaces[agent_id].shape[0]):
-            for j in range(self.observation_spaces[agent_id].shape[1]):
+        for i in range(self.observation_spaces[agent_id]["observations"].shape[0]):
+            for j in range(self.observation_spaces[agent_id]["observations"].shape[1]):
                 # Calculate the corresponding position on the grid
                 x = pos[0] - 1 + i
                 y = pos[1] - 1 + j
@@ -333,6 +337,56 @@ class ReferenceModel(MultiAgentEnv):
                     obs[i, j] = 1
 
         return obs
+
+    def get_action_mask(self, agent_id: str, obs):
+        """
+        Get the action mask for a given agent.
+        Parameters:
+            agent_id (str): The ID of the agent.
+            obs (numpy.ndarray): The observation array for the agent.
+        Returns:
+            numpy.ndarray: The action mask array.
+        Description:
+            This function calculates the action mask array for a given agent based on its observation.
+            The action mask array is a binary array indicating which actions are valid for the agent.
+            The possible actions are:
+                - 0: No-op
+                - 1: Move up
+                - 2: Move right
+                - 3: Move down
+                - 4: Move left
+            The action mask is calculated based on the current observation of the agent.
+            Action 0 is always possible.
+            Movement actions (1-4) are only possible if the corresponding cell in the observation is empty or a goal.
+        """
+
+        action_mask = np.zeros(
+            self.observation_spaces[agent_id]["action_mask"].shape,
+            dtype=self.observation_spaces[agent_id]["action_mask"].dtype,
+        )
+
+        action_mask[0] = 1  # No-op action is always possible
+
+        # TODO: Make the action mask depend on the obs shape,
+        pos = [1, 1]  # should be flexible depending on grid obs shape
+        x, y = pos
+        if x > 0 and (obs[x - 1, y] == 0 or obs[x - 1, y] == 3 or obs[x - 1, y] == 4):
+            action_mask[1] = 1  # Move up
+
+        if y < obs.shape[1] - 1 and (
+            obs[x, y + 1] == 0 or obs[x, y + 1] == 3 or obs[x, y + 1] == 4
+        ):
+            action_mask[2] = 1  # Move right
+
+        if x < obs.shape[0] - 1 and (
+            obs[x + 1, y] == 0 or obs[x + 1, y] == 3 or obs[x + 1, y] == 4
+        ):
+            action_mask[3] = 1  # Move down
+
+        if y > 0 and (obs[x, y - 1] == 0 or obs[x, y - 1] == 3 or obs[x, y - 1] == 4):
+            action_mask[4] = 1  # Move left
+
+        return action_mask
 
     def render(self):
         """Render the environment."""
@@ -418,49 +472,7 @@ class ReferenceModel(MultiAgentEnv):
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
+        return True
+
     def close(self):
         plt.close()
-
-    # def observation_space_contains(self, x: MultiAgentDict) -> bool:
-    #     """Check if the observation space contains the given key.
-
-    #     Args:
-    #         x: Observations to check.
-
-    #     Returns:
-    #         True if the observation space contains the given all observations in x.
-    #     """
-    #     for agent_id, obs in x.items():
-    #         if not self.observation_space.contains(obs):
-    #             return False
-    #     return True
-
-    # def action_space_contains(self, x: MultiAgentDict) -> bool:
-    #     """Checks if the action space contains the given action.
-
-    #     Args:
-    #         x: Actions to check.
-
-    #     Returns:
-    #         True if the action space contains all actions in x.
-    #     """
-    #     for agent_id, action in x.items():
-    #         if not self.action_space.contains(action):
-    #             return False
-    #     return True
-
-    # def action_space_sample(self, agent_ids: list = None) -> MultiAgentDict:
-    #     """Returns a random action for each environment, and potentially each
-    #         agent in that environment.
-
-    #     Args:
-    #         agent_ids: List of agent ids to sample actions for. If None or
-    #             empty list, sample actions for all agents in the
-    #             environment.
-
-    #     Returns:
-    #         A random action for each environment.
-    #     """
-    #     if agent_ids is None:
-    #         agent_ids = list(self._agent_ids)
-    #     return {agent_id: self.action_space.sample() for agent_id in agent_ids}
