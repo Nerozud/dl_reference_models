@@ -96,35 +96,22 @@ class ReferenceModel(MultiAgentEnv):
 
         # POMPD, small grid around the agent
         # TODO: Implement the shape(vision range) depending on the env_config
-        # self.observation_space = gym.spaces.Box(
-        #     low=0,
-        #     high=4,
-        #     shape=(3, 3),
-        #     dtype=np.uint8,
-        # )
 
         # Assuming all agents have the same observation space
-        self.observation_spaces = {
-            agent_id: gym.spaces.Dict(
-                {
-                    "observations": gym.spaces.Box(
-                        low=0,
-                        high=4,
-                        shape=(3, 3),
-                        dtype=np.uint8,
-                    ),
-                    "action_mask": gym.spaces.MultiBinary(5),
-                }
-            )
-            for agent_id in self._agent_ids
-        }
-        self.observation_space = gym.spaces.Dict(self.observation_spaces)
+        self.observation_space = gym.spaces.Dict(
+            {
+                "observations": gym.spaces.Box(
+                    low=0,
+                    high=4,
+                    shape=(3, 3),
+                    dtype=np.uint8,
+                ),
+                "action_mask": gym.spaces.MultiBinary(5),
+            }
+        )
 
         # Assuming all agents have the same action space
-        self.action_spaces = {
-            agent_id: gym.spaces.Discrete(5) for agent_id in self._agent_ids
-        }
-        self.action_space = gym.spaces.Dict(self.action_spaces)
+        self.action_space = gym.spaces.Discrete(5)
 
         # Initialize rendering attributes
         self.agent_patches = {}  # Initialize agent_patches as an empty dictionary
@@ -154,7 +141,7 @@ class ReferenceModel(MultiAgentEnv):
             obs[f"agent_{i}"] = {}
             obs[f"agent_{i}"]["observations"] = self.get_obs(f"agent_{i}")
             obs[f"agent_{i}"]["action_mask"] = self.get_action_mask(
-                f"agent_{i}", obs[f"agent_{i}"]["observations"]
+                obs[f"agent_{i}"]["observations"]
             )
 
         self.render()
@@ -170,6 +157,7 @@ class ReferenceModel(MultiAgentEnv):
         truncated = {}
         reached_goal = {}
 
+        # Default to no-op actions if no actions are provided or missing agent actions
         if not action_dict or len(action_dict) != self.num_agents:
             print("action_dict:", action_dict)
             action_dict = {agent_id: 0 for agent_id in self._agent_ids}
@@ -186,15 +174,20 @@ class ReferenceModel(MultiAgentEnv):
             pos = self.positions[f"agent_{i}"]
             next_pos = self.get_next_position(action, pos)
 
+            # Check if the next position is valid (action mask should prevent invalid moves)
             if (
                 0 <= next_pos[0] < self.grid.shape[0]
                 and 0 <= next_pos[1] < self.grid.shape[1]
                 and self.grid[next_pos[0], next_pos[1]] == 0
+                and not any(
+                    np.array_equal(self.positions[agent], next_pos)
+                    for agent in self.positions
+                    if agent != f"agent_{i}"
+                )
             ):
                 self.positions[f"agent_{i}"] = next_pos
             else:
-                # rewards[f"agent_{i}"] -= 1
-                # TODO: Instead use an action mask
+                rewards[f"agent_{i}"] -= 0.1
                 print(
                     f"Invalid move for agent {i} with action {action} at position {pos}"
                 )
@@ -202,7 +195,7 @@ class ReferenceModel(MultiAgentEnv):
             obs[f"agent_{i}"] = {}
             obs[f"agent_{i}"]["observations"] = self.get_obs(f"agent_{i}")
             obs[f"agent_{i}"]["action_mask"] = self.get_action_mask(
-                f"agent_{i}", obs[f"agent_{i}"]["observations"]
+                obs[f"agent_{i}"]["observations"]
             )
 
             if np.array_equal(self.positions[f"agent_{i}"], self.goals[f"agent_{i}"]):
@@ -214,6 +207,18 @@ class ReferenceModel(MultiAgentEnv):
             # print(
             #     f"Agent {i} did not reach its goal, because {self.positions[f'agent_{i}']} != {self.goals[f'agent_{i}']}"
             # )
+
+        # minus reward for agents on the same position, shouldn't happen
+        for i in range(self.num_agents):
+            for j in range(i + 1, self.num_agents):
+                if np.array_equal(
+                    self.positions[f"agent_{i}"], self.positions[f"agent_{j}"]
+                ):
+                    rewards[f"agent_{i}"] -= 1
+                    rewards[f"agent_{j}"] -= 1
+                    print(
+                        f"Agents {i} and {j} are on the same position {self.positions[f'agent_{i}']}"
+                    )
 
         # If all agents have reached their goals, end the episode (not truncated)
         if all(reached_goal.values()):
@@ -232,6 +237,12 @@ class ReferenceModel(MultiAgentEnv):
         elif (
             self.step_count >= self.steps_per_episode
         ):  # If the step limit is reached, end the episode and mark it as truncated
+            # minus reward for not reaching the goal
+            for i in range(self.num_agents):
+                if not np.array_equal(
+                    self.positions[f"agent_{i}"], self.goals[f"agent_{i}"]
+                ):
+                    rewards[f"agent_{i}"] -= 1
             terminated["__all__"] = True
             truncated["__all__"] = True
         else:
@@ -272,6 +283,9 @@ class ReferenceModel(MultiAgentEnv):
             next_pos = np.array([pos[0] + 1, pos[1]], dtype=np.uint8)
         elif action == 4:  # left
             next_pos = np.array([pos[0], pos[1] - 1], dtype=np.uint8)
+        else:
+            raise ValueError("Invalid action")
+
         return next_pos
 
     def get_obs(self, agent_id: str):
@@ -296,12 +310,12 @@ class ReferenceModel(MultiAgentEnv):
 
         pos = self.positions[agent_id]
         obs = np.zeros(
-            self.observation_spaces[agent_id]["observations"].shape,
-            dtype=self.observation_spaces[agent_id]["observations"].dtype,
+            self.observation_space["observations"].shape,
+            dtype=self.observation_space["observations"].dtype,
         )
 
-        for i in range(self.observation_spaces[agent_id]["observations"].shape[0]):
-            for j in range(self.observation_spaces[agent_id]["observations"].shape[1]):
+        for i in range(self.observation_space["observations"].shape[0]):
+            for j in range(self.observation_space["observations"].shape[1]):
                 # Calculate the corresponding position on the grid
                 x = pos[0] - 1 + i
                 y = pos[1] - 1 + j
@@ -338,7 +352,7 @@ class ReferenceModel(MultiAgentEnv):
 
         return obs
 
-    def get_action_mask(self, agent_id: str, obs):
+    def get_action_mask(self, obs):
         """
         Get the action mask for a given agent.
         Parameters:
@@ -361,8 +375,8 @@ class ReferenceModel(MultiAgentEnv):
         """
 
         action_mask = np.zeros(
-            self.observation_spaces[agent_id]["action_mask"].shape,
-            dtype=self.observation_spaces[agent_id]["action_mask"].dtype,
+            self.observation_space["action_mask"].shape,
+            dtype=self.observation_space["action_mask"].dtype,
         )
 
         action_mask[0] = 1  # No-op action is always possible

@@ -25,7 +25,7 @@ def tune_with_callback(config, algo_name, env_name):
             trial_name_creator=lambda trial: f"{algo_name}-{trial.trial_id}",
         ),
         run_config=air.RunConfig(
-            local_dir=os.path.abspath("./experiments/trained_models"),
+            storage_path=os.path.abspath("./experiments/trained_models"),
             # stop=MaximumIterationStopper(max_iter=100),
             callbacks=[
                 WandbLoggerCallback(
