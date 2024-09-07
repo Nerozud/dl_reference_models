@@ -67,6 +67,7 @@ class ReferenceModel(MultiAgentEnv):
         self.num_agents = env_config.get("num_agents", 2)
         self.deterministic = env_config.get("deterministic", False)
         self._agent_ids = {f"agent_{i}" for i in range(self.num_agents)}
+        self.render_env = env_config.get("render_env", False)
 
         # TODO: Implement the environment initialization depending on the env_config´
         # 0 - empty cell, 1 - obstacle,
@@ -143,8 +144,8 @@ class ReferenceModel(MultiAgentEnv):
             obs[f"agent_{i}"]["action_mask"] = self.get_action_mask(
                 obs[f"agent_{i}"]["observations"]
             )
-
-        self.render()
+        if self.render_env:
+            self.render()
 
         return obs, info
 
@@ -249,7 +250,8 @@ class ReferenceModel(MultiAgentEnv):
             terminated["__all__"] = False
             truncated["__all__"] = False
 
-        self.render()
+        if self.render_env:
+            self.render()
 
         # print("Stepping env with number of obs:", len(obs))
         return obs, rewards, terminated, truncated, info

@@ -9,11 +9,13 @@ from models.action_mask_model import TorchActionMaskModel
 ModelCatalog.register_custom_model("my_action_mask_model", TorchActionMaskModel)
 
 
-def get_ppo_config(env_name, render_env: bool = False, env_config=None):
+def get_ppo_config(env_name, env_config=None):
     """Get the PPO configuration."""
     config = (
         PPOConfig()
-        .environment(env_name, render_env=render_env, env_config=env_config)
+        .environment(
+            env_name, render_env=env_config["render_env"], env_config=env_config
+        )
         .framework("torch")
         .env_runners(num_env_runners=4, num_envs_per_env_runner=4)
         .training(

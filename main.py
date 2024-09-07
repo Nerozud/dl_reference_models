@@ -11,8 +11,9 @@ ALGO_NAME = "PPO"
 
 env_setup = {
     "num_agents": 2,
-    "deterministic": True,
+    "deterministic": True,  # no randomness in the environment
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE
+    "render_env": False,
 }
 
 
@@ -30,6 +31,6 @@ if __name__ == "__main__":
     register_env(ENV_NAME, env_creator)
 
     if ALGO_NAME == "PPO":
-        config = get_ppo_config(ENV_NAME, render_env=True, env_config=env_setup)
+        config = get_ppo_config(ENV_NAME, env_config=env_setup)
 
     tune_with_callback(config, ALGO_NAME, ENV_NAME)
