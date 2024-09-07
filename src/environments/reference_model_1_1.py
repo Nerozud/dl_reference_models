@@ -53,7 +53,9 @@ class ReferenceModel(MultiAgentEnv):
         - 4: Move left
     - The environment is episodic and terminates after a fixed number of steps.
     - Each agent receives a reward of
-        -1 for each invalid move
+        -0.1 for each invalid move
+        -1 for being on the same position as another agent
+        -1 for not reaching its goal
         1 for reaching its goal
         0 otherwise.
     - The episode terminates after a fixed number of steps or when all agents reach their goals.
@@ -107,6 +109,18 @@ class ReferenceModel(MultiAgentEnv):
                     shape=(3, 3),
                     dtype=np.uint8,
                 ),
+                "position": gym.spaces.Box(
+                    low=0,
+                    high=max(self.grid.shape),
+                    shape=(2,),
+                    dtype=np.uint8,
+                ),
+                "goal": gym.spaces.Box(
+                    low=0,
+                    high=max(self.grid.shape),
+                    shape=(2,),
+                    dtype=np.uint8,
+                ),
                 "action_mask": gym.spaces.MultiBinary(5),
             }
         )
@@ -140,6 +154,8 @@ class ReferenceModel(MultiAgentEnv):
 
         for i in range(self.num_agents):
             obs[f"agent_{i}"] = {}
+            obs[f"agent_{i}"]["position"] = np.array(self.positions[f"agent_{i}"])
+            obs[f"agent_{i}"]["goal"] = np.array(self.goals[f"agent_{i}"])
             obs[f"agent_{i}"]["observations"] = self.get_obs(f"agent_{i}")
             obs[f"agent_{i}"]["action_mask"] = self.get_action_mask(
                 obs[f"agent_{i}"]["observations"]
@@ -188,12 +204,14 @@ class ReferenceModel(MultiAgentEnv):
             ):
                 self.positions[f"agent_{i}"] = next_pos
             else:
-                rewards[f"agent_{i}"] -= 0.1
+                # rewards[f"agent_{i}"] -= 0.1
                 print(
                     f"Invalid move for agent {i} with action {action} at position {pos}"
                 )
 
             obs[f"agent_{i}"] = {}
+            obs[f"agent_{i}"]["position"] = np.array(self.positions[f"agent_{i}"])
+            obs[f"agent_{i}"]["goal"] = np.array(self.goals[f"agent_{i}"])
             obs[f"agent_{i}"]["observations"] = self.get_obs(f"agent_{i}")
             obs[f"agent_{i}"]["action_mask"] = self.get_action_mask(
                 obs[f"agent_{i}"]["observations"]

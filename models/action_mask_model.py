@@ -3,7 +3,7 @@ from torch import nn
 
 from gymnasium.spaces import Dict
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
-from ray.rllib.models.torch.fcnet import FullyConnectedNetwork as TorchFC
+from ray.rllib.models.torch.complex_input_net import ComplexInputNetwork
 from ray.rllib.utils.torch_utils import FLOAT_MIN
 
 
@@ -24,6 +24,8 @@ class TorchActionMaskModel(TorchModelV2, nn.Module):
             isinstance(orig_space, Dict)
             and "action_mask" in orig_space.spaces
             and "observations" in orig_space.spaces
+            and "position" in orig_space.spaces
+            and "goal" in orig_space.spaces
         )
 
         TorchModelV2.__init__(
@@ -31,8 +33,8 @@ class TorchActionMaskModel(TorchModelV2, nn.Module):
         )
         nn.Module.__init__(self)
 
-        self.internal_model = TorchFC(
-            orig_space["observations"],
+        self.internal_model = ComplexInputNetwork(
+            orig_space,
             action_space,
             num_outputs,
             model_config,
@@ -49,7 +51,7 @@ class TorchActionMaskModel(TorchModelV2, nn.Module):
         action_mask = input_dict["obs"]["action_mask"]
 
         # Compute the unmasked logits.
-        logits, _ = self.internal_model({"obs": input_dict["obs"]["observations"]})
+        logits, _ = self.internal_model({"obs": input_dict["obs"]})
 
         # If action masking is disabled, directly return unmasked logits
         if self.no_masking:

@@ -11,9 +11,9 @@ ALGO_NAME = "PPO"
 
 env_setup = {
     "num_agents": 2,
-    "deterministic": True,  # no randomness in the environment
+    "deterministic": True,  # no random starts and goals
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE
-    "render_env": False,
+    "render_env": True,
 }
 
 
