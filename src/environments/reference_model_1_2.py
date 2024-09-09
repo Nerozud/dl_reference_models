@@ -77,16 +77,17 @@ class ReferenceModel(MultiAgentEnv):
         # coords are [y-1, x-1] from upper left, so [0, 4] is the aisle
         self.grid = np.array(
             [
-                [1, 1, 1, 1, 0, 1, 1, 1, 1],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
             ],
             dtype=np.uint8,
         )
 
         if self.deterministic:
-            self.starts = {"agent_0": (1, 1), "agent_1": (1, 7)}
+            self.starts = {"agent_0": (1, 1), "agent_1": (1, 8)}
             self.positions = self.starts.copy()
-            self.goals = {"agent_0": (1, 8), "agent_1": (1, 0)}
+            self.goals = {"agent_0": (1, 9), "agent_1": (1, 0)}
         else:
             self.starts = {
                 f"agent_{i}": (random.choice(np.argwhere(self.grid == 0)))
