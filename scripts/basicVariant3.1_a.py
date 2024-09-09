@@ -38,8 +38,8 @@ grid = [
 
 # Define the start and goal positions for multiple agents
 # blue green red pink yellow
-starts = [(16, 0), (6, 23), (17, 22), (17, 28)]
-goals = [(18, 22), (19, 4), (17, 0), (18, 0)]
+starts = [(15, 0), (6, 23), (16, 22), (16, 28)]
+goals = [(17, 22), (19, 4), (16, 0), (17, 0)]
 
 # Define directions for movement (left, right, stay, up, down)
 directions = [(0, -1), (0, 1), (0, 0), (-1, 0), (1, 0)]  # left, right, stay, up, down
