@@ -8,6 +8,11 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
 
+import time  # Import the time module
+
+# Record the start time
+start_time = time.process_time()
+
 # Define the grid
 grid = [[1, 1, 1, 1, 1, 0, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
@@ -83,6 +88,12 @@ def a_star_multiple_agents(starts, goals, grid):
 # Find the simultaneous paths
 paths = a_star_multiple_agents(starts, goals, grid)
 
+# Record the end time
+end_time = time.process_time()
+
+# Calculate the CPU time
+cpu_time = end_time - start_time
+
 
 if paths:
     for agent_index, agent_path in enumerate(zip(*paths)):
@@ -110,7 +121,7 @@ if paths:
 else:
     print("No path found.")
 
-
+print(f"CPU time: {cpu_time:.4f} seconds")
 number_of_agents = len(starts)
 
 fig, ax = plt.subplots(figsize=(10, 8))
