@@ -4,13 +4,13 @@ import ray
 from ray.tune.registry import register_env
 from src.agents.ppo import get_ppo_config
 from src.trainers.tuner import tune_with_callback
-from src.environments.reference_model_1_2 import ReferenceModel
+from src.environments.reference_model_2_1 import ReferenceModel
 
-ENV_NAME = "ReferenceModel-1-2"
+ENV_NAME = "ReferenceModel-2-1"
 ALGO_NAME = "PPO"
 
 env_setup = {
-    "num_agents": 2,
+    "num_agents": 4,
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7
     "deterministic": True,  # no random starts and goals
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE
