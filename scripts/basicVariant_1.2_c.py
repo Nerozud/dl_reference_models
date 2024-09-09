@@ -14,14 +14,14 @@ start_time = time.process_time()
 
 # Define the grid
 grid = [
-    [0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
+    [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
 ]
 
 # Define the start and goal positions for multiple agents
-starts = [(0, 0), (0, 1), (0, 8)]
-goals = [(0, 9), (2, 8), (2, 0)]
+starts = [(1, 1), (1, 11)]
+goals = [(1, 12), (1, 0)]
 
 # Define directions for movement (left, right, stay, up, down)
 directions = [(0, -1), (0, 1), (0, 0), (-1, 0), (1, 0)]  # left, right, stay, up, down
