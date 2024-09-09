@@ -71,10 +71,10 @@ class ReferenceModel(MultiAgentEnv):
         self.deterministic = env_config.get("deterministic", False)
         self._agent_ids = {f"agent_{i}" for i in range(self.num_agents)}
         self.render_env = env_config.get("render_env", False)
+        self.goal_reached_once = {f"agent_{i}": False for i in range(self.num_agents)}
 
         # TODO: Implement the environment initialization depending on the env_config´
         # 0 - empty cell, 1 - obstacle,
-        # coords are [y-1, x-1] from upper left, so [0, 4] is the aisle
         self.grid = np.array(
             [
                 [
@@ -789,6 +789,7 @@ class ReferenceModel(MultiAgentEnv):
         self.step_count = 0
         info = {}
         obs = {}
+        self.goal_reached_once = {f"agent_{i}": False for i in range(self.num_agents)}
 
         if self.deterministic:
             self.positions = self.starts.copy()
@@ -870,6 +871,9 @@ class ReferenceModel(MultiAgentEnv):
 
             if np.array_equal(self.positions[f"agent_{i}"], self.goals[f"agent_{i}"]):
                 reached_goal[f"agent_{i}"] = True
+                if not self.goal_reached_once[f"agent_{i}"]:
+                    self.goal_reached_once[f"agent_{i}"] = True
+                    rewards[f"agent_{i}"] += 0.5
                 # print(
                 #     f"Agent {i} reached its goal, because {self.positions[f'agent_{i}']} == {self.goals[f'agent_{i}']}"
                 # )
@@ -1081,7 +1085,9 @@ class ReferenceModel(MultiAgentEnv):
         if not hasattr(self, "fig") or self.fig is None:
             # Initialize the rendering environment if it hasn't been done yet
             plt.ion()
-            self.fig, self.ax = plt.subplots(figsize=(8, 4))
+            self.fig, self.ax = plt.subplots(
+                figsize=(self.grid.shape[1] / 3, self.grid.shape[0] / 3)
+            )
 
             # Draw the grid
             for i in range(self.grid.shape[0]):
