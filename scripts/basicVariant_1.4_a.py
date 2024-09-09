@@ -95,8 +95,6 @@ def a_star_multiple_agents(starts, goals, grid):
 # Find the simultaneous paths
 paths = a_star_multiple_agents(starts, goals, grid)
 
-# Find the simultaneous paths
-paths = a_star_multiple_agents(starts, goals, grid)
 
 # Record the end time
 end_time = time.process_time()
