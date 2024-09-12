@@ -1,20 +1,21 @@
 """Main script to run the training of a chosen environment with chosen algorithm."""
 
+import os
 import ray
 from ray.tune.registry import register_env
 from src.agents.ppo import get_ppo_config
 from src.trainers.tuner import tune_with_callback
-from src.environments.reference_model_2_1 import ReferenceModel
+from src.environments.reference_model_2_2 import ReferenceModel
 
-ENV_NAME = "ReferenceModel-2-1"
+ENV_NAME = "ReferenceModel-2-2"
 ALGO_NAME = "PPO"
 
 env_setup = {
     "num_agents": 4,
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7
     "deterministic": True,  # no random starts and goals
-    "training_execution_mode": "CTDE",  # CTDE or CTE or DTE
-    "render_env": True,
+    "training_execution_mode": "DTE",  # CTDE or CTE or DTE
+    "render_env": False,
 }
 
 
@@ -25,8 +26,9 @@ def env_creator(env_config=None):
 
 if __name__ == "__main__":
 
+    drive = os.path.splitdrive(os.getcwd())[0]
     ray.init(
-        _temp_dir="D:\\tmp"
+        _temp_dir=drive + "\\tmp"
     )  # make sure everything is on the same drive C: or D: etc.
 
     register_env(ENV_NAME, env_creator)

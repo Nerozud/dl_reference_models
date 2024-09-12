@@ -11,6 +11,10 @@ ModelCatalog.register_custom_model("my_action_mask_model", TorchActionMaskModel)
 
 def get_ppo_config(env_name, env_config=None):
     """Get the PPO configuration."""
+    num_agents = env_config.get("num_agents", 2)
+    policies = {f"agent_{i}": PolicySpec() for i in range(num_agents)}
+    policies["shared_policy"] = PolicySpec()
+
     config = (
         PPOConfig()
         .environment(
@@ -40,8 +44,12 @@ def get_ppo_config(env_name, env_config=None):
             },
         )
         .multi_agent(
-            policies={"shared_policy": PolicySpec()},
-            policy_mapping_fn=lambda agent_id, *args, **kwargs: "shared_policy",
+            policies=policies,
+            policy_mapping_fn=lambda agent_id, *args, **kwargs: (
+                agent_id
+                if env_config.get("training_execution_mode") == "DTE"
+                else "shared_policy"
+            ),
         )
     )
     return config
