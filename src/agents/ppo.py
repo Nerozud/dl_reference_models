@@ -21,7 +21,9 @@ def get_ppo_config(env_name, env_config=None):
             env_name, render_env=env_config["render_env"], env_config=env_config
         )
         .framework("torch")
-        .env_runners(num_env_runners=8, num_envs_per_env_runner=4, sample_timeout_s=300)
+        .env_runners(
+            num_env_runners=10, num_envs_per_env_runner=2, sample_timeout_s=300
+        )  # increase num_envs_per_env_runner if render is false
         .training(
             train_batch_size=4000,
             sgd_minibatch_size=4000,

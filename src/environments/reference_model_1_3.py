@@ -97,7 +97,6 @@ class ReferenceModel(MultiAgentEnv):
             }
 
         # POMPD, small grid around the agent
-        # TODO: Implement the shape(vision range) depending on the env_config
 
         # Assuming all agents have the same observation space
         self.observation_space = gym.spaces.Dict(

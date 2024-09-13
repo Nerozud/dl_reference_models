@@ -33,7 +33,7 @@ import gymnasium as gym
 
 class ReferenceModel(MultiAgentEnv):
     """
-    Reference Model 1.1
+    Reference Model 1.2
     This is a simple environment with a grid where agents need to reach their respective goals.
     The environment has the following properties:
     - The grid is a 2D numpy array where each cell can be an empty cell (0) or an obstacle (1).
@@ -101,7 +101,6 @@ class ReferenceModel(MultiAgentEnv):
             }
 
         # POMPD, small grid around the agent
-        # TODO: Implement the shape(vision range) depending on the env_config
 
         # Assuming all agents have the same observation space
         self.observation_space = gym.spaces.Dict(
@@ -254,14 +253,14 @@ class ReferenceModel(MultiAgentEnv):
                 rewards[f"agent_{i}"] += 1
             terminated["__all__"] = True
             truncated["__all__"] = False
-            print(
-                "All agents reached their goals in",
-                self.step_count,
-                "steps with a reward of",
-                rewards,
-            )
-            print("Positions:", self.positions)
-            print("Goals:", self.goals)
+            # print(
+            #     "All agents reached their goals in",
+            #     self.step_count,
+            #     "steps with a reward of",
+            #     rewards,
+            # )
+            # print("Positions:", self.positions)
+            # print("Goals:", self.goals)
         elif (
             self.step_count >= self.steps_per_episode
         ):  # If the step limit is reached, end the episode and mark it as truncated

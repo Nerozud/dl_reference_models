@@ -100,7 +100,6 @@ class ReferenceModel(MultiAgentEnv):
             }
 
         # POMPD, small grid around the agent
-        # TODO: Implement the shape(vision range) depending on the env_config
 
         # Assuming all agents have the same observation space
         self.observation_space = gym.spaces.Dict(
@@ -253,14 +252,14 @@ class ReferenceModel(MultiAgentEnv):
                 rewards[f"agent_{i}"] += 1
             terminated["__all__"] = True
             truncated["__all__"] = False
-            print(
-                "All agents reached their goals in",
-                self.step_count,
-                "steps with a reward of",
-                rewards,
-            )
-            print("Positions:", self.positions)
-            print("Goals:", self.goals)
+            # print(
+            #     "All agents reached their goals in",
+            #     self.step_count,
+            #     "steps with a reward of",
+            #     rewards,
+            # )
+            # print("Positions:", self.positions)
+            # print("Goals:", self.goals)
         elif (
             self.step_count >= self.steps_per_episode
         ):  # If the step limit is reached, end the episode and mark it as truncated
