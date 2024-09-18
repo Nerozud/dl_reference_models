@@ -3,7 +3,7 @@ from torch import nn
 
 from gymnasium.spaces import Dict
 from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
-from ray.rllib.models.torch.fcnet import FullyConnectedNetwork
+from ray.rllib.models.torch.complex_input_net import ComplexInputNetwork
 from ray.rllib.utils.torch_utils import FLOAT_MIN
 
 
@@ -31,7 +31,7 @@ class TorchActionMaskModelSingle(TorchModelV2, nn.Module):
         )
         nn.Module.__init__(self)
 
-        self.internal_model = FullyConnectedNetwork(
+        self.internal_model = ComplexInputNetwork(
             orig_space["observations"],
             action_space,
             num_outputs,

@@ -1,35 +1,29 @@
 """
 This module contains the ReferenceModel class, which is a multi-agent environment.
-The environment is interpreted as single RL agent environment, 
-where all agents are controlled by the same policy.
-
-Initialize the ReferenceModel environment.
-    Parameters:
+    Initialize the ReferenceModel environment.
         env_config (dict): Configuration options for the environment.
-
-Reset the environment to its initial state.
-    Parameters:
+        None
+    Reset the environment to its initial state.
         seed (int): The random seed for the environment.
         options (dict): Additional options for resetting the environment.
-    Returns:
         obs (dict): The initial observations for each agent.
         info (dict): Additional information about the reset.
-
-Take a step in the environment.
-    Parameters:
+    Take a step in the environment.
         action_dict (dict): The actions to be taken by each agent.
-    Returns:
         obs (dict): The new observations for each agent.
         rewards (dict): The rewards obtained by each agent.
         terminated (dict): Whether each agent has terminated.
         truncated (dict): Whether each agent's trajectory was truncated.
         info (dict): Additional information about the step.
-
-Render the environment.
-    None
+        obs (numpy.ndarray): The observation array.
+    Render the environment.
+        None
 """
 
 import random
+import logging
+
+from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -39,9 +33,9 @@ import gymnasium as gym
 from src.environments import get_grid
 
 
-class ReferenceModel(gym.Env):
+class ReferenceModel(MultiAgentEnv):
     """
-    Reference Model 1.1 for CTE
+    Reference Model Multi-Agent Environment.
     This is a simple environment with a grid where agents need to reach their respective goals.
     The environment has the following properties:
     - The grid is a 2D numpy array where each cell can be an empty cell (0) or an obstacle (1).
@@ -97,26 +91,41 @@ class ReferenceModel(gym.Env):
         else:
             self.generate_starts_goals()
 
+        # POMPD, small grid around the agent
+
         # Assuming all agents have the same observation space
         self.observation_space = gym.spaces.Dict(
             {
                 "observations": gym.spaces.Box(
                     low=0,
-                    high=2 * self.num_agents + 1,
-                    shape=(self.grid.shape[0], self.grid.shape[1]),
+                    high=4,
+                    shape=(self.sensor_range * 2 + 1, self.sensor_range * 2 + 1),
                     dtype=np.uint8,
                 ),
-                "action_mask": gym.spaces.MultiBinary(5 * self.num_agents),
+                "position": gym.spaces.Box(
+                    low=0,
+                    high=max(self.grid.shape),
+                    shape=(2,),
+                    dtype=np.uint8,
+                ),
+                "goal": gym.spaces.Box(
+                    low=0,
+                    high=max(self.grid.shape),
+                    shape=(2,),
+                    dtype=np.uint8,
+                ),
+                "action_mask": gym.spaces.MultiBinary(5),
             }
         )
 
         # Assuming all agents have the same action space
-        self.action_space = gym.spaces.MultiDiscrete([5] * self.num_agents)
+        self.action_space = gym.spaces.Discrete(5)
 
         if self.render_env:
             # Initialize rendering attributes
             self.agent_patches = {}  # Initialize agent_patches as an empty dictionary
             self.goal_patches = {}  # Initialize goal_patches as an empty dictionary
+            self.sensor_patches = {}
             self.fig = None
             self.ax = None
 
@@ -165,27 +174,44 @@ class ReferenceModel(gym.Env):
         else:
             self.generate_starts_goals()
 
-        obs = {}
-        obs["observations"] = self.get_obs()
-        obs["action_mask"] = self.get_action_mask(obs["observations"])
+        for i in range(self.num_agents):
+            obs[f"agent_{i}"] = {}
+            obs[f"agent_{i}"]["position"] = np.array(self.positions[f"agent_{i}"])
+            obs[f"agent_{i}"]["goal"] = np.array(self.goals[f"agent_{i}"])
+            obs[f"agent_{i}"]["observations"] = self.get_obs(f"agent_{i}")
+            obs[f"agent_{i}"]["action_mask"] = self.get_action_mask(
+                obs[f"agent_{i}"]["observations"]
+            )
         if self.render_env:
             self.render()
 
         return obs, info
 
-    def step(self, action):
+    def step(self, action_dict):
         self.step_count += 1
+        rewards = {}
         info = {}
         obs = {}
         terminated = {}
         truncated = {}
         reached_goal = {}
-        reward = 0
+
+        # Default to no-op actions if no actions are provided or missing agent actions
+        if not action_dict or len(action_dict) != self.num_agents:
+            print("action_dict:", action_dict)
+            action_dict = {agent_id: 0 for agent_id in self._agent_ids}
+            logging.warning(
+                "No actions provided or missing agent actions. Defaulting to no-op actions: %s",
+                action_dict,
+            )
 
         for i in range(self.num_agents):
+            rewards[f"agent_{i}"] = 0
             reached_goal[f"agent_{i}"] = False
+            action = action_dict[f"agent_{i}"]
+
             pos = self.positions[f"agent_{i}"]
-            next_pos = self.get_next_position(action[i], pos)
+            next_pos = self.get_next_position(action, pos)
 
             # Check if the next position is valid (action mask should prevent invalid moves)
             if (
@@ -205,15 +231,26 @@ class ReferenceModel(gym.Env):
                     f"Invalid move for agent {i} with action {action} at position {pos}"
                 )
 
+            obs[f"agent_{i}"] = {}
+            obs[f"agent_{i}"]["position"] = np.array(self.positions[f"agent_{i}"])
+            obs[f"agent_{i}"]["goal"] = np.array(self.goals[f"agent_{i}"])
+            obs[f"agent_{i}"]["observations"] = self.get_obs(f"agent_{i}")
+            obs[f"agent_{i}"]["action_mask"] = self.get_action_mask(
+                obs[f"agent_{i}"]["observations"]
+            )
+
             if np.array_equal(self.positions[f"agent_{i}"], self.goals[f"agent_{i}"]):
                 reached_goal[f"agent_{i}"] = True
                 if not self.goal_reached_once[f"agent_{i}"]:
                     self.goal_reached_once[f"agent_{i}"] = True
-                    reward += 0.5
-
-        obs = {}
-        obs["observations"] = self.get_obs()
-        obs["action_mask"] = self.get_action_mask(obs["observations"])
+                    rewards[f"agent_{i}"] += 0.5
+                # print(
+                #     f"Agent {i} reached its goal, because {self.positions[f'agent_{i}']} == {self.goals[f'agent_{i}']}"
+                # )
+            # else:
+            # print(
+            #     f"Agent {i} did not reach its goal, because {self.positions[f'agent_{i}']} != {self.goals[f'agent_{i}']}"
+            # )
 
         # minus reward for agents on the same position, shouldn't happen
         for i in range(self.num_agents):
@@ -221,24 +258,26 @@ class ReferenceModel(gym.Env):
                 if np.array_equal(
                     self.positions[f"agent_{i}"], self.positions[f"agent_{j}"]
                 ):
-                    reward -= 1
+                    rewards[f"agent_{i}"] -= 1
+                    rewards[f"agent_{j}"] -= 1
                     print(
                         f"Agents {i} and {j} are on the same position {self.positions[f'agent_{i}']}"
                     )
 
         # If all agents have reached their goals, end the episode (not truncated)
         if all(reached_goal.values()):
-            reward += 1
-            terminated = True
-            truncated = False
-            print(
-                "All agents reached their goals in",
-                self.step_count,
-                "steps with a reward of",
-                reward,
-            )
-            print("Positions:", self.positions)
-            print("Goals:", self.goals)
+            for i in range(self.num_agents):
+                rewards[f"agent_{i}"] += 1
+            terminated["__all__"] = True
+            truncated["__all__"] = False
+            # print(
+            #     "All agents reached their goals in",
+            #     self.step_count,
+            #     "steps with a reward of",
+            #     rewards,
+            # )
+            # print("Positions:", self.positions)
+            # print("Goals:", self.goals)
         elif (
             self.step_count >= self.steps_per_episode
         ):  # If the step limit is reached, end the episode and mark it as truncated
@@ -247,18 +286,18 @@ class ReferenceModel(gym.Env):
                 if not np.array_equal(
                     self.positions[f"agent_{i}"], self.goals[f"agent_{i}"]
                 ):
-                    reward -= 1
-            terminated = True
-            truncated = True
+                    rewards[f"agent_{i}"] -= 1
+            terminated["__all__"] = True
+            truncated["__all__"] = True
         else:
-            terminated = False
-            truncated = False
+            terminated["__all__"] = False
+            truncated["__all__"] = False
 
         if self.render_env:
             self.render()
 
         # print("Stepping env with number of obs:", len(obs))
-        return obs, reward, terminated, truncated, info
+        return obs, rewards, terminated, truncated, info
 
     def get_next_position(self, action, pos):
         """
@@ -294,38 +333,67 @@ class ReferenceModel(gym.Env):
 
         return next_pos
 
-    def get_obs(self):
+    def get_obs(self, agent_id: str):
         """
         Get the observation for a given agent.
+        Parameters:
+            agent_id (str): The ID of the agent.
         Returns:
             numpy.ndarray: The observation array.
         Description:
-            This function calculates the complete grid with agent positions and goals.
+            This function calculates the observation array for a given agent based on its position.
             The observation array is a 2D np array with the same shape as the env's obs space.
             Each element in the array represents the state of a cell in the grid.
             The possible values for each cell are:
                 - 0: Empty cell
                 - 1: Obstacle cell
-                - 2: agent 1 position
-                - 3: agent 1 goal
-                - 4: agent 2 position
-                - 5: agent 2 goal
-                - ...
+                - 2: Cell occupied by another agent
+                - 3: Cell occupied by current agent's goal but not occupied by another agent
+                - 4: Cell occupied by another agent's goal but not occupied by another agent
+            If a cell is outside the grid boundaries, it is considered an obstacle cell.
         """
 
-        obs = self.grid.copy()
+        pos = self.positions[agent_id]
+        obs = np.zeros(
+            self.observation_space["observations"].shape,
+            dtype=self.observation_space["observations"].dtype,
+        )
 
-        # can be optimized by not creating the obs array from scratch
-        # goals first, then agents overwriting goals
-        for i in range(self.num_agents):
-            agent_id = f"agent_{i}"
-            goal = self.goals[agent_id]
-            obs[goal[0], goal[1]] = i * 2 + 3
+        for i in range(self.observation_space["observations"].shape[0]):
+            for j in range(self.observation_space["observations"].shape[1]):
+                # Calculate the corresponding position on the grid
+                x = pos[0] - self.sensor_range + i
+                y = pos[1] - self.sensor_range + j
 
-        for i in range(self.num_agents):
-            agent_id = f"agent_{i}"
-            pos = self.positions[agent_id]
-            obs[pos[0], pos[1]] = i * 2 + 2
+                # Check if the position is within the grid boundaries
+                if 0 <= x < self.grid.shape[0] and 0 <= y < self.grid.shape[1]:
+                    # Default to empty cell
+                    obs[i, j] = 0
+
+                    # Check if the cell is an obstacle
+                    if self.grid[x, y] == 1:
+                        obs[i, j] = 1
+                    else:
+                        # Check if another agent occupies the cell
+                        if any(
+                            np.array_equal(self.positions[agent], (x, y))
+                            for agent in self.positions
+                            if agent != agent_id
+                        ):
+                            obs[i, j] = 2
+                        # Check if this is current agent's goal and not occupied by another agent
+                        elif np.array_equal(self.goals[agent_id], (x, y)):
+                            obs[i, j] = 3
+                        # Check if this is another agent's goal and not occupied by another agent
+                        elif any(
+                            np.array_equal(self.goals[agent], (x, y))
+                            for agent in self.positions
+                            if agent != agent_id
+                        ):
+                            obs[i, j] = 4
+                else:
+                    # If the cell is outside the grid, treat it as an obstacle
+                    obs[i, j] = 1
 
         return obs
 
@@ -348,7 +416,7 @@ class ReferenceModel(gym.Env):
                 - 4: Move left
             The action mask is calculated based on the current observation of the agent.
             Action 0 is always possible.
-            Movement actions (1-4) are only possible if the corresponding cell is empty or a goal.
+            Movement actions (1-4) are only possible if the corresponding cell in the observation is empty or a goal.
         """
 
         action_mask = np.zeros(
@@ -356,34 +424,29 @@ class ReferenceModel(gym.Env):
             dtype=self.observation_space["action_mask"].dtype,
         )
 
-        for i in range(self.num_agents):
-            action_mask[i * 5] = 1  # No-op action is always possible
+        action_mask[0] = 1  # No-op action is always possible
 
-            pos = [
-                self.positions[f"agent_{i}"][0],
-                self.positions[f"agent_{i}"][1],
-            ]
-            x, y = pos
+        pos = [
+            self.sensor_range,
+            self.sensor_range,
+        ]
+        x, y = pos
 
-            if x > 0 and (
-                obs[x - 1, y] == 0 or obs[x - 1, y] == 3 or obs[x - 1, y] == 4
-            ):
-                action_mask[i * 5 + 1] = 1  # Move up
+        if x > 0 and (obs[x - 1, y] == 0 or obs[x - 1, y] == 3 or obs[x - 1, y] == 4):
+            action_mask[1] = 1  # Move up
 
-            if y < obs.shape[1] - 1 and (
-                obs[x, y + 1] == 0 or obs[x, y + 1] == 3 or obs[x, y + 1] == 4
-            ):
-                action_mask[i * 5 + 2] = 1  # Move right
+        if y < obs.shape[1] - 1 and (
+            obs[x, y + 1] == 0 or obs[x, y + 1] == 3 or obs[x, y + 1] == 4
+        ):
+            action_mask[2] = 1  # Move right
 
-            if x < obs.shape[0] - 1 and (
-                obs[x + 1, y] == 0 or obs[x + 1, y] == 3 or obs[x + 1, y] == 4
-            ):
-                action_mask[i * 5 + 3] = 1  # Move down
+        if x < obs.shape[0] - 1 and (
+            obs[x + 1, y] == 0 or obs[x + 1, y] == 3 or obs[x + 1, y] == 4
+        ):
+            action_mask[3] = 1  # Move down
 
-            if y > 0 and (
-                obs[x, y - 1] == 0 or obs[x, y - 1] == 3 or obs[x, y - 1] == 4
-            ):
-                action_mask[i * 5 + 4] = 1  # Move left
+        if y > 0 and (obs[x, y - 1] == 0 or obs[x, y - 1] == 3 or obs[x, y - 1] == 4):
+            action_mask[4] = 1  # Move left
 
         return action_mask
 
@@ -447,9 +510,23 @@ class ReferenceModel(gym.Env):
                     color=colors[i % len(colors)],
                     label=f"Agent {i}",
                 )
-
+                sensor_range_size = 2 * self.sensor_range + 1
+                sensor_patch = patches.Rectangle(
+                    (
+                        pos[1] - self.sensor_range,
+                        pos[0] - self.sensor_range,
+                    ),
+                    sensor_range_size,
+                    sensor_range_size,
+                    edgecolor=colors[i % len(colors)],
+                    facecolor=colors[i % len(colors)],
+                    alpha=0.2,
+                    fill=True,
+                )
                 self.ax.add_patch(agent_patch)
+                self.ax.add_patch(sensor_patch)
                 self.agent_patches[agent_id] = agent_patch
+                self.sensor_patches[agent_id] = sensor_patch
 
             # Set the limits and aspect
             self.ax.set_xlim(0, self.grid.shape[1])
@@ -469,6 +546,10 @@ class ReferenceModel(gym.Env):
             for agent_id, agent_patch in self.agent_patches.items():
                 pos = self.positions[agent_id]
                 agent_patch.set_center((pos[1] + 0.5, pos[0] + 0.5))
+                sensor_patch = self.sensor_patches[agent_id]
+                sensor_patch.set_xy(
+                    (pos[1] - self.sensor_range, pos[0] - self.sensor_range)
+                )
 
         # Redraw the updated plot
         self.fig.canvas.draw()

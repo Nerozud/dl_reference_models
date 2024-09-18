@@ -19,7 +19,7 @@ def get_ppo_config(env_name, env_config=None):
 
     if env_config.get("training_execution_mode") == "CTE":
         config = (
-            PPOConfig()
+            PPOConfig()  # single agent config, CTE
             .environment(
                 env_name, render_env=env_config["render_env"], env_config=env_config
             )
@@ -43,9 +43,8 @@ def get_ppo_config(env_name, env_config=None):
                         # "use_attention": True,
                         # "lstm_use_prev_reward": True,
                         # "lstm_use_prev_action": True,
-                        "fcnet_hiddens": [32, 32],
+                        "fcnet_hiddens": [64, 64],
                     },
-                    "fcnet_hiddens": [32, 32],
                 },
             )
         )
@@ -55,7 +54,7 @@ def get_ppo_config(env_name, env_config=None):
         policies["shared_policy"] = PolicySpec()
 
         config = (
-            PPOConfig()
+            PPOConfig()  # multi agent config, CTDE or DTE
             .environment(
                 env_name, render_env=env_config["render_env"], env_config=env_config
             )

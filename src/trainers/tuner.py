@@ -27,6 +27,7 @@ def tune_with_callback(config, algo_name, env_name):
         run_config=air.RunConfig(
             storage_path=os.path.abspath("./experiments/trained_models"),
             # stop=MaximumIterationStopper(max_iter=100),
+            stop={"timesteps_total": 1e6},
             callbacks=[
                 WandbLoggerCallback(
                     project=env_name, dir=os.path.abspath("./experiments")
