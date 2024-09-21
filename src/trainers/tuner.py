@@ -2,7 +2,7 @@
 
 import os
 from ray import tune, air
-
+from ray.tune.search.bayesopt import BayesOptSearch
 from ray.air.integrations.wandb import WandbLoggerCallback
 
 
@@ -21,6 +21,12 @@ def tune_with_callback(config, algo_name, env_name):
         algo_name,
         param_space=config,
         tune_config=tune.TuneConfig(
+            mode="max",
+            metric="episode_reward_mean",
+            # search_alg=BayesOptSearch(
+            #     utility_kwargs={"kind": "ucb", "kappa": 2.5, "xi": 0.0}
+            # ),
+            num_samples=1,
             trial_dirname_creator=lambda trial: f"{algo_name}-{env_name}-{trial.trial_id}",
             trial_name_creator=lambda trial: f"{algo_name}-{trial.trial_id}",
         ),

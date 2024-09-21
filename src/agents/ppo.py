@@ -3,7 +3,7 @@
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.policy.policy import PolicySpec
 from ray.rllib.models import ModelCatalog
-
+from ray import tune
 from models.action_mask_model import TorchActionMaskModel
 from models.action_mask_model_single import TorchActionMaskModelSingle
 
@@ -25,17 +25,21 @@ def get_ppo_config(env_name, env_config=None):
             )
             .framework("torch")
             .env_runners(
-                num_env_runners=10, num_envs_per_env_runner=2, sample_timeout_s=300
+                num_env_runners=4, num_envs_per_env_runner=2, sample_timeout_s=300
             )  # increase num_envs_per_env_runner if render is false
             .training(
                 train_batch_size=4000,
                 sgd_minibatch_size=4000,
                 num_sgd_iter=10,
+                # num_sgd_iter=tune.randint(5, 20),
                 clip_param=0.2,
+                # clip_param=tune.uniform(0.1, 0.3),
                 lr=0.0003,
+                # lr=tune.uniform(0.00005, 0.001),
                 gamma=0.99,
                 lambda_=0.95,
                 entropy_coeff=0.01,
+                # entropy_coeff=tune.uniform(0, 0.02),
                 model={
                     "custom_model": "action_mask_model_single",
                     "custom_model_config": {
