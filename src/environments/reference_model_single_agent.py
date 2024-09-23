@@ -228,17 +228,18 @@ class ReferenceModel(gym.Env):
 
         # If all agents have reached their goals, end the episode (not truncated)
         if all(reached_goal.values()):
-            reward += 1
+            for i in range(self.num_agents):
+                reward += 1
             terminated = True
             truncated = False
-            print(
-                "All agents reached their goals in",
-                self.step_count,
-                "steps with a reward of",
-                reward,
-            )
-            print("Positions:", self.positions)
-            print("Goals:", self.goals)
+            # print(
+            #     "All agents reached their goals in",
+            #     self.step_count,
+            #     "steps with a reward of",
+            #     reward,
+            # )
+            # print("Positions:", self.positions)
+            # print("Goals:", self.goals)
         elif (
             self.step_count >= self.steps_per_episode
         ):  # If the step limit is reached, end the episode and mark it as truncated
@@ -306,10 +307,10 @@ class ReferenceModel(gym.Env):
             The possible values for each cell are:
                 - 0: Empty cell
                 - 1: Obstacle cell
-                - 2: agent 1 position
-                - 3: agent 1 goal
-                - 4: agent 2 position
-                - 5: agent 2 goal
+                - 2: agent 0 position
+                - 3: agent 0 goal
+                - 4: agent 1 position
+                - 5: agent 1 goal
                 - ...
         """
 
@@ -365,24 +366,16 @@ class ReferenceModel(gym.Env):
             ]
             x, y = pos
 
-            if x > 0 and (
-                obs[x - 1, y] == 0 or obs[x - 1, y] == 3 or obs[x - 1, y] == 4
-            ):
+            if x > 0 and (obs[x - 1, y] == 0 or obs[x - 1, y] % 2 == 1):
                 action_mask[i * 5 + 1] = 1  # Move up
 
-            if y < obs.shape[1] - 1 and (
-                obs[x, y + 1] == 0 or obs[x, y + 1] == 3 or obs[x, y + 1] == 4
-            ):
+            if y < obs.shape[1] - 1 and (obs[x, y + 1] == 0 or obs[x, y + 1] % 2 == 1):
                 action_mask[i * 5 + 2] = 1  # Move right
 
-            if x < obs.shape[0] - 1 and (
-                obs[x + 1, y] == 0 or obs[x + 1, y] == 3 or obs[x + 1, y] == 4
-            ):
+            if x < obs.shape[0] - 1 and (obs[x + 1, y] == 0 or obs[x + 1, y] % 2 == 1):
                 action_mask[i * 5 + 3] = 1  # Move down
 
-            if y > 0 and (
-                obs[x, y - 1] == 0 or obs[x, y - 1] == 3 or obs[x, y - 1] == 4
-            ):
+            if y > 0 and (obs[x, y - 1] == 0 or obs[x, y - 1] % 2 == 1):
                 action_mask[i * 5 + 4] = 1  # Move left
 
         return action_mask
