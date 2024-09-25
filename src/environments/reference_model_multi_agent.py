@@ -225,11 +225,11 @@ class ReferenceModel(MultiAgentEnv):
                 )
             ):
                 self.positions[f"agent_{i}"] = next_pos
-            else:
-                # rewards[f"agent_{i}"] -= 0.1
-                print(
-                    f"Invalid move for agent {i} with action {action} at position {pos}"
-                )
+            # else:
+            # rewards[f"agent_{i}"] -= 0.1
+            # print(
+            #     f"Invalid move for agent {i} with action {action} at position {pos}"
+            # )
 
             obs[f"agent_{i}"] = {}
             obs[f"agent_{i}"]["position"] = np.array(self.positions[f"agent_{i}"])

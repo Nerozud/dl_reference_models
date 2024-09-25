@@ -199,11 +199,11 @@ class ReferenceModel(gym.Env):
                 )
             ):
                 self.positions[f"agent_{i}"] = next_pos
-            else:
-                # rewards[f"agent_{i}"] -= 0.1
-                print(
-                    f"Invalid move for agent {i} with action {action} at position {pos}"
-                )
+            # else:
+            # rewards[f"agent_{i}"] -= 0.1
+            # print(
+            #     f"Invalid move for agent {i} with action {action} at position {pos}"
+            # )
 
             if np.array_equal(self.positions[f"agent_{i}"], self.goals[f"agent_{i}"]):
                 reached_goal[f"agent_{i}"] = True

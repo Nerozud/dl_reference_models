@@ -24,6 +24,7 @@ def get_ppo_config(env_name, env_config=None):
                 env_name, render_env=env_config["render_env"], env_config=env_config
             )
             .framework("torch")
+            .resources(num_gpus=1)
             .env_runners(
                 num_env_runners=10, num_envs_per_env_runner=2, sample_timeout_s=300
             )  # increase num_envs_per_env_runner if render is false
@@ -64,6 +65,7 @@ def get_ppo_config(env_name, env_config=None):
                 env_name, render_env=env_config["render_env"], env_config=env_config
             )
             .framework("torch")
+            .resources(num_gpus=1)
             .env_runners(
                 num_env_runners=10, num_envs_per_env_runner=2, sample_timeout_s=300
             )  # increase num_envs_per_env_runner if render is false

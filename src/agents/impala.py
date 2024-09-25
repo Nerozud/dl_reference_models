@@ -3,7 +3,7 @@
 from ray.rllib.algorithms.impala import IMPALAConfig
 from ray.rllib.policy.policy import PolicySpec
 from ray.rllib.models import ModelCatalog
-
+from ray import tune
 from models.action_mask_model import TorchActionMaskModel
 from models.action_mask_model_single import TorchActionMaskModelSingle
 
@@ -14,7 +14,7 @@ ModelCatalog.register_custom_model(
 
 
 def get_impala_config(env_name, env_config=None):
-    """Get the DQN configuration."""
+    """Get the IMPALA configuration."""
     num_agents = env_config.get("num_agents", 2)
 
     if env_config.get("training_execution_mode") == "CTE":
@@ -24,7 +24,7 @@ def get_impala_config(env_name, env_config=None):
                 env_name, render_env=env_config["render_env"], env_config=env_config
             )
             .framework("torch")
-            .resources(num_gpus=0)
+            .resources(num_gpus=1)
             .env_runners(
                 num_env_runners=10, num_envs_per_env_runner=2, sample_timeout_s=300
             )  # increase num_envs_per_env_runner if render is false
@@ -39,7 +39,7 @@ def get_impala_config(env_name, env_config=None):
                         # "use_attention": True,
                         # "lstm_use_prev_reward": True,
                         # "lstm_use_prev_action": True,
-                        "fcnet_hiddens": [64, 64],
+                        "fcnet_hiddens": tune.choice([[32, 32], [64, 64], [256, 256]]),
                     },
                 },
             )
@@ -55,7 +55,7 @@ def get_impala_config(env_name, env_config=None):
                 env_name, render_env=env_config["render_env"], env_config=env_config
             )
             .framework("torch")
-            .resources(num_gpus=0)
+            .resources(num_gpus=1)
             .env_runners(
                 num_env_runners=10, num_envs_per_env_runner=2, sample_timeout_s=300
             )  # increase num_envs_per_env_runner if render is false
@@ -70,9 +70,8 @@ def get_impala_config(env_name, env_config=None):
                         # "use_attention": True,
                         # "lstm_use_prev_reward": True,
                         # "lstm_use_prev_action": True,
-                        "fcnet_hiddens": [32, 32],
+                        "fcnet_hiddens": tune.choice([[32, 32], [64, 64], [256, 256]]),
                     },
-                    "fcnet_hiddens": [32, 32],
                 },
             )
             .multi_agent(

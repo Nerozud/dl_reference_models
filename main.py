@@ -21,7 +21,7 @@ env_setup = {
     "steps_per_episode": 100,
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
     "deterministic": True,  # False: random starts and goals
-    "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE use single agent env
+    "training_execution_mode": "DTE",  # CTDE or CTE or DTE, if CTE use single agent env
     "render_env": False,
 }
 
