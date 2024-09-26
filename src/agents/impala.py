@@ -29,9 +29,11 @@ def get_impala_config(env_name, env_config=None):
                 num_env_runners=10, num_envs_per_env_runner=2, sample_timeout_s=300
             )  # increase num_envs_per_env_runner if render is false
             .training(
-                train_batch_size=4000,
-                lr=0.0003,
+                train_batch_size=tune.choice([500, 1000, 4000]),
+                lr=tune.choice([0.0001, 0.0003, 0.0005, 0.001]),
                 gamma=0.99,
+                vf_loss_coeff=tune.choice([0, 0.1, 0.3, 0.5, 0.9, 1]),
+                entropy_coeff=tune.choice([0, 0.001, 0.01]),
                 model={
                     "custom_model": "action_mask_model_single",
                     "custom_model_config": {
@@ -60,9 +62,11 @@ def get_impala_config(env_name, env_config=None):
                 num_env_runners=10, num_envs_per_env_runner=2, sample_timeout_s=300
             )  # increase num_envs_per_env_runner if render is false
             .training(
-                train_batch_size=4000,
-                lr=0.0003,
+                train_batch_size=tune.choice([500, 1000, 4000]),
+                lr=tune.choice([0.0001, 0.0003, 0.0005, 0.001]),
                 gamma=0.99,
+                vf_loss_coeff=tune.choice([0, 0.1, 0.3, 0.5, 0.9, 1]),
+                entropy_coeff=tune.choice([0, 0.001, 0.01]),
                 model={
                     "custom_model": "action_mask_model",
                     "custom_model_config": {
