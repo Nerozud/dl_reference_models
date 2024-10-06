@@ -13,7 +13,7 @@ from src.environments.reference_model_single_agent import ReferenceModel
 # from src.environments.reference_model_multi_agent import ReferenceModel
 
 ENV_NAME = "ReferenceModel-1-1"
-ALGO_NAME = "IMPALA"  # PPO or IMPALA
+ALGO_NAME = "PPO"  # PPO or IMPALA
 
 env_setup = {
     "env_name": ENV_NAME,
@@ -21,7 +21,7 @@ env_setup = {
     "steps_per_episode": 100,
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
     "deterministic": True,  # False: random starts and goals
-    "training_execution_mode": "CTE",  # CTDE or CTE or DTE, if CTE use single agent env
+    "training_execution_mode": "DTE",  # CTDE or CTE or DTE, if CTE use single agent env
     "render_env": False,
 }
 
@@ -49,4 +49,6 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"Algorithm {ALGO_NAME} not supported.")
 
-    tune_with_callback(config, ALGO_NAME, ENV_NAME)
+    tune_with_callback(
+        config, ALGO_NAME, ENV_NAME, env_setup["training_execution_mode"]
+    )
