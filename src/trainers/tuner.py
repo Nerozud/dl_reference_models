@@ -46,7 +46,8 @@ def tune_with_callback(config, algo_name, env_name, training_execution_mode):
             storage_path=os.path.abspath("./experiments/trained_models"),
             # stop=MaximumIterationStopper(max_iter=100),
             # stop={"timesteps_total": 1e6 * 2},
-            stop={"env_runners/episode_reward_mean": 3, "timesteps_total": 1e6 / 10},
+            # stop={"env_runners/episode_reward_mean": 3, "timesteps_total": 1e6 / 2},
+            stop={"env_runners/episode_reward_mean": 3, "time_total_s": 600},
             # stop=stop_fn,
             callbacks=[
                 WandbLoggerCallback(
