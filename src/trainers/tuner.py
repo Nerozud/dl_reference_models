@@ -7,22 +7,7 @@ from ray import tune, air
 from ray.air.integrations.wandb import WandbLoggerCallback
 
 
-def stop_fn(trial_id: str, result: dict) -> bool:
-    """
-    Determines whether the training should stop based on the episode length mean.
-    Args:
-        result (dict): A dictionary containing training metrics, including the key
-                       "env_runners/episode_len_mean" which represents the mean length
-                       of episodes.
-    Returns:
-        bool: True if the mean episode length is less than or equal to 10, indicating
-              that training should stop; False otherwise.
-    """
-
-    return result["env_runners/episode_len_mean"] <= 10
-
-
-def tune_with_callback(config, algo_name, env_name, training_execution_mode):
+def tune_with_callback(config, algo_name, env_name):
     """
     Tune the model using a wandb callback.
     Args:
@@ -39,7 +24,7 @@ def tune_with_callback(config, algo_name, env_name, training_execution_mode):
         tune_config=tune.TuneConfig(
             num_samples=10,
             trial_dirname_creator=lambda trial: f"{algo_name}-{env_name}-{trial.trial_id}",
-            trial_name_creator=lambda trial: f"{algo_name}-{training_execution_mode}-{trial.trial_id}",
+            trial_name_creator=lambda trial: f"{algo_name}-{config['env_config']['training_execution_mode']}-{trial.trial_id}",
             time_budget_s=3600 * 4,
         ),
         run_config=air.RunConfig(
@@ -47,14 +32,17 @@ def tune_with_callback(config, algo_name, env_name, training_execution_mode):
             # stop=MaximumIterationStopper(max_iter=100),
             # stop={"timesteps_total": 1e6 * 2},
             # stop={"env_runners/episode_reward_mean": 3, "timesteps_total": 1e6 / 2},
-            stop={"env_runners/episode_reward_mean": 3, "time_total_s": 600},
-            # stop=stop_fn,
+            stop={
+                "env_runners/episode_reward_mean": 1.5
+                * config["env_config"]["num_agents"],
+                "time_total_s": 3600,
+            },
             callbacks=[
                 WandbLoggerCallback(
                     # project=env_name,
                     project=f"{env_name}-comparison",
                     dir=os.path.abspath("./experiments"),
-                    group=f"{algo_name}-{training_execution_mode}",
+                    group=f"{algo_name}-{config['env_config']['training_execution_mode']}",
                 )
             ],
         ),
