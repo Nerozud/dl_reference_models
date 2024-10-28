@@ -22,10 +22,10 @@ def tune_with_callback(config, algo_name, env_name):
         algo_name,
         param_space=config,
         tune_config=tune.TuneConfig(
-            num_samples=10,
+            # num_samples=10,
             trial_dirname_creator=lambda trial: f"{algo_name}-{env_name}-{trial.trial_id}",
             trial_name_creator=lambda trial: f"{algo_name}-{config['env_config']['training_execution_mode']}-{trial.trial_id}",
-            time_budget_s=3600 * 4,
+            # time_budget_s=3600 * 4,
         ),
         run_config=air.RunConfig(
             storage_path=os.path.abspath("./experiments/trained_models"),
@@ -35,12 +35,12 @@ def tune_with_callback(config, algo_name, env_name):
             stop={
                 "env_runners/episode_reward_mean": 1.5
                 * config["env_config"]["num_agents"],
-                "time_total_s": 3600,
+                "time_total_s": 1800,
             },
             callbacks=[
                 WandbLoggerCallback(
-                    # project=env_name,
-                    project=f"{env_name}-comparison",
+                    project=env_name,
+                    # project=f"{env_name}-comparison",
                     dir=os.path.abspath("./experiments"),
                     group=f"{algo_name}-{config['env_config']['training_execution_mode']}",
                 )
