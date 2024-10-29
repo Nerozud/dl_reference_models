@@ -75,6 +75,13 @@ class ReferenceModel(MultiAgentEnv):
         self.render_env = env_config.get("render_env", False)
         self.goal_reached_once = {f"agent_{i}": False for i in range(self.num_agents)}
 
+        # Initialize a random number generator with the provided seed
+        self.seed = env_config.get("seed", None)
+        if self.seed is not None:
+            self.rng = np.random.default_rng(self.seed)
+        else:
+            self.rng = np.random.default_rng()
+
         # TODO: Implement the environment initialization depending on the env_config´
         # 0 - empty cell, 1 - obstacle,
         # coords are [y-1, x-1] from upper left, so [0, 4] is the aisle
@@ -142,9 +149,11 @@ class ReferenceModel(MultiAgentEnv):
         """
 
         self.starts = {}
+        available_positions = np.argwhere(self.grid == 0)
         for i in range(self.num_agents):
             while True:
-                start_pos = random.choice(np.argwhere(self.grid == 0))
+                idx = self.rng.choice(len(available_positions))
+                start_pos = available_positions[idx]
                 # Ensure that the starting position is unique
                 if not any(
                     np.array_equal(start_pos, pos) for pos in self.starts.values()
@@ -155,10 +164,13 @@ class ReferenceModel(MultiAgentEnv):
         self.goals = {}
         for i in range(self.num_agents):
             while True:
-                goal_pos = random.choice(np.argwhere(self.grid == 0))
-                # Ensure that the goal position is unique
+                idx = self.rng.choice(len(available_positions))
+                goal_pos = available_positions[idx]
+                # Ensure that the goal position is unique and not the same as any start position
                 if not any(
                     np.array_equal(goal_pos, pos) for pos in self.goals.values()
+                ) and not any(
+                    np.array_equal(goal_pos, pos) for pos in self.starts.values()
                 ):
                     self.goals[f"agent_{i}"] = goal_pos
                     break
@@ -550,6 +562,17 @@ class ReferenceModel(MultiAgentEnv):
                 sensor_patch.set_xy(
                     (pos[1] - self.sensor_range, pos[0] - self.sensor_range)
                 )
+
+            # Update goal positions
+            for agent_id, goal_patch in self.goal_patches.items():
+                goal = self.goals[agent_id]
+                goal_vertices = [
+                    [goal[1] + 0.5, goal[0]],
+                    [goal[1], goal[0] + 0.5],
+                    [goal[1] + 0.5, goal[0] + 1],
+                    [goal[1] + 1, goal[0] + 0.5],
+                ]
+                goal_patch.set_xy(goal_vertices)
 
         # Redraw the updated plot
         self.fig.canvas.draw()

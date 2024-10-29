@@ -9,6 +9,9 @@ def get_grid(env_name: str):
     Args:
         env_name (str): The name of the environment.
 
+    Returns:
+        np.ndarray: The grid of the environment.
+
     """
 
     grids = {

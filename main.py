@@ -1,6 +1,8 @@
 """Main script to run the training of a chosen environment with chosen algorithm."""
 
 import os
+from datetime import datetime
+import pandas as pd
 import torch
 import ray
 from ray.tune.registry import register_env
@@ -18,10 +20,11 @@ CHECKPOINT_RNN = True  # if the checkpoint is from a trained RNN
 
 env_setup = {
     "env_name": ENV_NAME,
+    "seed": None,  # int or None, same seed creates same sequence of starts and goals
+    "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
     "num_agents": 4,
     "steps_per_episode": 100,
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
-    "deterministic": False,  # False: random starts and goals
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE use single agent env
     "render_env": True,
 }
@@ -34,6 +37,7 @@ elif (
     or env_setup["training_execution_mode"] == "DTE"
 ):
     from src.environments.reference_model_multi_agent import ReferenceModel
+
 else:
     raise ValueError(
         f"Training execution mode {env_setup['training_execution_mode']} not supported."
@@ -45,17 +49,19 @@ def env_creator(env_config=None):
     return ReferenceModel(env_config)
 
 
-def test_trained_model(cp_path, num_episodes=20):
+def test_trained_model(cp_path, num_episodes=10):
     """
-    Test a trained model with a given checkpoint path.
+    Test a trained model with a given checkpoint path and store the results in CSV format.
     """
-
     # Initialize the RLlib Algorithm from a checkpoint.
     algo = Algorithm.from_checkpoint(cp_path)
     env = env_creator(env_config=env_setup)
 
     total_reward = 0
     total_timesteps = 0
+
+    # Initialize a list to store results for each episode
+    results = []
 
     for episode in range(num_episodes):
         obs = env.reset()[0]
@@ -64,55 +70,111 @@ def test_trained_model(cp_path, num_episodes=20):
         steps = 0
 
         if CHECKPOINT_RNN:
-            # Initialize the state for all agents, ToDo: make size flexible.
+            # Initialize the state for all agents; adjust the size as needed.
             state_list = {
                 agent_id: [torch.zeros(64), torch.zeros(64)] for agent_id in obs
             }
-            initial_state_list = state_list
-
+            initial_state_list = state_list.copy()
             next_state_list = {}
 
         actions = {agent_id: 0 for agent_id in obs}
         rewards = {agent_id: 0.0 for agent_id in obs}
 
+        # Track per-agent rewards
+        agent_episode_rewards = {agent_id: 0.0 for agent_id in obs}
+        # Optionally, track trajectories if needed
+        # agent_trajectories = {agent_id: [] for agent_id in obs}
+
         while not done["__all__"]:
             steps += 1
-            for j in range(env_setup["num_agents"]):
+            for agent_id, observation in obs.items():
                 if CHECKPOINT_RNN:
-                    actions[f"agent_{j}"], next_state_list[f"agent_{j}"], _ = (
+                    actions[agent_id], next_state_list[agent_id], _ = (
                         algo.compute_single_action(
-                            obs[f"agent_{j}"],
-                            state=state_list[f"agent_{j}"],
+                            observation,
+                            state=state_list[agent_id],
                             policy_id="shared_policy",
-                            prev_action=actions[f"agent_{j}"],
-                            prev_reward=rewards[f"agent_{j}"],
+                            prev_action=actions[agent_id],
+                            prev_reward=rewards[agent_id],
                             explore=True,
                         )
                     )
                 else:
-                    actions[f"agent_{j}"] = algo.compute_single_action(
-                        obs[f"agent_{j}"],
+                    actions[agent_id] = algo.compute_single_action(
+                        observation,
                         policy_id="shared_policy",
                         explore=True,
                     )
-                # )  # for PG algorithms true
+
             # Step the environment.
             obs, rewards, done, _, _ = env.step(actions)
             episode_reward += sum(rewards.values())
 
+            # Update per-agent rewards
+            for agent_id in obs:
+                agent_episode_rewards[agent_id] += rewards[agent_id]
+                # Optionally, collect positions
+                # position = obs[agent_id]['position'].tolist()
+                # agent_trajectories[agent_id].append(position)
+
             # Update states for all agents.
             if CHECKPOINT_RNN:
-                state_list = next_state_list
+                state_list = next_state_list.copy()
 
         if CHECKPOINT_RNN:
-            state_list = initial_state_list
+            state_list = initial_state_list.copy()
 
         print(f"Episode {episode + 1} reward: {episode_reward} timesteps: {steps}")
         total_reward += episode_reward
         total_timesteps += steps
 
+        # Collect episode data in a flat structure
+        episode_data = {
+            "episode": episode + 1,
+            "total_reward": episode_reward,
+            "timesteps": steps,
+            "seed": env.seed,
+        }
+
+        # Add per-agent rewards and positions
+        for agent_id in env._agent_ids:
+            agent_index = agent_id.split("_")[1]  # Extract agent index
+            # Flatten the data by creating separate columns for each agent
+            episode_data[f"agent_{agent_index}_reward"] = agent_episode_rewards[
+                agent_id
+            ]
+            start_pos = env.starts[agent_id].tolist()
+            goal_pos = env.goals[agent_id].tolist()
+            episode_data[f"agent_{agent_index}_start_x"] = start_pos[0]
+            episode_data[f"agent_{agent_index}_start_y"] = start_pos[1]
+            episode_data[f"agent_{agent_index}_goal_x"] = goal_pos[0]
+            episode_data[f"agent_{agent_index}_goal_y"] = goal_pos[1]
+            # Optionally, include trajectories (but be cautious with CSV size)
+            # trajectory = agent_trajectories[agent_id]
+            # episode_data[f'agent_{agent_index}_trajectory'] = str(trajectory)
+
+        results.append(episode_data)
+
     print("Average reward:", total_reward / num_episodes)
     print("Average timesteps:", total_timesteps / num_episodes)
+
+    df = pd.DataFrame(results)
+    # Ensure the directory exists
+    os.makedirs("experiments/results", exist_ok=True)
+
+    # Generate a suitable filename with current date and time
+    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    output_file = os.path.join(
+        "experiments/results",
+        f"{ENV_NAME}_{ALGO_NAME}_{current_time}.csv",
+    )
+
+    # Save the DataFrame to CSV
+    df.to_csv(output_file, index=False)
+    print(f"Results saved to {output_file}")
+
+    # Optionally, return the DataFrame for immediate use
+    # return df
 
 
 if __name__ == "__main__":
