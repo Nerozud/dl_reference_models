@@ -1,6 +1,7 @@
 """Main script to run the training of a chosen environment with chosen algorithm."""
 
 import os
+import torch
 import ray
 from ray.tune.registry import register_env
 from ray.rllib.algorithms.algorithm import Algorithm
@@ -11,8 +12,9 @@ from src.trainers.tuner import tune_with_callback
 
 ENV_NAME = "ReferenceModel-2-1"
 ALGO_NAME = "PPO"  # PPO or IMPALA
-MODE = "test"  # train or test an algorithm
-CHECKPOINT_PATH = r"experiments\trained_models\PPO_2024-10-17_01-50-02\PPO-ReferenceModel-2-1-5c8c0_00000\checkpoint_000000"  # just for MODE = test
+MODE = "test"  # train or test an algorithm, test only works with CTDE for now
+CHECKPOINT_PATH = r"experiments\trained_models\PPO_2024-10-29_01-02-32\PPO-ReferenceModel-2-1-18a43_00000\checkpoint_000000"  # just for MODE = test
+CHECKPOINT_RNN = True  # if the checkpoint is from a trained RNN
 
 env_setup = {
     "env_name": ENV_NAME,
@@ -43,15 +45,17 @@ def env_creator(env_config=None):
     return ReferenceModel(env_config)
 
 
-def test_trained_model(cp_path, num_episodes=10):
+def test_trained_model(cp_path, num_episodes=20):
     """
     Test a trained model with a given checkpoint path.
-    Currently not working with trained RNNs.
     """
 
     # Initialize the RLlib Algorithm from a checkpoint.
     algo = Algorithm.from_checkpoint(cp_path)
     env = env_creator(env_config=env_setup)
+
+    total_reward = 0
+    total_timesteps = 0
 
     for episode in range(num_episodes):
         obs = env.reset()[0]
@@ -59,44 +63,56 @@ def test_trained_model(cp_path, num_episodes=10):
         episode_reward = 0
         steps = 0
 
-        # state_list = {
-        #     agent_id: [torch.zeros(128), torch.zeros(128)] for agent_id in obs
-        # }
-        # initial_state_list = state_list
+        if CHECKPOINT_RNN:
+            # Initialize the state for all agents, ToDo: make size flexible.
+            state_list = {
+                agent_id: [torch.zeros(64), torch.zeros(64)] for agent_id in obs
+            }
+            initial_state_list = state_list
+
+            next_state_list = {}
 
         actions = {agent_id: 0 for agent_id in obs}
         rewards = {agent_id: 0.0 for agent_id in obs}
 
-        # next_state_list = {}
-
         while not done["__all__"]:
             steps += 1
             for j in range(env_setup["num_agents"]):
-                actions[f"agent_{j}"] = algo.compute_single_action(
-                    obs[f"agent_{j}"],
-                    policy_id="shared_policy",
-                    explore=True,
-                )
-                # for future testing with RNNs
-                # actions[f"agent_{j}"], next_state_list[f"agent_{j}"], _ = (
-                # algo.compute_single_action(
-                #     obs[f"agent_{j}"],
-                #     # state=state_list[f"agent_{j}"],
-                #     policy_id="shared_policy",
-                #     # prev_action=actions[f"agent_{j}"],
-                #     # prev_reward=rewards[f"agent_{j}"],
-                #     explore=True,
-                # )
+                if CHECKPOINT_RNN:
+                    actions[f"agent_{j}"], next_state_list[f"agent_{j}"], _ = (
+                        algo.compute_single_action(
+                            obs[f"agent_{j}"],
+                            state=state_list[f"agent_{j}"],
+                            policy_id="shared_policy",
+                            prev_action=actions[f"agent_{j}"],
+                            prev_reward=rewards[f"agent_{j}"],
+                            explore=True,
+                        )
+                    )
+                else:
+                    actions[f"agent_{j}"] = algo.compute_single_action(
+                        obs[f"agent_{j}"],
+                        policy_id="shared_policy",
+                        explore=True,
+                    )
                 # )  # for PG algorithms true
             # Step the environment.
-            obs, rewards, done, truncated, info = env.step(actions)
+            obs, rewards, done, _, _ = env.step(actions)
             episode_reward += sum(rewards.values())
 
             # Update states for all agents.
-        #     state_list = next_state_list
+            if CHECKPOINT_RNN:
+                state_list = next_state_list
 
-        # state_list = initial_state_list
+        if CHECKPOINT_RNN:
+            state_list = initial_state_list
+
         print(f"Episode {episode + 1} reward: {episode_reward} timesteps: {steps}")
+        total_reward += episode_reward
+        total_timesteps += steps
+
+    print("Average reward:", total_reward / num_episodes)
+    print("Average timesteps:", total_timesteps / num_episodes)
 
 
 if __name__ == "__main__":

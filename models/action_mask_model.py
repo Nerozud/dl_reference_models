@@ -23,10 +23,17 @@ class TorchActionMaskModel(TorchModelV2, nn.Module):
 
         assert (
             isinstance(orig_space, Dict)
-            and "action_mask" in orig_space.spaces
             and "observations" in orig_space.spaces
             and "position" in orig_space.spaces
             and "goal" in orig_space.spaces
+        )
+
+        relevant_obs_space = Dict(
+            {
+                "observations": orig_space.spaces["observations"],
+                "position": orig_space.spaces["position"],
+                "goal": orig_space.spaces["goal"],
+            }
         )
 
         TorchModelV2.__init__(
@@ -35,24 +42,27 @@ class TorchActionMaskModel(TorchModelV2, nn.Module):
         nn.Module.__init__(self)
 
         self.internal_model = ComplexInputNetwork(
-            orig_space,
+            relevant_obs_space,
             action_space,
             num_outputs,
             model_config,
             name + "_internal",
         )
 
-        # disable action masking --> will likely lead to invalid actions
-        self.no_masking = False
-        if "no_masking" in model_config["custom_model_config"]:
-            self.no_masking = model_config["custom_model_config"]["no_masking"]
+        # Option to disable action masking
+        self.no_masking = model_config["custom_model_config"].get("no_masking", False)
 
     def forward(self, input_dict, state, seq_lens):
         # Extract the available actions tensor from the observation.
         action_mask = input_dict["obs"]["action_mask"]
+        observations = {
+            "observations": input_dict["obs"]["observations"],
+            "position": input_dict["obs"]["position"],
+            "goal": input_dict["obs"]["goal"],
+        }
 
         # Compute the unmasked logits.
-        logits, _ = self.internal_model({"obs": input_dict["obs"]})
+        logits, _ = self.internal_model({"obs": observations})
 
         # If action masking is disabled, directly return unmasked logits
         if self.no_masking:

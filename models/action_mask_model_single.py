@@ -39,10 +39,8 @@ class TorchActionMaskModelSingle(TorchModelV2, nn.Module):
             name + "_internal",
         )
 
-        # disable action masking --> will likely lead to invalid actions
-        self.no_masking = False
-        if "no_masking" in model_config["custom_model_config"]:
-            self.no_masking = model_config["custom_model_config"]["no_masking"]
+        # Option to disable action masking
+        self.no_masking = model_config["custom_model_config"].get("no_masking", False)
 
     def forward(self, input_dict, state, seq_lens):
         # Extract the available actions tensor from the observation.

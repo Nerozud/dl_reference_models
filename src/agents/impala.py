@@ -42,12 +42,8 @@ def get_impala_config(env_name, env_config=None):
                     "custom_model": "action_mask_model_single",
                     "custom_model_config": {
                         "no_masking": False,
-                        # "use_attention": True,
-                        # "lstm_use_prev_reward": True,
-                        # "lstm_use_prev_action": True,
-                        # "fcnet_hiddens": tune.choice([[32, 32], [64, 64], [256, 256]]),
-                        "fcnet_hiddens": [256, 256],
                     },
+                    "fcnet_hiddens": [256, 256],
                 },
             )
         )
@@ -84,13 +80,8 @@ def get_impala_config(env_name, env_config=None):
                     "custom_model": "action_mask_model",
                     "custom_model_config": {
                         "no_masking": False,
-                        # "use_attention": True,
-                        # "lstm_use_prev_reward": True,
-                        # "lstm_use_prev_action": True,
-                        # "fcnet_hiddens": tune.choice([[32, 32], [64, 64], [256, 256]]),
-                        "fcnet_hiddens": [32, 32],
-                        # "fcnet_hiddens": [256, 256],
                     },
+                    "fcnet_hiddens": [32, 32],
                 },
             )
             .multi_agent(
