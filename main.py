@@ -1,6 +1,7 @@
 """Main script to run the training of a chosen environment with chosen algorithm."""
 
 import os
+import time
 from datetime import datetime
 import pandas as pd
 import torch
@@ -12,11 +13,11 @@ from src.agents.dqn import get_dqn_config
 from src.agents.impala import get_impala_config
 from src.trainers.tuner import tune_with_callback
 
-ENV_NAME = "ReferenceModel-2-1"
+ENV_NAME = "ReferenceModel-2-2"
 ALGO_NAME = "PPO"  # PPO or IMPALA
-MODE = "test"  # train or test an algorithm, test only works with CTDE for now
-CHECKPOINT_PATH = r"experiments\trained_models\PPO_2024-10-29_01-02-32\PPO-ReferenceModel-2-1-18a43_00000\checkpoint_000000"  # just for MODE = test
-CHECKPOINT_RNN = True  # if the checkpoint is from a trained RNN
+MODE = "train"  # train or test, test only works with CTDE for now
+CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2024-10-31_20-25-09\IMPALA-ReferenceModel-2-1-b-d7c2f_00000\checkpoint_000000"  # just for MODE = test
+CHECKPOINT_RNN = False  # if the checkpoint is from a trained RNN
 
 env_setup = {
     "env_name": ENV_NAME,
@@ -26,7 +27,7 @@ env_setup = {
     "steps_per_episode": 100,
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE use single agent env
-    "render_env": True,
+    "render_env": False,
 }
 
 # Import the correct environment based on the training execution mode
@@ -49,7 +50,7 @@ def env_creator(env_config=None):
     return ReferenceModel(env_config)
 
 
-def test_trained_model(cp_path, num_episodes=10):
+def test_trained_model(cp_path, num_episodes=100):
     """
     Test a trained model with a given checkpoint path and store the results in CSV format.
     """
@@ -64,6 +65,7 @@ def test_trained_model(cp_path, num_episodes=10):
     results = []
 
     for episode in range(num_episodes):
+        start_time = time.process_time()
         obs = env.reset()[0]
         done = {"__all__": False}
         episode_reward = 0
@@ -128,12 +130,19 @@ def test_trained_model(cp_path, num_episodes=10):
         total_reward += episode_reward
         total_timesteps += steps
 
+        # Record the end time
+        end_time = time.process_time()
+
+        # Calculate the CPU time
+        cpu_time = end_time - start_time
+
         # Collect episode data in a flat structure
         episode_data = {
             "episode": episode + 1,
+            "cpu_time": cpu_time,
+            "seed": env.seed,
             "total_reward": episode_reward,
             "timesteps": steps,
-            "seed": env.seed,
         }
 
         # Add per-agent rewards and positions

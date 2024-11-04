@@ -153,6 +153,7 @@ class ReferenceModel(MultiAgentEnv):
         for i in range(self.num_agents):
             while True:
                 idx = self.rng.choice(len(available_positions))
+                # print("idx", idx, "from", len(available_positions))
                 start_pos = available_positions[idx]
                 # Ensure that the starting position is unique
                 if not any(
@@ -160,6 +161,7 @@ class ReferenceModel(MultiAgentEnv):
                 ):
                     self.starts[f"agent_{i}"] = start_pos
                     break
+        # print("starts", self.starts)
         self.positions = self.starts.copy()
         self.goals = {}
         for i in range(self.num_agents):
