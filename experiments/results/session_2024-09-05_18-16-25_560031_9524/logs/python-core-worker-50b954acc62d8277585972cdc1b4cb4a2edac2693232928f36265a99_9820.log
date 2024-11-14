@@ -1,0 +1,54 @@
+[2024-09-05 18:16:27,841 I 9820 14852] core_worker_process.cc:107: Constructing CoreWorkerProcess. pid: 9820
+[2024-09-05 18:16:27,843 I 9820 14852] io_service_pool.cc:35: IOServicePool is running with 1 io_service.
+[2024-09-05 18:16:27,844 I 9820 14852] grpc_server.cc:129: worker server started, listening on port 57482.
+[2024-09-05 18:16:27,848 I 9820 14852] core_worker.cc:252: Initializing worker at address: 127.0.0.1:57482, worker ID 50b954acc62d8277585972cdc1b4cb4a2edac2693232928f36265a99, raylet 9d3476886d10e9af010ab5b58cef92de84e168d96fce97943cf85339
+[2024-09-05 18:16:27,848 I 9820 14852] task_event_buffer.cc:177: Reporting task events to GCS every 1000ms.
+[2024-09-05 18:16:27,849 I 9820 17704] accessor.cc:627: Received notification for node id = 9d3476886d10e9af010ab5b58cef92de84e168d96fce97943cf85339, IsAlive = 1
+[2024-09-05 18:16:27,849 I 9820 17704] core_worker.cc:4552: Number of alive nodes:1
+[2024-09-05 18:16:27,849 I 9820 17704] core_worker.cc:614: Event stats:
+
+
+Global stats: 12 total (4 active)
+Queueing time: mean = 6.925 us, max = 66.400 us, min = 3.100 us, total = 83.100 us
+Execution time:  mean = 65.433 us, total = 785.200 us
+Event stats:
+	PeriodicalRunner.RunFnPeriodically - 3 total (1 active, 1 running), Execution time: mean = 6.367 us, total = 19.100 us, Queueing time: mean = 23.167 us, max = 66.400 us, min = 3.100 us, total = 69.500 us
+	WorkerInfoGcsService.grpc_client.AddWorkerInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 24.000 us, total = 24.000 us, Queueing time: mean = 4.400 us, max = 4.400 us, min = 4.400 us, total = 4.400 us
+	NodeInfoGcsService.grpc_client.GetAllNodeInfo - 1 total (0 active), Execution time: mean = 170.400 us, total = 170.400 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	Publisher.CheckDeadSubscribers - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch - 1 total (0 active), Execution time: mean = 188.800 us, total = 188.800 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	CoreWorker.ExitIfParentRayletDies - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	WorkerInfoGcsService.grpc_client.AddWorkerInfo - 1 total (0 active), Execution time: mean = 232.300 us, total = 232.300 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	InternalPubSubGcsService.grpc_client.GcsSubscriberPoll - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch.OnReplyReceived - 1 total (0 active), Execution time: mean = 85.400 us, total = 85.400 us, Queueing time: mean = 4.200 us, max = 4.200 us, min = 4.200 us, total = 4.200 us
+	NodeInfoGcsService.grpc_client.GetAllNodeInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 65.200 us, total = 65.200 us, Queueing time: mean = 5.000 us, max = 5.000 us, min = 5.000 us, total = 5.000 us
+
+-----------------
+Task Event stats:
+
+IO Service Stats:
+
+Global stats: 4 total (1 active)
+Queueing time: mean = 2.225 us, max = 4.800 us, min = 4.100 us, total = 8.900 us
+Execution time:  mean = 78.125 us, total = 312.500 us
+Event stats:
+	CoreWorker.deadline_timer.flush_task_events - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	TaskInfoGcsService.grpc_client.AddTaskEventData.OnReplyReceived - 1 total (0 active), Execution time: mean = 14.000 us, total = 14.000 us, Queueing time: mean = 4.800 us, max = 4.800 us, min = 4.800 us, total = 4.800 us
+	TaskInfoGcsService.grpc_client.AddTaskEventData - 1 total (0 active), Execution time: mean = 198.500 us, total = 198.500 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	PeriodicalRunner.RunFnPeriodically - 1 total (0 active), Execution time: mean = 100.000 us, total = 100.000 us, Queueing time: mean = 4.100 us, max = 4.100 us, min = 4.100 us, total = 4.100 us
+Other Stats:
+	grpc_in_progress:0
+	current number of task status events in buffer: 0
+	current number of profile events in buffer: 0
+	current number of dropped task attempts tracked: 0
+	total task events sent: 0 MiB
+	total number of task attempts sent: 0
+	total number of task attempts dropped reported: 0
+	total number of sent failure: 0
+	num status task events dropped: 0
+	num profile task events dropped: 0
+
+
+[2024-09-05 18:16:27,850 I 9820 14852] event.cc:234: Set ray event level to warning
+[2024-09-05 18:16:27,851 I 9820 14852] event.cc:342: Ray Event initialized for CORE_WORKER
+[2024-09-05 18:16:39,881 W 9820 19952] metric_exporter.cc:105: [1] Export metrics to agent failed: GrpcUnavailable: RPC Error message: failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:57507: Connection refused; RPC Error details: . This won't affect Ray, but you can lose metrics from the cluster.

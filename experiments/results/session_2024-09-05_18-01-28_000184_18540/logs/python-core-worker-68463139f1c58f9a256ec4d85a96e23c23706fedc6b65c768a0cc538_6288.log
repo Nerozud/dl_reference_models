@@ -1,0 +1,62 @@
+[2024-09-05 18:01:38,121 I 6288 5280] core_worker_process.cc:107: Constructing CoreWorkerProcess. pid: 6288
+[2024-09-05 18:01:38,123 I 6288 5280] io_service_pool.cc:35: IOServicePool is running with 1 io_service.
+[2024-09-05 18:01:38,124 I 6288 5280] grpc_server.cc:129: worker server started, listening on port 55690.
+[2024-09-05 18:01:38,128 I 6288 5280] core_worker.cc:252: Initializing worker at address: 127.0.0.1:55690, worker ID 68463139f1c58f9a256ec4d85a96e23c23706fedc6b65c768a0cc538, raylet 6d88af7bf0953c3f8113d9ed4e7b2afb0467f08231f08200c6a1d4b5
+[2024-09-05 18:01:38,128 I 6288 5280] task_event_buffer.cc:177: Reporting task events to GCS every 1000ms.
+[2024-09-05 18:01:38,129 I 6288 17912] accessor.cc:627: Received notification for node id = 6d88af7bf0953c3f8113d9ed4e7b2afb0467f08231f08200c6a1d4b5, IsAlive = 1
+[2024-09-05 18:01:38,129 I 6288 17912] core_worker.cc:4552: Number of alive nodes:1
+[2024-09-05 18:01:38,129 I 6288 17912] core_worker.cc:614: Event stats:
+
+
+Global stats: 12 total (4 active)
+Queueing time: mean = 7.058 us, max = 68.300 us, min = 3.400 us, total = 84.700 us
+Execution time:  mean = 70.717 us, total = 848.600 us
+Event stats:
+	PeriodicalRunner.RunFnPeriodically - 3 total (1 active, 1 running), Execution time: mean = 6.200 us, total = 18.600 us, Queueing time: mean = 23.900 us, max = 68.300 us, min = 3.400 us, total = 71.700 us
+	WorkerInfoGcsService.grpc_client.AddWorkerInfo - 1 total (0 active), Execution time: mean = 285.200 us, total = 285.200 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	NodeInfoGcsService.grpc_client.GetAllNodeInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 61.800 us, total = 61.800 us, Queueing time: mean = 4.700 us, max = 4.700 us, min = 4.700 us, total = 4.700 us
+	WorkerInfoGcsService.grpc_client.AddWorkerInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 22.300 us, total = 22.300 us, Queueing time: mean = 4.400 us, max = 4.400 us, min = 4.400 us, total = 4.400 us
+	Publisher.CheckDeadSubscribers - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch - 1 total (0 active), Execution time: mean = 203.500 us, total = 203.500 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	CoreWorker.ExitIfParentRayletDies - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	NodeInfoGcsService.grpc_client.GetAllNodeInfo - 1 total (0 active), Execution time: mean = 173.500 us, total = 173.500 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	InternalPubSubGcsService.grpc_client.GcsSubscriberPoll - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch.OnReplyReceived - 1 total (0 active), Execution time: mean = 83.700 us, total = 83.700 us, Queueing time: mean = 3.900 us, max = 3.900 us, min = 3.900 us, total = 3.900 us
+
+-----------------
+Task Event stats:
+
+IO Service Stats:
+
+Global stats: 4 total (1 active)
+Queueing time: mean = 2.175 us, max = 4.500 us, min = 4.200 us, total = 8.700 us
+Execution time:  mean = 71.225 us, total = 284.900 us
+Event stats:
+	PeriodicalRunner.RunFnPeriodically - 1 total (0 active), Execution time: mean = 87.400 us, total = 87.400 us, Queueing time: mean = 4.500 us, max = 4.500 us, min = 4.500 us, total = 4.500 us
+	TaskInfoGcsService.grpc_client.AddTaskEventData - 1 total (0 active), Execution time: mean = 182.700 us, total = 182.700 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	CoreWorker.deadline_timer.flush_task_events - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	TaskInfoGcsService.grpc_client.AddTaskEventData.OnReplyReceived - 1 total (0 active), Execution time: mean = 14.800 us, total = 14.800 us, Queueing time: mean = 4.200 us, max = 4.200 us, min = 4.200 us, total = 4.200 us
+Other Stats:
+	grpc_in_progress:0
+	current number of task status events in buffer: 0
+	current number of profile events in buffer: 0
+	current number of dropped task attempts tracked: 0
+	total task events sent: 0 MiB
+	total number of task attempts sent: 0
+	total number of task attempts dropped reported: 0
+	total number of sent failure: 0
+	num status task events dropped: 0
+	num profile task events dropped: 0
+
+
+[2024-09-05 18:01:38,131 I 6288 5280] event.cc:234: Set ray event level to warning
+[2024-09-05 18:01:38,131 I 6288 5280] event.cc:342: Ray Event initialized for CORE_WORKER
+[2024-09-05 18:01:38,132 I 6288 5280] direct_actor_task_submitter.cc:36: Set max pending calls to -1 for actor 4f4bce7ce40004c3d964b3a201000000
+[2024-09-05 18:01:38,132 I 6288 5280] direct_actor_task_submitter.cc:237: Connecting to actor 4f4bce7ce40004c3d964b3a201000000 at worker 68463139f1c58f9a256ec4d85a96e23c23706fedc6b65c768a0cc538
+[2024-09-05 18:01:38,132 I 6288 5280] core_worker.cc:2861: Creating actor: 4f4bce7ce40004c3d964b3a201000000
+[2024-09-05 18:01:45,384 I 6288 5280] direct_actor_transport.cc:188: Actor creation task finished, task_id: ffffffffffffffff4f4bce7ce40004c3d964b3a201000000, actor_id: 4f4bce7ce40004c3d964b3a201000000, actor_repr_name: 
+[2024-09-05 18:01:46,560 I 6288 17912] core_worker.cc:4001: Force kill actor request has received. exiting immediately... The actor is dead because it was killed by `ray.kill`.
+[2024-09-05 18:01:46,560 W 6288 17912] core_worker.cc:916: Force exit the process.  Details: Worker exits because the actor is killed. The actor is dead because it was killed by `ray.kill`.
+[2024-09-05 18:01:46,562 I 6288 17912] core_worker.cc:772: Disconnecting to the raylet.
+[2024-09-05 18:01:46,562 I 6288 17912] raylet_client.cc:163: RayletClient::Disconnect, exit_type=INTENDED_SYSTEM_EXIT, exit_detail=Worker exits because the actor is killed. The actor is dead because it was killed by `ray.kill`., has creation_task_exception_pb_bytes=0
+[2024-09-05 18:01:46,562 W 6288 17912] raylet_client.cc:188: IOError: Unknown error [RayletClient] Failed to disconnect from raylet. This means the raylet the worker is connected is probably already dead.

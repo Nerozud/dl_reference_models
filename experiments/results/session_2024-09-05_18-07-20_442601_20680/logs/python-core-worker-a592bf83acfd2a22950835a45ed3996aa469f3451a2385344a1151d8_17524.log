@@ -1,0 +1,70 @@
+[2024-09-05 18:07:23,703 I 17524 10888] core_worker_process.cc:107: Constructing CoreWorkerProcess. pid: 17524
+[2024-09-05 18:07:23,705 I 17524 10888] io_service_pool.cc:35: IOServicePool is running with 1 io_service.
+[2024-09-05 18:07:23,706 I 17524 10888] grpc_server.cc:129: worker server started, listening on port 56548.
+[2024-09-05 18:07:23,709 I 17524 10888] core_worker.cc:252: Initializing worker at address: 127.0.0.1:56548, worker ID a592bf83acfd2a22950835a45ed3996aa469f3451a2385344a1151d8, raylet a15435975e4612cd2cb2fbf49cdc701be5f3aab708edbcc2ddf99016
+[2024-09-05 18:07:23,710 I 17524 10888] task_event_buffer.cc:177: Reporting task events to GCS every 1000ms.
+[2024-09-05 18:07:23,711 I 17524 16428] accessor.cc:627: Received notification for node id = a15435975e4612cd2cb2fbf49cdc701be5f3aab708edbcc2ddf99016, IsAlive = 1
+[2024-09-05 18:07:23,711 I 17524 16428] core_worker.cc:4552: Number of alive nodes:1
+[2024-09-05 18:07:23,711 I 17524 16428] core_worker.cc:614: Event stats:
+
+
+Global stats: 12 total (4 active)
+Queueing time: mean = 7.650 us, max = 74.400 us, min = 4.000 us, total = 91.800 us
+Execution time:  mean = 68.383 us, total = 820.600 us
+Event stats:
+	PeriodicalRunner.RunFnPeriodically - 3 total (1 active, 1 running), Execution time: mean = 6.267 us, total = 18.800 us, Queueing time: mean = 26.200 us, max = 74.400 us, min = 4.200 us, total = 78.600 us
+	WorkerInfoGcsService.grpc_client.AddWorkerInfo - 1 total (0 active), Execution time: mean = 264.100 us, total = 264.100 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	NodeInfoGcsService.grpc_client.GetAllNodeInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 61.100 us, total = 61.100 us, Queueing time: mean = 4.000 us, max = 4.000 us, min = 4.000 us, total = 4.000 us
+	WorkerInfoGcsService.grpc_client.AddWorkerInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 21.200 us, total = 21.200 us, Queueing time: mean = 5.100 us, max = 5.100 us, min = 5.100 us, total = 5.100 us
+	Publisher.CheckDeadSubscribers - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch - 1 total (0 active), Execution time: mean = 214.600 us, total = 214.600 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	CoreWorker.ExitIfParentRayletDies - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	NodeInfoGcsService.grpc_client.GetAllNodeInfo - 1 total (0 active), Execution time: mean = 157.700 us, total = 157.700 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	InternalPubSubGcsService.grpc_client.GcsSubscriberPoll - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch.OnReplyReceived - 1 total (0 active), Execution time: mean = 83.100 us, total = 83.100 us, Queueing time: mean = 4.100 us, max = 4.100 us, min = 4.100 us, total = 4.100 us
+
+-----------------
+Task Event stats:
+
+IO Service Stats:
+
+Global stats: 4 total (1 active)
+Queueing time: mean = 2.125 us, max = 4.300 us, min = 4.200 us, total = 8.500 us
+Execution time:  mean = 71.250 us, total = 285.000 us
+Event stats:
+	PeriodicalRunner.RunFnPeriodically - 1 total (0 active), Execution time: mean = 89.100 us, total = 89.100 us, Queueing time: mean = 4.200 us, max = 4.200 us, min = 4.200 us, total = 4.200 us
+	TaskInfoGcsService.grpc_client.AddTaskEventData - 1 total (0 active), Execution time: mean = 181.000 us, total = 181.000 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	CoreWorker.deadline_timer.flush_task_events - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	TaskInfoGcsService.grpc_client.AddTaskEventData.OnReplyReceived - 1 total (0 active), Execution time: mean = 14.900 us, total = 14.900 us, Queueing time: mean = 4.300 us, max = 4.300 us, min = 4.300 us, total = 4.300 us
+Other Stats:
+	grpc_in_progress:0
+	current number of task status events in buffer: 0
+	current number of profile events in buffer: 0
+	current number of dropped task attempts tracked: 0
+	total task events sent: 0 MiB
+	total number of task attempts sent: 0
+	total number of task attempts dropped reported: 0
+	total number of sent failure: 0
+	num status task events dropped: 0
+	num profile task events dropped: 0
+
+
+[2024-09-05 18:07:23,712 I 17524 10888] event.cc:234: Set ray event level to warning
+[2024-09-05 18:07:23,712 I 17524 10888] event.cc:342: Ray Event initialized for CORE_WORKER
+[2024-09-05 18:07:23,714 I 17524 10888] direct_actor_task_submitter.cc:36: Set max pending calls to -1 for actor d7d09308898d97fde5397a9f01000000
+[2024-09-05 18:07:23,714 I 17524 10888] direct_actor_task_submitter.cc:237: Connecting to actor d7d09308898d97fde5397a9f01000000 at worker a592bf83acfd2a22950835a45ed3996aa469f3451a2385344a1151d8
+[2024-09-05 18:07:23,714 I 17524 10888] core_worker.cc:2861: Creating actor: d7d09308898d97fde5397a9f01000000
+[2024-09-05 18:07:29,591 I 17524 10888] direct_actor_task_submitter.cc:36: Set max pending calls to -1 for actor f353360bd25217a9e70e6e5601000000
+[2024-09-05 18:07:29,593 I 17524 10888] direct_actor_task_submitter.cc:36: Set max pending calls to -1 for actor 4d414e25fed22f31e85f97cf01000000
+[2024-09-05 18:07:29,595 I 17524 16428] actor_manager.cc:214: received notification on actor, state: PENDING_CREATION, actor_id: f353360bd25217a9e70e6e5601000000, ip address: , port: 0, worker_id: NIL_ID, raylet_id: a15435975e4612cd2cb2fbf49cdc701be5f3aab708edbcc2ddf99016, num_restarts: 0, death context type=CONTEXT_NOT_SET
+[2024-09-05 18:07:29,595 I 17524 16428] actor_manager.cc:214: received notification on actor, state: PENDING_CREATION, actor_id: 4d414e25fed22f31e85f97cf01000000, ip address: , port: 0, worker_id: NIL_ID, raylet_id: a15435975e4612cd2cb2fbf49cdc701be5f3aab708edbcc2ddf99016, num_restarts: 0, death context type=CONTEXT_NOT_SET
+[2024-09-05 18:07:35,826 W 17524 5536] metric_exporter.cc:105: [1] Export metrics to agent failed: GrpcUnavailable: RPC Error message: failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:59729: Connection refused; RPC Error details: . This won't affect Ray, but you can lose metrics from the cluster.
+[2024-09-05 18:07:36,992 I 17524 16428] actor_manager.cc:214: received notification on actor, state: ALIVE, actor_id: f353360bd25217a9e70e6e5601000000, ip address: 127.0.0.1, port: 56567, worker_id: 937f094f0b9f4cedf3762236d1c22824e5b69dabc4764f09c846a275, raylet_id: a15435975e4612cd2cb2fbf49cdc701be5f3aab708edbcc2ddf99016, num_restarts: 0, death context type=CONTEXT_NOT_SET
+[2024-09-05 18:07:36,992 I 17524 16428] direct_actor_task_submitter.cc:237: Connecting to actor f353360bd25217a9e70e6e5601000000 at worker 937f094f0b9f4cedf3762236d1c22824e5b69dabc4764f09c846a275
+[2024-09-05 18:07:37,013 I 17524 16428] actor_manager.cc:214: received notification on actor, state: ALIVE, actor_id: 4d414e25fed22f31e85f97cf01000000, ip address: 127.0.0.1, port: 56574, worker_id: 94309feeadabe8c71d121311c3aff7cc9a0945a74594485ea304fe40, raylet_id: a15435975e4612cd2cb2fbf49cdc701be5f3aab708edbcc2ddf99016, num_restarts: 0, death context type=CONTEXT_NOT_SET
+[2024-09-05 18:07:37,013 I 17524 16428] direct_actor_task_submitter.cc:237: Connecting to actor 4d414e25fed22f31e85f97cf01000000 at worker 94309feeadabe8c71d121311c3aff7cc9a0945a74594485ea304fe40
+[2024-09-05 18:07:37,335 I 17524 10888] direct_actor_transport.cc:188: Actor creation task finished, task_id: ffffffffffffffffd7d09308898d97fde5397a9f01000000, actor_id: d7d09308898d97fde5397a9f01000000, actor_repr_name: PPO
+[2024-09-05 18:07:38,134 I 17524 16428] actor_manager.cc:214: received notification on actor, state: DEAD, actor_id: f353360bd25217a9e70e6e5601000000, ip address: 127.0.0.1, port: 56567, worker_id: 937f094f0b9f4cedf3762236d1c22824e5b69dabc4764f09c846a275, raylet_id: a15435975e4612cd2cb2fbf49cdc701be5f3aab708edbcc2ddf99016, num_restarts: 0, death context type=ActorDiedErrorContext
+[2024-09-05 18:07:38,134 I 17524 16428] direct_actor_task_submitter.cc:287: Failing pending tasks for actor f353360bd25217a9e70e6e5601000000 because the actor is already dead.
+[2024-09-05 18:07:38,134 I 17524 16428] actor_manager.cc:214: received notification on actor, state: DEAD, actor_id: 4d414e25fed22f31e85f97cf01000000, ip address: 127.0.0.1, port: 56574, worker_id: 94309feeadabe8c71d121311c3aff7cc9a0945a74594485ea304fe40, raylet_id: a15435975e4612cd2cb2fbf49cdc701be5f3aab708edbcc2ddf99016, num_restarts: 0, death context type=ActorDiedErrorContext
+[2024-09-05 18:07:38,134 I 17524 16428] direct_actor_task_submitter.cc:287: Failing pending tasks for actor 4d414e25fed22f31e85f97cf01000000 because the actor is already dead.

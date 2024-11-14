@@ -1,0 +1,65 @@
+[2024-09-05 18:18:06,683 I 11300 10704] core_worker_process.cc:107: Constructing CoreWorkerProcess. pid: 11300
+[2024-09-05 18:18:06,687 I 11300 10704] io_service_pool.cc:35: IOServicePool is running with 1 io_service.
+[2024-09-05 18:18:06,690 I 11300 10704] grpc_server.cc:129: worker server started, listening on port 57713.
+[2024-09-05 18:18:06,696 I 11300 10704] core_worker.cc:252: Initializing worker at address: 127.0.0.1:57713, worker ID 9592be67c8e76c9fad08bd017d5209f9a0c285d8d37ee7d8af23ea04, raylet f72327a86a42f70531ae34357ff87476115d6b76b34e077b85b7f8c0
+[2024-09-05 18:18:06,698 I 11300 10704] task_event_buffer.cc:177: Reporting task events to GCS every 1000ms.
+[2024-09-05 18:18:06,700 I 11300 22256] core_worker.cc:614: Event stats:
+
+
+Global stats: 11 total (5 active)
+Queueing time: mean = 220.273 us, max = 1.176 ms, min = 178.900 us, total = 2.423 ms
+Execution time:  mean = 135.918 us, total = 1.495 ms
+Event stats:
+	PeriodicalRunner.RunFnPeriodically - 3 total (1 active, 1 running), Execution time: mean = 7.500 us, total = 22.500 us, Queueing time: mean = 258.133 us, max = 595.500 us, min = 178.900 us, total = 774.400 us
+	WorkerInfoGcsService.grpc_client.AddWorkerInfo - 1 total (0 active), Execution time: mean = 584.800 us, total = 584.800 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch.OnReplyReceived - 1 total (0 active), Execution time: mean = 154.500 us, total = 154.500 us, Queueing time: mean = 1.176 ms, max = 1.176 ms, min = 1.176 ms, total = 1.176 ms
+	Publisher.CheckDeadSubscribers - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch - 1 total (0 active), Execution time: mean = 704.900 us, total = 704.900 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	NodeInfoGcsService.grpc_client.GetAllNodeInfo - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	WorkerInfoGcsService.grpc_client.AddWorkerInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 28.400 us, total = 28.400 us, Queueing time: mean = 472.500 us, max = 472.500 us, min = 472.500 us, total = 472.500 us
+	InternalPubSubGcsService.grpc_client.GcsSubscriberPoll - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	CoreWorker.ExitIfParentRayletDies - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+
+-----------------
+Task Event stats:
+
+IO Service Stats:
+
+Global stats: 1 total (1 active)
+Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+Execution time:  mean = 0.000 s, total = 0.000 s
+Event stats:
+	PeriodicalRunner.RunFnPeriodically - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+Other Stats:
+	grpc_in_progress:0
+	current number of task status events in buffer: 0
+	current number of profile events in buffer: 0
+	current number of dropped task attempts tracked: 0
+	total task events sent: 0 MiB
+	total number of task attempts sent: 0
+	total number of task attempts dropped reported: 0
+	total number of sent failure: 0
+	num status task events dropped: 0
+	num profile task events dropped: 0
+
+
+[2024-09-05 18:18:06,701 I 11300 22256] accessor.cc:627: Received notification for node id = f72327a86a42f70531ae34357ff87476115d6b76b34e077b85b7f8c0, IsAlive = 1
+[2024-09-05 18:18:06,701 I 11300 22256] core_worker.cc:4552: Number of alive nodes:1
+[2024-09-05 18:18:06,701 I 11300 10704] event.cc:234: Set ray event level to warning
+[2024-09-05 18:18:06,701 I 11300 10704] event.cc:342: Ray Event initialized for CORE_WORKER
+[2024-09-05 18:18:07,963 I 11300 22256] core_worker.cc:835: Exit signal received, this process will exit after all outstanding tasks have finished, exit_type=INTENDED_SYSTEM_EXIT, detail=Worker exits because it was idle (it doesn't have objects it owns while no task or actor has been scheduled) for a long time.
+[2024-09-05 18:18:07,963 I 11300 10704] core_worker.cc:772: Disconnecting to the raylet.
+[2024-09-05 18:18:07,963 I 11300 10704] raylet_client.cc:163: RayletClient::Disconnect, exit_type=INTENDED_SYSTEM_EXIT, exit_detail=Worker exits because it was idle (it doesn't have objects it owns while no task or actor has been scheduled) for a long time., has creation_task_exception_pb_bytes=0
+[2024-09-05 18:18:07,963 I 11300 10704] core_worker.cc:694: Shutting down a core worker.
+[2024-09-05 18:18:07,963 I 11300 10704] task_event_buffer.cc:188: Shutting down TaskEventBuffer.
+[2024-09-05 18:18:07,963 I 11300 20164] task_event_buffer.cc:170: Task event buffer io service stopped.
+[2024-09-05 18:18:07,963 I 11300 10704] core_worker.cc:720: Disconnecting a GCS client.
+[2024-09-05 18:18:07,963 I 11300 10704] core_worker.cc:724: Waiting for joining a core worker io thread. If it hangs here, there might be deadlock or a high load in the core worker io service.
+[2024-09-05 18:18:07,963 I 11300 22256] core_worker.cc:943: Core worker main io service stopped.
+[2024-09-05 18:18:07,966 I 11300 10704] core_worker.cc:737: Core worker ready to be deallocated.
+[2024-09-05 18:18:07,966 I 11300 10704] core_worker_process.cc:243: Task execution loop terminated. Removing the global worker.
+[2024-09-05 18:18:07,966 I 11300 10704] core_worker.cc:685: Core worker is destructed
+[2024-09-05 18:18:07,966 I 11300 10704] task_event_buffer.cc:188: Shutting down TaskEventBuffer.
+[2024-09-05 18:18:07,967 I 11300 10704] core_worker_process.cc:148: Destructing CoreWorkerProcessImpl. pid: 11300
+[2024-09-05 18:18:07,967 I 11300 10704] io_service_pool.cc:47: IOServicePool is stopped.
+[2024-09-05 18:18:08,256 I 11300 10704] stats.h:120: Stats module has shutdown.

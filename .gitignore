@@ -1,1 +1,4 @@
-experiments/
+experiments/config
+experiments/logs
+experiments/trained_models
+experiments/wandb

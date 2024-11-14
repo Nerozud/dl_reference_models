@@ -1,0 +1,68 @@
+[2024-09-05 17:50:14,476 I 2552 16228] core_worker_process.cc:107: Constructing CoreWorkerProcess. pid: 2552
+[2024-09-05 17:50:14,480 I 2552 16228] io_service_pool.cc:35: IOServicePool is running with 1 io_service.
+[2024-09-05 17:50:14,487 I 2552 16228] grpc_server.cc:129: worker server started, listening on port 55239.
+[2024-09-05 17:50:14,493 I 2552 16228] core_worker.cc:252: Initializing worker at address: 127.0.0.1:55239, worker ID 0de1f271ad7bf0d84ef50c85845b2470bcb9beb8d4d3d3bcbc7982f4, raylet a0146ca749ab81b1c91d2bea495916f8150c04bbc626337c258192cb
+[2024-09-05 17:50:14,496 I 2552 16228] task_event_buffer.cc:177: Reporting task events to GCS every 1000ms.
+[2024-09-05 17:50:14,499 I 2552 16572] accessor.cc:627: Received notification for node id = a0146ca749ab81b1c91d2bea495916f8150c04bbc626337c258192cb, IsAlive = 1
+[2024-09-05 17:50:14,500 I 2552 16572] core_worker.cc:4552: Number of alive nodes:1
+[2024-09-05 17:50:14,500 I 2552 16572] core_worker.cc:614: Event stats:
+
+
+Global stats: 12 total (4 active)
+Queueing time: mean = 62.600 us, max = 490.300 us, min = 6.000 us, total = 751.200 us
+Execution time:  mean = 582.275 us, total = 6.987 ms
+Event stats:
+	PeriodicalRunner.RunFnPeriodically - 3 total (1 active, 1 running), Execution time: mean = 15.000 us, total = 45.000 us, Queueing time: mean = 172.167 us, max = 490.300 us, min = 26.200 us, total = 516.500 us
+	Publisher.CheckDeadSubscribers - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	WorkerInfoGcsService.grpc_client.AddWorkerInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 286.500 us, total = 286.500 us, Queueing time: mean = 15.000 us, max = 15.000 us, min = 15.000 us, total = 15.000 us
+	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch.OnReplyReceived - 1 total (0 active), Execution time: mean = 183.900 us, total = 183.900 us, Queueing time: mean = 213.700 us, max = 213.700 us, min = 213.700 us, total = 213.700 us
+	WorkerInfoGcsService.grpc_client.AddWorkerInfo - 1 total (0 active), Execution time: mean = 3.793 ms, total = 3.793 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	NodeInfoGcsService.grpc_client.GetAllNodeInfo - 1 total (0 active), Execution time: mean = 1.319 ms, total = 1.319 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	CoreWorker.ExitIfParentRayletDies - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch - 1 total (0 active), Execution time: mean = 716.400 us, total = 716.400 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	InternalPubSubGcsService.grpc_client.GcsSubscriberPoll - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	NodeInfoGcsService.grpc_client.GetAllNodeInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 644.000 us, total = 644.000 us, Queueing time: mean = 6.000 us, max = 6.000 us, min = 6.000 us, total = 6.000 us
+
+-----------------
+Task Event stats:
+
+IO Service Stats:
+
+Global stats: 4 total (2 active)
+Queueing time: mean = 576.550 us, max = 2.306 ms, min = 2.306 ms, total = 2.306 ms
+Execution time:  mean = 295.950 us, total = 1.184 ms
+Event stats:
+	TaskInfoGcsService.grpc_client.AddTaskEventData - 1 total (0 active), Execution time: mean = 1.037 ms, total = 1.037 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	TaskInfoGcsService.grpc_client.AddTaskEventData.OnReplyReceived - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	CoreWorker.deadline_timer.flush_task_events - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+	PeriodicalRunner.RunFnPeriodically - 1 total (0 active), Execution time: mean = 146.800 us, total = 146.800 us, Queueing time: mean = 2.306 ms, max = 2.306 ms, min = 2.306 ms, total = 2.306 ms
+Other Stats:
+	grpc_in_progress:1
+	current number of task status events in buffer: 0
+	current number of profile events in buffer: 0
+	current number of dropped task attempts tracked: 0
+	total task events sent: 0 MiB
+	total number of task attempts sent: 0
+	total number of task attempts dropped reported: 0
+	total number of sent failure: 0
+	num status task events dropped: 0
+	num profile task events dropped: 0
+
+
+[2024-09-05 17:50:14,502 I 2552 16228] event.cc:234: Set ray event level to warning
+[2024-09-05 17:50:14,502 I 2552 16228] event.cc:342: Ray Event initialized for CORE_WORKER
+[2024-09-05 17:50:15,745 I 2552 16228] core_worker.cc:835: Exit signal received, this process will exit after all outstanding tasks have finished, exit_type=SYSTEM_ERROR, detail=Worker exits unexpectedly by a signal. SystemExit is raised (sys.exit is called). Exit code: 1. The process receives a SIGTERM.
+[2024-09-05 17:50:15,747 I 2552 16228] core_worker.cc:772: Disconnecting to the raylet.
+[2024-09-05 17:50:15,747 I 2552 16228] raylet_client.cc:163: RayletClient::Disconnect, exit_type=SYSTEM_ERROR, exit_detail=Worker exits unexpectedly by a signal. SystemExit is raised (sys.exit is called). Exit code: 1. The process receives a SIGTERM., has creation_task_exception_pb_bytes=0
+[2024-09-05 17:50:15,747 I 2552 16228] core_worker.cc:694: Shutting down a core worker.
+[2024-09-05 17:50:15,747 I 2552 16228] task_event_buffer.cc:188: Shutting down TaskEventBuffer.
+[2024-09-05 17:50:15,747 I 2552 16872] task_event_buffer.cc:170: Task event buffer io service stopped.
+[2024-09-05 17:50:15,747 I 2552 16228] core_worker.cc:720: Disconnecting a GCS client.
+[2024-09-05 17:50:15,748 I 2552 16228] core_worker.cc:724: Waiting for joining a core worker io thread. If it hangs here, there might be deadlock or a high load in the core worker io service.
+[2024-09-05 17:50:15,751 I 2552 16572] core_worker.cc:943: Core worker main io service stopped.
+[2024-09-05 17:50:15,758 I 2552 16228] core_worker.cc:737: Core worker ready to be deallocated.
+[2024-09-05 17:50:15,758 I 2552 16228] core_worker_process.cc:243: Task execution loop terminated. Removing the global worker.
+[2024-09-05 17:50:15,758 I 2552 16228] core_worker.cc:685: Core worker is destructed
+[2024-09-05 17:50:15,758 I 2552 16228] task_event_buffer.cc:188: Shutting down TaskEventBuffer.
+[2024-09-05 17:50:15,808 I 2552 16228] core_worker_process.cc:148: Destructing CoreWorkerProcessImpl. pid: 2552
+[2024-09-05 17:50:15,808 I 2552 16228] io_service_pool.cc:47: IOServicePool is stopped.

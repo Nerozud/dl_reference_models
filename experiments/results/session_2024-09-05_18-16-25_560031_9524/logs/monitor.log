@@ -1,0 +1,83 @@
+2024-09-05 18:16:26,577	INFO monitor.py:688 -- Starting monitor using ray installation: D:\Programme\Anaconda3\envs\stablebaselines2023\lib\site-packages\ray\__init__.py
+2024-09-05 18:16:26,577	INFO monitor.py:689 -- Ray version: 2.10.0
+2024-09-05 18:16:26,577	INFO monitor.py:690 -- Ray commit: 09abba26b5bf2707639bb637c208d062a47b46f6
+2024-09-05 18:16:26,577	INFO monitor.py:691 -- Monitor started with command: ['D:\\Programme\\Anaconda3\\envs\\stablebaselines2023\\lib\\site-packages\\ray\\autoscaler\\_private\\monitor.py', '--logs-dir=D:\\Programme\\Nextcloud\\00_Eigene_Dateien\\Programmieren\\dl_reference_models\\experiments\\results\\session_2024-09-05_18-16-25_560031_9524\\logs', '--logging-rotate-bytes=536870912', '--logging-rotate-backup-count=5', '--gcs-address=127.0.0.1:63422', '--monitor-ip=127.0.0.1']
+2024-09-05 18:16:26,580	INFO monitor.py:159 -- session_name: session_2024-09-05_18-16-25_560031_9524
+2024-09-05 18:16:26,580	WARNING monitor.py:212 -- `prometheus_client` not found, so metrics will not be exported.
+2024-09-05 18:16:26,580	INFO monitor.py:216 -- Monitor: Started
+2024-09-05 18:16:26,590	INFO autoscaler.py:280 -- disable_node_updaters:False
+2024-09-05 18:16:26,590	INFO autoscaler.py:288 -- disable_launch_config_check:True
+2024-09-05 18:16:26,590	INFO autoscaler.py:300 -- foreground_node_launch:False
+2024-09-05 18:16:26,590	INFO autoscaler.py:310 -- worker_liveness_check:True
+2024-09-05 18:16:26,590	INFO autoscaler.py:318 -- worker_rpc_drain:True
+2024-09-05 18:16:26,591	INFO autoscaler.py:368 -- StandardAutoscaler: {'cluster_name': 'default', 'max_workers': 0, 'upscaling_speed': 1.0, 'docker': {}, 'idle_timeout_minutes': 0, 'provider': {'type': 'readonly', 'use_node_id_as_ip': True, 'disable_launch_config_check': True}, 'auth': {}, 'available_node_types': {'ray.head.default': {'resources': {}, 'node_config': {}, 'max_workers': 0}}, 'head_node_type': 'ray.head.default', 'file_mounts': {}, 'cluster_synced_files': [], 'file_mounts_sync_continuously': False, 'rsync_exclude': [], 'rsync_filter': [], 'initialization_commands': [], 'setup_commands': [], 'head_setup_commands': [], 'worker_setup_commands': [], 'head_start_ray_commands': [], 'worker_start_ray_commands': []}
+2024-09-05 18:16:26,591	INFO monitor.py:383 -- Autoscaler has not yet received load metrics. Waiting.
+2024-09-05 18:16:31,594	INFO autoscaler.py:147 -- The autoscaler took 0.0 seconds to fetch the list of non-terminated nodes.
+2024-09-05 18:16:31,594	INFO autoscaler.py:427 -- 
+======== Autoscaler status: 2024-09-05 18:16:31.594175 ========
+Node status
+---------------------------------------------------------------
+Active:
+ 1 node_9d3476886d10e9af010ab5b58cef92de84e168d96fce97943cf85339
+Pending:
+ (no pending nodes)
+Recent failures:
+ (no failures)
+
+Resources
+---------------------------------------------------------------
+Usage:
+ 1.0/16.0 CPU (1.0 used of 3.0 reserved in placement groups)
+ 0.0/1.0 GPU
+ 0B/4.62GiB memory
+ 0B/2.31GiB object_store_memory
+
+Demands:
+ (no resource demands)
+2024-09-05 18:16:31,595	INFO autoscaler.py:470 -- The autoscaler took 0.001 seconds to complete the update iteration.
+2024-09-05 18:16:36,610	INFO autoscaler.py:147 -- The autoscaler took 0.0 seconds to fetch the list of non-terminated nodes.
+2024-09-05 18:16:36,610	INFO autoscaler.py:427 -- 
+======== Autoscaler status: 2024-09-05 18:16:36.610558 ========
+Node status
+---------------------------------------------------------------
+Active:
+ 1 node_9d3476886d10e9af010ab5b58cef92de84e168d96fce97943cf85339
+Pending:
+ (no pending nodes)
+Recent failures:
+ (no failures)
+
+Resources
+---------------------------------------------------------------
+Usage:
+ 3.0/16.0 CPU (3.0 used of 3.0 reserved in placement groups)
+ 0.0/1.0 GPU
+ 0B/4.62GiB memory
+ 0B/2.31GiB object_store_memory
+
+Demands:
+ (no resource demands)
+2024-09-05 18:16:36,610	INFO autoscaler.py:470 -- The autoscaler took 0.0 seconds to complete the update iteration.
+2024-09-05 18:16:41,617	INFO autoscaler.py:147 -- The autoscaler took 0.0 seconds to fetch the list of non-terminated nodes.
+2024-09-05 18:16:41,617	INFO autoscaler.py:427 -- 
+======== Autoscaler status: 2024-09-05 18:16:41.617680 ========
+Node status
+---------------------------------------------------------------
+Active:
+ 1 node_9d3476886d10e9af010ab5b58cef92de84e168d96fce97943cf85339
+Pending:
+ (no pending nodes)
+Recent failures:
+ (no failures)
+
+Resources
+---------------------------------------------------------------
+Usage:
+ 3.0/16.0 CPU (3.0 used of 3.0 reserved in placement groups)
+ 0.0/1.0 GPU
+ 0B/4.62GiB memory
+ 0B/2.31GiB object_store_memory
+
+Demands:
+ (no resource demands)
+2024-09-05 18:16:41,618	INFO autoscaler.py:470 -- The autoscaler took 0.001 seconds to complete the update iteration.

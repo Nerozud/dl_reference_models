@@ -1,0 +1,885 @@
+[2024-09-05 18:03:16,146 I 20884 21284] (raylet.exe) main.cc:176: Setting cluster ID to: 01ea386adbac479460c726ab96eb24b2fe7ef5e71479cb5490fdec05
+[2024-09-05 18:03:16,149 I 20884 21284] (raylet.exe) main.cc:396: Raylet is not set to kill unknown children.
+[2024-09-05 18:03:16,149 I 20884 21284] (raylet.exe) io_service_pool.cc:35: IOServicePool is running with 1 io_service.
+[2024-09-05 18:03:16,150 I 20884 21284] (raylet.exe) store_runner.cc:32: Allowing the Plasma store to use up to 2.43585GB of memory.
+[2024-09-05 18:03:16,150 I 20884 21284] (raylet.exe) store_runner.cc:48: Starting object store with directory C:\Users\colam\AppData\Local\Temp, fallback D:\Programme\Nextcloud\00_Eigene_Dateien\Programmieren\dl_reference_models\experiments\results, and huge page support disabled
+[2024-09-05 18:03:16,150 I 20884 20868] (raylet.exe) store.cc:564: ========== Plasma store: =================
+Current usage: 0 / 2.43585 GB
+- num bytes created total: 0
+0 pending objects of total size 0MB
+- objects spillable: 0
+- bytes spillable: 0
+- objects unsealed: 0
+- bytes unsealed: 0
+- objects in use: 0
+- bytes in use: 0
+- objects evictable: 0
+- bytes evictable: 0
+
+- objects created by worker: 0
+- bytes created by worker: 0
+- objects restored: 0
+- bytes restored: 0
+- objects received: 0
+- bytes received: 0
+- objects errored: 0
+- bytes errored: 0
+
+[2024-09-05 18:03:16,152 I 20884 21284] (raylet.exe) grpc_server.cc:129: ObjectManager server started, listening on port 55913.
+[2024-09-05 18:03:16,155 I 20884 21284] (raylet.exe) worker_killing_policy.cc:101: Running GroupByOwner policy.
+[2024-09-05 18:03:16,155 W 20884 21284] (raylet.exe) memory_monitor.cc:67: Not running MemoryMonitor. It is currently supported only on Linux.
+[2024-09-05 18:03:16,155 I 20884 21284] (raylet.exe) node_manager.cc:282: Initializing NodeManager with ID b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11
+[2024-09-05 18:03:16,155 I 20884 21284] (raylet.exe) grpc_server.cc:129: NodeManager server started, listening on port 55915.
+[2024-09-05 18:03:16,162 I 20884 17712] (raylet.exe) agent_manager.cc:78: Monitor agent process with name dashboard_agent/15724
+[2024-09-05 18:03:16,165 I 20884 17972] (raylet.exe) agent_manager.cc:78: Monitor agent process with name runtime_env_agent
+[2024-09-05 18:03:16,168 I 20884 21284] (raylet.exe) event.cc:234: Set ray event level to warning
+[2024-09-05 18:03:16,168 I 20884 21284] (raylet.exe) event.cc:342: Ray Event initialized for RAYLET
+[2024-09-05 18:03:16,168 I 20884 21284] (raylet.exe) raylet.cc:128: Raylet of id, b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11 started. Raylet consists of node_manager and object_manager. node_manager address: 127.0.0.1:55915 object_manager address: 127.0.0.1:55913 hostname: MININT-EJD2ILQ
+[2024-09-05 18:03:16,170 I 20884 21284] (raylet.exe) node_manager.cc:502: [state-dump] NodeManager:
+[state-dump] Node ID: b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11
+[state-dump] Node name: 127.0.0.1
+[state-dump] InitialConfigResources: {node:__internal_head__: 10000, CPU: 160000, node:127.0.0.1: 10000, memory: 48716906510000, object_store_memory: 24358453240000, accelerator_type:G: 10000, GPU: 10000}
+[state-dump] ClusterTaskManager:
+[state-dump] ========== Node: b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11 =================
+[state-dump] Infeasible queue length: 0
+[state-dump] Schedule queue length: 0
+[state-dump] Dispatch queue length: 0
+[state-dump] num_waiting_for_resource: 0
+[state-dump] num_waiting_for_plasma_memory: 0
+[state-dump] num_waiting_for_remote_node_resources: 0
+[state-dump] num_worker_not_started_by_job_config_not_exist: 0
+[state-dump] num_worker_not_started_by_registration_timeout: 0
+[state-dump] num_tasks_waiting_for_workers: 0
+[state-dump] num_cancelled_tasks: 0
+[state-dump] cluster_resource_scheduler state: 
+[state-dump] Local id: 1345268899905793263 Local resources: {"total":{object_store_memory: [24358453240000], memory: [48716906510000], CPU: [160000], node:__internal_head__: [10000], node:127.0.0.1: [10000], accelerator_type:G: [10000], GPU: [10000]}}, "available": {object_store_memory: [24358453240000], memory: [48716906510000], CPU: [160000], node:__internal_head__: [10000], node:127.0.0.1: [10000], accelerator_type:G: [10000], GPU: [10000]}}, "labels":{"ray.io/node_id":"b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11",} is_draining: 0 is_idle: 1 Cluster resources: node id: 1345268899905793263{"total":{node:__internal_head__: 10000, CPU: 160000, node:127.0.0.1: 10000, memory: 48716906510000, object_store_memory: 24358453240000, accelerator_type:G: 10000, GPU: 10000}}, "available": {CPU: 160000, object_store_memory: 24358453240000, memory: 48716906510000, node:127.0.0.1: 10000, accelerator_type:G: 10000, node:__internal_head__: 10000, GPU: 10000}}, "labels":{"ray.io/node_id":"b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11",}, "is_draining": 0, "draining_deadline_timestamp_ms": -1} { "placment group locations": [], "node to bundles": []}
+[state-dump] Waiting tasks size: 0
+[state-dump] Number of executing tasks: 0
+[state-dump] Number of pinned task arguments: 0
+[state-dump] Number of total spilled tasks: 0
+[state-dump] Number of spilled waiting tasks: 0
+[state-dump] Number of spilled unschedulable tasks: 0
+[state-dump] Resource usage {
+[state-dump] }
+[state-dump] Running tasks by scheduling class:
+[state-dump] ==================================================
+[state-dump] 
+[state-dump] ClusterResources:
+[state-dump] LocalObjectManager:
+[state-dump] - num pinned objects: 0
+[state-dump] - pinned objects size: 0
+[state-dump] - num objects pending restore: 0
+[state-dump] - num objects pending spill: 0
+[state-dump] - num bytes pending spill: 0
+[state-dump] - num bytes currently spilled: 0
+[state-dump] - cumulative spill requests: 0
+[state-dump] - cumulative restore requests: 0
+[state-dump] - spilled objects pending delete: 0
+[state-dump] 
+[state-dump] ObjectManager:
+[state-dump] - num local objects: 0
+[state-dump] - num unfulfilled push requests: 0
+[state-dump] - num object pull requests: 0
+[state-dump] - num chunks received total: 0
+[state-dump] - num chunks received failed (all): 0
+[state-dump] - num chunks received failed / cancelled: 0
+[state-dump] - num chunks received failed / plasma error: 0
+[state-dump] Event stats:
+[state-dump] Global stats: 0 total (0 active)
+[state-dump] Queueing time: mean = -nan(ind) s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] Execution time:  mean = -nan(ind) s, total = 0.000 s
+[state-dump] Event stats:
+[state-dump] PushManager:
+[state-dump] - num pushes in flight: 0
+[state-dump] - num chunks in flight: 0
+[state-dump] - num chunks remaining: 0
+[state-dump] - max chunks allowed: 409
+[state-dump] OwnershipBasedObjectDirectory:
+[state-dump] - num listeners: 0
+[state-dump] - cumulative location updates: 0
+[state-dump] - num location updates per second: 0.000
+[state-dump] - num location lookups per second: 0.000
+[state-dump] - num locations added per second: 0.000
+[state-dump] - num locations removed per second: 0.000
+[state-dump] BufferPool:
+[state-dump] - create buffer state map size: 0
+[state-dump] PullManager:
+[state-dump] - num bytes available for pulled objects: 2435845324
+[state-dump] - num bytes being pulled (all): 0
+[state-dump] - num bytes being pulled / pinned: 0
+[state-dump] - get request bundles: BundlePullRequestQueue{0 total, 0 active, 0 inactive, 0 unpullable}
+[state-dump] - wait request bundles: BundlePullRequestQueue{0 total, 0 active, 0 inactive, 0 unpullable}
+[state-dump] - task request bundles: BundlePullRequestQueue{0 total, 0 active, 0 inactive, 0 unpullable}
+[state-dump] - first get request bundle: N/A
+[state-dump] - first wait request bundle: N/A
+[state-dump] - first task request bundle: N/A
+[state-dump] - num objects queued: 0
+[state-dump] - num objects actively pulled (all): 0
+[state-dump] - num objects actively pulled / pinned: 0
+[state-dump] - num bundles being pulled: 0
+[state-dump] - num pull retries: 0
+[state-dump] - max timeout seconds: 0
+[state-dump] - max timeout request is already processed. No entry.
+[state-dump] 
+[state-dump] WorkerPool:
+[state-dump] - registered jobs: 0
+[state-dump] - process_failed_job_config_missing: 0
+[state-dump] - process_failed_rate_limited: 0
+[state-dump] - process_failed_pending_registration: 0
+[state-dump] - process_failed_runtime_env_setup_failed: 0
+[state-dump] - num PYTHON workers: 0
+[state-dump] - num PYTHON drivers: 0
+[state-dump] - num object spill callbacks queued: 0
+[state-dump] - num object restore queued: 0
+[state-dump] - num util functions queued: 0
+[state-dump] - num idle workers: 0
+[state-dump] TaskDependencyManager:
+[state-dump] - task deps map size: 0
+[state-dump] - get req map size: 0
+[state-dump] - wait req map size: 0
+[state-dump] - local objects map size: 0
+[state-dump] WaitManager:
+[state-dump] - num active wait requests: 0
+[state-dump] Subscriber:
+[state-dump] Channel WORKER_OBJECT_LOCATIONS_CHANNEL
+[state-dump] - cumulative subscribe requests: 0
+[state-dump] - cumulative unsubscribe requests: 0
+[state-dump] - active subscribed publishers: 0
+[state-dump] - cumulative published messages: 0
+[state-dump] - cumulative processed messages: 0
+[state-dump] Channel WORKER_REF_REMOVED_CHANNEL
+[state-dump] - cumulative subscribe requests: 0
+[state-dump] - cumulative unsubscribe requests: 0
+[state-dump] - active subscribed publishers: 0
+[state-dump] - cumulative published messages: 0
+[state-dump] - cumulative processed messages: 0
+[state-dump] Channel WORKER_OBJECT_EVICTION
+[state-dump] - cumulative subscribe requests: 0
+[state-dump] - cumulative unsubscribe requests: 0
+[state-dump] - active subscribed publishers: 0
+[state-dump] - cumulative published messages: 0
+[state-dump] - cumulative processed messages: 0
+[state-dump] num async plasma notifications: 0
+[state-dump] Remote node managers: 
+[state-dump] Event stats:
+[state-dump] Global stats: 25 total (12 active)
+[state-dump] Queueing time: mean = 1.402 ms, max = 12.983 ms, min = 4.700 us, total = 35.043 ms
+[state-dump] Execution time:  mean = 877.316 us, total = 21.933 ms
+[state-dump] Event stats:
+[state-dump] 	PeriodicalRunner.RunFnPeriodically - 10 total (2 active, 1 running), Execution time: mean = 147.670 us, total = 1.477 ms, Queueing time: mean = 3.503 ms, max = 12.983 ms, min = 26.500 us, total = 35.030 ms
+[state-dump] 	NodeManager.ScheduleAndDispatchTasks - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch - 1 total (0 active), Execution time: mean = 206.800 us, total = 206.800 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManager.deadline_timer.debug_state_dump - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManager.deadline_timer.record_metrics - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeInfoGcsService.grpc_client.RegisterNode - 1 total (0 active), Execution time: mean = 544.200 us, total = 544.200 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeInfoGcsService.grpc_client.RegisterNode.OnReplyReceived - 1 total (0 active), Execution time: mean = 210.800 us, total = 210.800 us, Queueing time: mean = 4.700 us, max = 4.700 us, min = 4.700 us, total = 4.700 us
+[state-dump] 	NodeInfoGcsService.grpc_client.GetInternalConfig.OnReplyReceived - 1 total (0 active), Execution time: mean = 19.163 ms, total = 19.163 ms, Queueing time: mean = 7.800 us, max = 7.800 us, min = 7.800 us, total = 7.800 us
+[state-dump] 	RayletWorkerPool.deadline_timer.kill_idle_workers - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberPoll - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManager.deadline_timer.spill_objects_when_over_threshold - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	ClusterResourceManager.ResetRemoteNodeView - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeInfoGcsService.grpc_client.GetInternalConfig - 1 total (0 active), Execution time: mean = 330.900 us, total = 330.900 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManager.GCTaskFailureReason - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManager.deadline_timer.flush_free_objects - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch.OnReplyReceived - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] DebugString() time ms: 0
+[state-dump] 
+[state-dump] 
+[2024-09-05 18:03:16,171 I 20884 21284] (raylet.exe) accessor.cc:627: Received notification for node id = b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11, IsAlive = 1
+[2024-09-05 18:03:16,262 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 21456, the token is 0
+[2024-09-05 18:03:16,265 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 17168, the token is 1
+[2024-09-05 18:03:16,270 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 20212, the token is 2
+[2024-09-05 18:03:16,273 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 15480, the token is 3
+[2024-09-05 18:03:16,277 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 12052, the token is 4
+[2024-09-05 18:03:16,281 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 5348, the token is 5
+[2024-09-05 18:03:16,286 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 1908, the token is 6
+[2024-09-05 18:03:16,290 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 16884, the token is 7
+[2024-09-05 18:03:16,294 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 21028, the token is 8
+[2024-09-05 18:03:16,299 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 20936, the token is 9
+[2024-09-05 18:03:16,304 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 18856, the token is 10
+[2024-09-05 18:03:16,310 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 16560, the token is 11
+[2024-09-05 18:03:16,315 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 3060, the token is 12
+[2024-09-05 18:03:16,320 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 20360, the token is 13
+[2024-09-05 18:03:16,325 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 20208, the token is 14
+[2024-09-05 18:03:16,330 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 20248, the token is 15
+[2024-09-05 18:03:17,045 I 20884 20868] (raylet.exe) object_store.cc:35: Object store current usage 8e-09 / 2.43585 GB.
+[2024-09-05 18:03:17,302 I 20884 21284] (raylet.exe) node_manager.cc:587: New job has started. Job id 01000000 Driver pid 20036 is dead: 0 driver address: 127.0.0.1
+[2024-09-05 18:03:17,302 I 20884 21284] (raylet.exe) worker_pool.cc:678: Job 01000000 already started in worker pool.
+[2024-09-05 18:03:17,452 I 20884 21284] (raylet.exe) runtime_env_agent_client.cc:369: Create runtime env for job 01000000
+[2024-09-05 18:03:17,455 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 2264, the token is 16
+[2024-09-05 18:03:18,434 I 20884 21284] (raylet.exe) node_manager.cc:1399: NodeManager::DisconnectClient, disconnect_type=1, has creation task exception = false
+[2024-09-05 18:03:18,435 I 20884 21284] (raylet.exe) node_manager.cc:1399: NodeManager::DisconnectClient, disconnect_type=1, has creation task exception = false
+[2024-09-05 18:03:18,435 I 20884 21284] (raylet.exe) node_manager.cc:1399: NodeManager::DisconnectClient, disconnect_type=1, has creation task exception = false
+[2024-09-05 18:03:24,208 I 20884 21284] (raylet.exe) runtime_env_agent_client.cc:369: Create runtime env for job 01000000
+[2024-09-05 18:03:24,212 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 16308, the token is 17
+[2024-09-05 18:03:24,213 I 20884 21284] (raylet.exe) runtime_env_agent_client.cc:369: Create runtime env for job 01000000
+[2024-09-05 18:03:24,216 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 4240, the token is 18
+[2024-09-05 18:03:28,203 W 20884 20764] (raylet.exe) metric_exporter.cc:105: [1] Export metrics to agent failed: GrpcUnavailable: RPC Error message: failed to connect to all addresses; last error: UNAVAILABLE: ipv4:127.0.0.1:57540: Connection refused; RPC Error details: . This won't affect Ray, but you can lose metrics from the cluster.
+[2024-09-05 18:03:31,966 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 18344, the token is 19
+[2024-09-05 18:03:31,975 I 20884 21284] (raylet.exe) worker_pool.cc:495: Started worker process with pid 21316, the token is 20
+[2024-09-05 18:03:32,738 I 20884 21284] (raylet.exe) node_manager.cc:1399: NodeManager::DisconnectClient, disconnect_type=1, has creation task exception = false
+[2024-09-05 18:03:32,738 I 20884 21284] (raylet.exe) node_manager.cc:1399: NodeManager::DisconnectClient, disconnect_type=1, has creation task exception = false
+[2024-09-05 18:03:32,738 I 20884 21284] (raylet.exe) node_manager.cc:1399: NodeManager::DisconnectClient, disconnect_type=1, has creation task exception = false
+[2024-09-05 18:03:32,739 I 20884 21284] (raylet.exe) node_manager.cc:1399: NodeManager::DisconnectClient, disconnect_type=0, has creation task exception = false
+[2024-09-05 18:03:32,739 I 20884 21284] (raylet.exe) node_manager.cc:1413: Ignoring client disconnect because the client has already been disconnected.
+[2024-09-05 18:03:32,739 I 20884 21284] (raylet.exe) node_manager.cc:1399: NodeManager::DisconnectClient, disconnect_type=0, has creation task exception = false
+[2024-09-05 18:03:32,739 I 20884 21284] (raylet.exe) node_manager.cc:1413: Ignoring client disconnect because the client has already been disconnected.
+[2024-09-05 18:03:32,740 I 20884 21284] (raylet.exe) node_manager.cc:1399: NodeManager::DisconnectClient, disconnect_type=0, has creation task exception = false
+[2024-09-05 18:03:32,740 I 20884 21284] (raylet.exe) node_manager.cc:1413: Ignoring client disconnect because the client has already been disconnected.
+[2024-09-05 18:04:16,155 I 20884 20868] (raylet.exe) store.cc:564: ========== Plasma store: =================
+Current usage: 0 / 2.43585 GB
+- num bytes created total: 176
+0 pending objects of total size 0MB
+- objects spillable: 0
+- bytes spillable: 0
+- objects unsealed: 0
+- bytes unsealed: 0
+- objects in use: 0
+- bytes in use: 0
+- objects evictable: 0
+- bytes evictable: 0
+
+- objects created by worker: 0
+- bytes created by worker: 0
+- objects restored: 0
+- bytes restored: 0
+- objects received: 0
+- bytes received: 0
+- objects errored: 0
+- bytes errored: 0
+
+[2024-09-05 18:04:16,186 I 20884 21284] (raylet.exe) node_manager.cc:502: [state-dump] NodeManager:
+[state-dump] Node ID: b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11
+[state-dump] Node name: 127.0.0.1
+[state-dump] InitialConfigResources: {node:__internal_head__: 10000, CPU: 160000, node:127.0.0.1: 10000, memory: 48716906510000, object_store_memory: 24358453240000, accelerator_type:G: 10000, GPU: 10000}
+[state-dump] ClusterTaskManager:
+[state-dump] ========== Node: b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11 =================
+[state-dump] Infeasible queue length: 0
+[state-dump] Schedule queue length: 0
+[state-dump] Dispatch queue length: 0
+[state-dump] num_waiting_for_resource: 0
+[state-dump] num_waiting_for_plasma_memory: 0
+[state-dump] num_waiting_for_remote_node_resources: 0
+[state-dump] num_worker_not_started_by_job_config_not_exist: 0
+[state-dump] num_worker_not_started_by_registration_timeout: 0
+[state-dump] num_tasks_waiting_for_workers: 0
+[state-dump] num_cancelled_tasks: 0
+[state-dump] cluster_resource_scheduler state: 
+[state-dump] Local id: 1345268899905793263 Local resources: {"total":{accelerator_type:G: [10000], GPU: [10000], node:__internal_head__: [10000], node:127.0.0.1: [10000], memory: [48716906510000], object_store_memory: [24358453240000], CPU: [160000]}}, "available": {GPU: [10000], accelerator_type:G: [10000], memory: [48716906510000], object_store_memory: [24358453240000], CPU: [160000], node:__internal_head__: [10000], node:127.0.0.1: [10000]}}, "labels":{"ray.io/node_id":"b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11",} is_draining: 0 is_idle: 0 Cluster resources: node id: 1345268899905793263{"total":{accelerator_type:G: 10000, GPU: 10000, CPU: 160000, node:127.0.0.1: 10000, node:__internal_head__: 10000, object_store_memory: 24358453240000, memory: 48716906510000}}, "available": {memory: 48716906510000, accelerator_type:G: 10000, CPU: 160000, GPU: 10000, node:127.0.0.1: 10000, node:__internal_head__: 10000, object_store_memory: 24358453240000}}, "labels":{"ray.io/node_id":"b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11",}, "is_draining": 0, "draining_deadline_timestamp_ms": -1} { "placment group locations": [], "node to bundles": []}
+[state-dump] Waiting tasks size: 0
+[state-dump] Number of executing tasks: 0
+[state-dump] Number of pinned task arguments: 0
+[state-dump] Number of total spilled tasks: 0
+[state-dump] Number of spilled waiting tasks: 0
+[state-dump] Number of spilled unschedulable tasks: 0
+[state-dump] Resource usage {
+[state-dump]     - (language=PYTHON actor_or_task=_QueueActor.__init__ pid=18344): {}
+[state-dump]     - (language=PYTHON actor_or_task=_WandbLoggingActor.__init__ pid=21316): {}
+[state-dump] }
+[state-dump] Running tasks by scheduling class:
+[state-dump] ==================================================
+[state-dump] 
+[state-dump] ClusterResources:
+[state-dump] LocalObjectManager:
+[state-dump] - num pinned objects: 0
+[state-dump] - pinned objects size: 0
+[state-dump] - num objects pending restore: 0
+[state-dump] - num objects pending spill: 0
+[state-dump] - num bytes pending spill: 0
+[state-dump] - num bytes currently spilled: 0
+[state-dump] - cumulative spill requests: 0
+[state-dump] - cumulative restore requests: 0
+[state-dump] - spilled objects pending delete: 0
+[state-dump] 
+[state-dump] ObjectManager:
+[state-dump] - num local objects: 0
+[state-dump] - num unfulfilled push requests: 0
+[state-dump] - num object pull requests: 0
+[state-dump] - num chunks received total: 0
+[state-dump] - num chunks received failed (all): 0
+[state-dump] - num chunks received failed / cancelled: 0
+[state-dump] - num chunks received failed / plasma error: 0
+[state-dump] Event stats:
+[state-dump] Global stats: 0 total (0 active)
+[state-dump] Queueing time: mean = -nan(ind) s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] Execution time:  mean = -nan(ind) s, total = 0.000 s
+[state-dump] Event stats:
+[state-dump] PushManager:
+[state-dump] - num pushes in flight: 0
+[state-dump] - num chunks in flight: 0
+[state-dump] - num chunks remaining: 0
+[state-dump] - max chunks allowed: 409
+[state-dump] OwnershipBasedObjectDirectory:
+[state-dump] - num listeners: 0
+[state-dump] - cumulative location updates: 0
+[state-dump] - num location updates per second: 0.000
+[state-dump] - num location lookups per second: 0.000
+[state-dump] - num locations added per second: 0.000
+[state-dump] - num locations removed per second: 0.000
+[state-dump] BufferPool:
+[state-dump] - create buffer state map size: 0
+[state-dump] PullManager:
+[state-dump] - num bytes available for pulled objects: 2435845324
+[state-dump] - num bytes being pulled (all): 0
+[state-dump] - num bytes being pulled / pinned: 0
+[state-dump] - get request bundles: BundlePullRequestQueue{0 total, 0 active, 0 inactive, 0 unpullable}
+[state-dump] - wait request bundles: BundlePullRequestQueue{0 total, 0 active, 0 inactive, 0 unpullable}
+[state-dump] - task request bundles: BundlePullRequestQueue{0 total, 0 active, 0 inactive, 0 unpullable}
+[state-dump] - first get request bundle: N/A
+[state-dump] - first wait request bundle: N/A
+[state-dump] - first task request bundle: N/A
+[state-dump] - num objects queued: 0
+[state-dump] - num objects actively pulled (all): 0
+[state-dump] - num objects actively pulled / pinned: 0
+[state-dump] - num bundles being pulled: 0
+[state-dump] - num pull retries: 0
+[state-dump] - max timeout seconds: 0
+[state-dump] - max timeout request is already processed. No entry.
+[state-dump] 
+[state-dump] WorkerPool:
+[state-dump] - registered jobs: 1
+[state-dump] - process_failed_job_config_missing: 0
+[state-dump] - process_failed_rate_limited: 0
+[state-dump] - process_failed_pending_registration: 0
+[state-dump] - process_failed_runtime_env_setup_failed: 0
+[state-dump] - num PYTHON workers: 15
+[state-dump] - num PYTHON drivers: 1
+[state-dump] - num object spill callbacks queued: 0
+[state-dump] - num object restore queued: 0
+[state-dump] - num util functions queued: 0
+[state-dump] - num idle workers: 13
+[state-dump] TaskDependencyManager:
+[state-dump] - task deps map size: 0
+[state-dump] - get req map size: 0
+[state-dump] - wait req map size: 0
+[state-dump] - local objects map size: 0
+[state-dump] WaitManager:
+[state-dump] - num active wait requests: 0
+[state-dump] Subscriber:
+[state-dump] Channel WORKER_OBJECT_LOCATIONS_CHANNEL
+[state-dump] - cumulative subscribe requests: 0
+[state-dump] - cumulative unsubscribe requests: 0
+[state-dump] - active subscribed publishers: 0
+[state-dump] - cumulative published messages: 0
+[state-dump] - cumulative processed messages: 0
+[state-dump] Channel WORKER_REF_REMOVED_CHANNEL
+[state-dump] - cumulative subscribe requests: 0
+[state-dump] - cumulative unsubscribe requests: 0
+[state-dump] - active subscribed publishers: 0
+[state-dump] - cumulative published messages: 0
+[state-dump] - cumulative processed messages: 0
+[state-dump] Channel WORKER_OBJECT_EVICTION
+[state-dump] - cumulative subscribe requests: 0
+[state-dump] - cumulative unsubscribe requests: 0
+[state-dump] - active subscribed publishers: 0
+[state-dump] - cumulative published messages: 0
+[state-dump] - cumulative processed messages: 0
+[state-dump] num async plasma notifications: 0
+[state-dump] Remote node managers: 
+[state-dump] Event stats:
+[state-dump] Global stats: 4673 total (29 active)
+[state-dump] Queueing time: mean = 16.887 ms, max = 14.637 s, min = 300.000 ns, total = 78.913 s
+[state-dump] Execution time:  mean = 4.327 ms, total = 20.220 s
+[state-dump] Event stats:
+[state-dump] 	NodeManagerService.grpc_server.ReportWorkerBacklog.HandleRequestImpl - 956 total (0 active), Execution time: mean = 10.164 us, total = 9.717 ms, Queueing time: mean = 20.959 us, max = 96.399 us, min = 1.557 us, total = 20.037 ms
+[state-dump] 	NodeManagerService.grpc_server.ReportWorkerBacklog - 956 total (0 active), Execution time: mean = 116.279 us, total = 111.163 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManager.CheckGC - 551 total (1 active), Execution time: mean = 2.538 us, total = 1.399 ms, Queueing time: mean = 8.902 ms, max = 58.727 ms, min = 5.705 ms, total = 4.905 s
+[state-dump] 	RaySyncer.OnDemandBroadcasting - 551 total (1 active), Execution time: mean = 8.411 us, total = 4.634 ms, Queueing time: mean = 8.896 ms, max = 58.722 ms, min = 5.603 ms, total = 4.902 s
+[state-dump] 	ObjectManager.UpdateAvailableMemory - 550 total (0 active), Execution time: mean = 2.439 us, total = 1.341 ms, Queueing time: mean = 33.530 us, max = 1.173 ms, min = 1.992 us, total = 18.441 ms
+[state-dump] 	RayletWorkerPool.deadline_timer.kill_idle_workers - 293 total (1 active), Execution time: mean = 14.605 us, total = 4.279 ms, Queueing time: mean = 4.926 ms, max = 15.573 ms, min = 31.654 us, total = 1.443 s
+[state-dump] 	ClientConnection.async_read.ProcessMessageHeader - 123 total (16 active), Execution time: mean = 6.423 us, total = 789.995 us, Queueing time: mean = 534.672 ms, max = 14.637 s, min = 22.372 us, total = 65.765 s
+[state-dump] 	ClientConnection.async_read.ProcessMessage - 104 total (0 active), Execution time: mean = 747.508 us, total = 77.741 ms, Queueing time: mean = 4.084 us, max = 64.894 us, min = 1.472 us, total = 424.777 us
+[state-dump] 	NodeManager.deadline_timer.flush_free_objects - 60 total (1 active), Execution time: mean = 4.043 us, total = 242.563 us, Queueing time: mean = 8.126 ms, max = 14.763 ms, min = 248.421 us, total = 487.537 ms
+[state-dump] 	NodeManager.deadline_timer.spill_objects_when_over_threshold - 60 total (1 active), Execution time: mean = 3.321 us, total = 199.279 us, Queueing time: mean = 8.126 ms, max = 14.739 ms, min = 233.189 us, total = 487.587 ms
+[state-dump] 	NodeManager.ScheduleAndDispatchTasks - 60 total (1 active), Execution time: mean = 6.631 us, total = 397.854 us, Queueing time: mean = 8.157 ms, max = 14.767 ms, min = 246.255 us, total = 489.407 ms
+[state-dump] 	NodeManagerService.grpc_server.GetResourceLoad.HandleRequestImpl - 59 total (0 active), Execution time: mean = 42.771 us, total = 2.524 ms, Queueing time: mean = 22.419 us, max = 56.185 us, min = 4.004 us, total = 1.323 ms
+[state-dump] 	NodeManagerService.grpc_server.GetResourceLoad - 59 total (0 active), Execution time: mean = 171.481 us, total = 10.117 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	ObjectManager.ObjectAdded - 22 total (0 active), Execution time: mean = 6.960 us, total = 153.118 us, Queueing time: mean = 6.305 us, max = 15.924 us, min = 3.953 us, total = 138.704 us
+[state-dump] 	ObjectManager.ObjectDeleted - 22 total (0 active), Execution time: mean = 13.620 us, total = 299.644 us, Queueing time: mean = 38.009 us, max = 70.037 us, min = 26.633 us, total = 836.193 us
+[state-dump] 	NodeManagerService.grpc_server.GetSystemConfig.HandleRequestImpl - 22 total (0 active), Execution time: mean = 26.407 us, total = 580.957 us, Queueing time: mean = 49.010 us, max = 646.096 us, min = 4.617 us, total = 1.078 ms
+[state-dump] 	ClientConnection.async_write.DoAsyncWrites - 22 total (0 active), Execution time: mean = 845.864 ns, total = 18.609 us, Queueing time: mean = 26.371 us, max = 63.739 us, min = 17.186 us, total = 580.167 us
+[state-dump] 	NodeManagerService.grpc_server.GetSystemConfig - 22 total (0 active), Execution time: mean = 157.836 us, total = 3.472 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	ClusterResourceManager.ResetRemoteNodeView - 20 total (1 active), Execution time: mean = 5.469 us, total = 109.386 us, Queueing time: mean = 6.672 ms, max = 15.464 ms, min = 647.748 us, total = 133.443 ms
+[state-dump] 	NodeManager.GcsCheckAlive - 12 total (1 active), Execution time: mean = 112.094 us, total = 1.345 ms, Queueing time: mean = 7.787 ms, max = 15.284 ms, min = 1.266 ms, total = 93.443 ms
+[state-dump] 	PeriodicalRunner.RunFnPeriodically - 12 total (0 active), Execution time: mean = 178.158 us, total = 2.138 ms, Queueing time: mean = 3.236 ms, max = 12.983 ms, min = 26.500 us, total = 38.829 ms
+[state-dump] 	NodeInfoGcsService.grpc_client.CheckAlive - 12 total (0 active), Execution time: mean = 433.730 us, total = 5.205 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeInfoGcsService.grpc_client.CheckAlive.OnReplyReceived - 12 total (0 active), Execution time: mean = 16.241 us, total = 194.895 us, Queueing time: mean = 29.606 us, max = 54.370 us, min = 4.931 us, total = 355.275 us
+[state-dump] 	NodeManager.deadline_timer.record_metrics - 12 total (1 active), Execution time: mean = 221.200 us, total = 2.654 ms, Queueing time: mean = 7.715 ms, max = 15.078 ms, min = 1.257 ms, total = 92.584 ms
+[state-dump] 	RaySyncer.BroadcastMessage - 8 total (0 active), Execution time: mean = 100.021 us, total = 800.166 us, Queueing time: mean = 624.750 ns, max = 945.000 ns, min = 377.000 ns, total = 4.998 us
+[state-dump] 	 - 8 total (0 active), Execution time: mean = 152.000 ns, total = 1.216 us, Queueing time: mean = 13.225 us, max = 37.693 us, min = 3.690 us, total = 105.798 us
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberPoll - 6 total (1 active), Execution time: mean = 2.762 s, total = 16.570 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.RequestWorkerLease.HandleRequestImpl - 6 total (0 active), Execution time: mean = 1.307 ms, total = 7.844 ms, Queueing time: mean = 538.114 us, max = 3.172 ms, min = 4.157 us, total = 3.229 ms
+[state-dump] 	NodeManagerService.grpc_server.RequestWorkerLease - 6 total (0 active), Execution time: mean = 560.046 ms, total = 3.360 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManager.deadline_timer.debug_state_dump - 6 total (1 active), Execution time: mean = 954.710 us, total = 5.728 ms, Queueing time: mean = 3.436 ms, max = 6.998 ms, min = 583.080 us, total = 20.617 ms
+[state-dump] 	Subscriber.HandlePublishedMessage_GCS_WORKER_DELTA_CHANNEL - 6 total (0 active), Execution time: mean = 2.458 us, total = 14.746 us, Queueing time: mean = 97.405 us, max = 174.633 us, min = 65.366 us, total = 584.429 us
+[state-dump] 	WorkerInfoGcsService.grpc_client.ReportWorkerFailure.OnReplyReceived - 6 total (0 active), Execution time: mean = 7.699 us, total = 46.195 us, Queueing time: mean = 526.037 us, max = 1.041 ms, min = 57.921 us, total = 3.156 ms
+[state-dump] 	WorkerInfoGcsService.grpc_client.ReportWorkerFailure - 6 total (0 active), Execution time: mean = 858.442 us, total = 5.151 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberPoll.OnReplyReceived - 5 total (0 active), Execution time: mean = 91.979 us, total = 459.896 us, Queueing time: mean = 200.956 us, max = 980.408 us, min = 4.380 us, total = 1.005 ms
+[state-dump] 	CoreWorkerService.grpc_client.Exit - 3 total (0 active), Execution time: mean = 1.003 ms, total = 3.010 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.CancelResourceReserve - 3 total (0 active), Execution time: mean = 682.531 us, total = 2.048 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.CancelResourceReserve.HandleRequestImpl - 3 total (0 active), Execution time: mean = 235.410 us, total = 706.231 us, Queueing time: mean = 381.089 us, max = 615.280 us, min = 6.387 us, total = 1.143 ms
+[state-dump] 	CoreWorkerService.grpc_client.Exit.OnReplyReceived - 3 total (0 active), Execution time: mean = 14.438 us, total = 43.314 us, Queueing time: mean = 4.668 us, max = 5.145 us, min = 4.160 us, total = 14.003 us
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch.OnReplyReceived - 2 total (0 active), Execution time: mean = 83.150 us, total = 166.300 us, Queueing time: mean = 1.074 ms, max = 1.980 ms, min = 167.600 us, total = 2.148 ms
+[state-dump] 	RaySyncerRegister - 2 total (0 active), Execution time: mean = 3.650 us, total = 7.300 us, Queueing time: mean = 1.850 us, max = 3.400 us, min = 300.000 ns, total = 3.700 us
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch - 2 total (0 active), Execution time: mean = 187.250 us, total = 374.500 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.CommitBundleResources.HandleRequestImpl - 1 total (0 active), Execution time: mean = 215.589 us, total = 215.589 us, Queueing time: mean = 4.863 us, max = 4.863 us, min = 4.863 us, total = 4.863 us
+[state-dump] 	NodeManagerService.grpc_server.ReturnWorker.HandleRequestImpl - 1 total (0 active), Execution time: mean = 43.555 us, total = 43.555 us, Queueing time: mean = 5.986 us, max = 5.986 us, min = 5.986 us, total = 5.986 us
+[state-dump] 	NodeManager.deadline_timer.print_event_loop_stats - 1 total (1 active, 1 running), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeInfoGcsService.grpc_client.RegisterNode.OnReplyReceived - 1 total (0 active), Execution time: mean = 210.800 us, total = 210.800 us, Queueing time: mean = 4.700 us, max = 4.700 us, min = 4.700 us, total = 4.700 us
+[state-dump] 	NodeInfoGcsService.grpc_client.GetInternalConfig.OnReplyReceived - 1 total (0 active), Execution time: mean = 19.163 ms, total = 19.163 ms, Queueing time: mean = 7.800 us, max = 7.800 us, min = 7.800 us, total = 7.800 us
+[state-dump] 	NodeInfoGcsService.grpc_client.RegisterNode - 1 total (0 active), Execution time: mean = 544.200 us, total = 544.200 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	JobInfoGcsService.grpc_client.GetAllJobInfo - 1 total (0 active), Execution time: mean = 196.300 us, total = 196.300 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	Subscriber.HandlePublishedMessage_GCS_JOB_CHANNEL - 1 total (0 active), Execution time: mean = 219.346 us, total = 219.346 us, Queueing time: mean = 77.304 us, max = 77.304 us, min = 77.304 us, total = 77.304 us
+[state-dump] 	NodeManagerService.grpc_server.ReturnWorker - 1 total (0 active), Execution time: mean = 140.084 us, total = 140.084 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeInfoGcsService.grpc_client.GetAllNodeInfo - 1 total (0 active), Execution time: mean = 215.300 us, total = 215.300 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.PrepareBundleResources - 1 total (0 active), Execution time: mean = 344.303 us, total = 344.303 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.PrepareBundleResources.HandleRequestImpl - 1 total (0 active), Execution time: mean = 225.409 us, total = 225.409 us, Queueing time: mean = 4.850 us, max = 4.850 us, min = 4.850 us, total = 4.850 us
+[state-dump] 	NodeManagerService.grpc_server.CommitBundleResources - 1 total (0 active), Execution time: mean = 258.241 us, total = 258.241 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeInfoGcsService.grpc_client.GetInternalConfig - 1 total (0 active), Execution time: mean = 330.900 us, total = 330.900 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManager.GCTaskFailureReason - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	JobInfoGcsService.grpc_client.AddJob.OnReplyReceived - 1 total (0 active), Execution time: mean = 37.222 us, total = 37.222 us, Queueing time: mean = 284.083 us, max = 284.083 us, min = 284.083 us, total = 284.083 us
+[state-dump] 	JobInfoGcsService.grpc_client.AddJob - 1 total (0 active), Execution time: mean = 322.999 us, total = 322.999 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeInfoGcsService.grpc_client.GetAllNodeInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 158.600 us, total = 158.600 us, Queueing time: mean = 9.600 us, max = 9.600 us, min = 9.600 us, total = 9.600 us
+[state-dump] 	WorkerPool.PopWorkerCallback - 1 total (0 active), Execution time: mean = 15.003 us, total = 15.003 us, Queueing time: mean = 8.794 us, max = 8.794 us, min = 8.794 us, total = 8.794 us
+[state-dump] 	JobInfoGcsService.grpc_client.GetAllJobInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 9.500 us, total = 9.500 us, Queueing time: mean = 5.000 us, max = 5.000 us, min = 5.000 us, total = 5.000 us
+[state-dump] DebugString() time ms: 1
+[state-dump] 
+[state-dump] 
+[2024-09-05 18:05:16,166 I 20884 20868] (raylet.exe) store.cc:564: ========== Plasma store: =================
+Current usage: 0 / 2.43585 GB
+- num bytes created total: 176
+0 pending objects of total size 0MB
+- objects spillable: 0
+- bytes spillable: 0
+- objects unsealed: 0
+- bytes unsealed: 0
+- objects in use: 0
+- bytes in use: 0
+- objects evictable: 0
+- bytes evictable: 0
+
+- objects created by worker: 0
+- bytes created by worker: 0
+- objects restored: 0
+- bytes restored: 0
+- objects received: 0
+- bytes received: 0
+- objects errored: 0
+- bytes errored: 0
+
+[2024-09-05 18:05:16,197 I 20884 21284] (raylet.exe) node_manager.cc:502: [state-dump] NodeManager:
+[state-dump] Node ID: b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11
+[state-dump] Node name: 127.0.0.1
+[state-dump] InitialConfigResources: {node:__internal_head__: 10000, CPU: 160000, node:127.0.0.1: 10000, memory: 48716906510000, object_store_memory: 24358453240000, accelerator_type:G: 10000, GPU: 10000}
+[state-dump] ClusterTaskManager:
+[state-dump] ========== Node: b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11 =================
+[state-dump] Infeasible queue length: 0
+[state-dump] Schedule queue length: 0
+[state-dump] Dispatch queue length: 0
+[state-dump] num_waiting_for_resource: 0
+[state-dump] num_waiting_for_plasma_memory: 0
+[state-dump] num_waiting_for_remote_node_resources: 0
+[state-dump] num_worker_not_started_by_job_config_not_exist: 0
+[state-dump] num_worker_not_started_by_registration_timeout: 0
+[state-dump] num_tasks_waiting_for_workers: 0
+[state-dump] num_cancelled_tasks: 0
+[state-dump] cluster_resource_scheduler state: 
+[state-dump] Local id: 1345268899905793263 Local resources: {"total":{accelerator_type:G: [10000], GPU: [10000], node:__internal_head__: [10000], node:127.0.0.1: [10000], memory: [48716906510000], object_store_memory: [24358453240000], CPU: [160000]}}, "available": {GPU: [10000], accelerator_type:G: [10000], memory: [48716906510000], object_store_memory: [24358453240000], CPU: [160000], node:__internal_head__: [10000], node:127.0.0.1: [10000]}}, "labels":{"ray.io/node_id":"b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11",} is_draining: 0 is_idle: 0 Cluster resources: node id: 1345268899905793263{"total":{accelerator_type:G: 10000, GPU: 10000, CPU: 160000, node:127.0.0.1: 10000, node:__internal_head__: 10000, object_store_memory: 24358453240000, memory: 48716906510000}}, "available": {memory: 48716906510000, accelerator_type:G: 10000, CPU: 160000, GPU: 10000, node:127.0.0.1: 10000, node:__internal_head__: 10000, object_store_memory: 24358453240000}}, "labels":{"ray.io/node_id":"b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11",}, "is_draining": 0, "draining_deadline_timestamp_ms": -1} { "placment group locations": [], "node to bundles": []}
+[state-dump] Waiting tasks size: 0
+[state-dump] Number of executing tasks: 0
+[state-dump] Number of pinned task arguments: 0
+[state-dump] Number of total spilled tasks: 0
+[state-dump] Number of spilled waiting tasks: 0
+[state-dump] Number of spilled unschedulable tasks: 0
+[state-dump] Resource usage {
+[state-dump]     - (language=PYTHON actor_or_task=_QueueActor.__init__ pid=18344): {}
+[state-dump]     - (language=PYTHON actor_or_task=_WandbLoggingActor.__init__ pid=21316): {}
+[state-dump] }
+[state-dump] Running tasks by scheduling class:
+[state-dump] ==================================================
+[state-dump] 
+[state-dump] ClusterResources:
+[state-dump] LocalObjectManager:
+[state-dump] - num pinned objects: 0
+[state-dump] - pinned objects size: 0
+[state-dump] - num objects pending restore: 0
+[state-dump] - num objects pending spill: 0
+[state-dump] - num bytes pending spill: 0
+[state-dump] - num bytes currently spilled: 0
+[state-dump] - cumulative spill requests: 0
+[state-dump] - cumulative restore requests: 0
+[state-dump] - spilled objects pending delete: 0
+[state-dump] 
+[state-dump] ObjectManager:
+[state-dump] - num local objects: 0
+[state-dump] - num unfulfilled push requests: 0
+[state-dump] - num object pull requests: 0
+[state-dump] - num chunks received total: 0
+[state-dump] - num chunks received failed (all): 0
+[state-dump] - num chunks received failed / cancelled: 0
+[state-dump] - num chunks received failed / plasma error: 0
+[state-dump] Event stats:
+[state-dump] Global stats: 0 total (0 active)
+[state-dump] Queueing time: mean = -nan(ind) s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] Execution time:  mean = -nan(ind) s, total = 0.000 s
+[state-dump] Event stats:
+[state-dump] PushManager:
+[state-dump] - num pushes in flight: 0
+[state-dump] - num chunks in flight: 0
+[state-dump] - num chunks remaining: 0
+[state-dump] - max chunks allowed: 409
+[state-dump] OwnershipBasedObjectDirectory:
+[state-dump] - num listeners: 0
+[state-dump] - cumulative location updates: 0
+[state-dump] - num location updates per second: 0.000
+[state-dump] - num location lookups per second: 0.000
+[state-dump] - num locations added per second: 0.000
+[state-dump] - num locations removed per second: 0.000
+[state-dump] BufferPool:
+[state-dump] - create buffer state map size: 0
+[state-dump] PullManager:
+[state-dump] - num bytes available for pulled objects: 2435845324
+[state-dump] - num bytes being pulled (all): 0
+[state-dump] - num bytes being pulled / pinned: 0
+[state-dump] - get request bundles: BundlePullRequestQueue{0 total, 0 active, 0 inactive, 0 unpullable}
+[state-dump] - wait request bundles: BundlePullRequestQueue{0 total, 0 active, 0 inactive, 0 unpullable}
+[state-dump] - task request bundles: BundlePullRequestQueue{0 total, 0 active, 0 inactive, 0 unpullable}
+[state-dump] - first get request bundle: N/A
+[state-dump] - first wait request bundle: N/A
+[state-dump] - first task request bundle: N/A
+[state-dump] - num objects queued: 0
+[state-dump] - num objects actively pulled (all): 0
+[state-dump] - num objects actively pulled / pinned: 0
+[state-dump] - num bundles being pulled: 0
+[state-dump] - num pull retries: 0
+[state-dump] - max timeout seconds: 0
+[state-dump] - max timeout request is already processed. No entry.
+[state-dump] 
+[state-dump] WorkerPool:
+[state-dump] - registered jobs: 1
+[state-dump] - process_failed_job_config_missing: 0
+[state-dump] - process_failed_rate_limited: 0
+[state-dump] - process_failed_pending_registration: 0
+[state-dump] - process_failed_runtime_env_setup_failed: 0
+[state-dump] - num PYTHON workers: 15
+[state-dump] - num PYTHON drivers: 1
+[state-dump] - num object spill callbacks queued: 0
+[state-dump] - num object restore queued: 0
+[state-dump] - num util functions queued: 0
+[state-dump] - num idle workers: 13
+[state-dump] TaskDependencyManager:
+[state-dump] - task deps map size: 0
+[state-dump] - get req map size: 0
+[state-dump] - wait req map size: 0
+[state-dump] - local objects map size: 0
+[state-dump] WaitManager:
+[state-dump] - num active wait requests: 0
+[state-dump] Subscriber:
+[state-dump] Channel WORKER_OBJECT_LOCATIONS_CHANNEL
+[state-dump] - cumulative subscribe requests: 0
+[state-dump] - cumulative unsubscribe requests: 0
+[state-dump] - active subscribed publishers: 0
+[state-dump] - cumulative published messages: 0
+[state-dump] - cumulative processed messages: 0
+[state-dump] Channel WORKER_REF_REMOVED_CHANNEL
+[state-dump] - cumulative subscribe requests: 0
+[state-dump] - cumulative unsubscribe requests: 0
+[state-dump] - active subscribed publishers: 0
+[state-dump] - cumulative published messages: 0
+[state-dump] - cumulative processed messages: 0
+[state-dump] Channel WORKER_OBJECT_EVICTION
+[state-dump] - cumulative subscribe requests: 0
+[state-dump] - cumulative unsubscribe requests: 0
+[state-dump] - active subscribed publishers: 0
+[state-dump] - cumulative published messages: 0
+[state-dump] - cumulative processed messages: 0
+[state-dump] num async plasma notifications: 0
+[state-dump] Remote node managers: 
+[state-dump] Event stats:
+[state-dump] Global stats: 8905 total (29 active)
+[state-dump] Queueing time: mean = 10.300 ms, max = 14.637 s, min = -0.000 s, total = 91.718 s
+[state-dump] Execution time:  mean = 2.289 ms, total = 20.381 s
+[state-dump] Event stats:
+[state-dump] 	NodeManagerService.grpc_server.ReportWorkerBacklog.HandleRequestImpl - 1905 total (0 active), Execution time: mean = 9.539 us, total = 18.172 ms, Queueing time: mean = 23.374 us, max = 98.888 us, min = 1.369 us, total = 44.527 ms
+[state-dump] 	NodeManagerService.grpc_server.ReportWorkerBacklog - 1905 total (0 active), Execution time: mean = 117.886 us, total = 224.573 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManager.CheckGC - 1107 total (1 active), Execution time: mean = 2.457 us, total = 2.720 ms, Queueing time: mean = 8.499 ms, max = 58.727 ms, min = 4.687 ms, total = 9.408 s
+[state-dump] 	RaySyncer.OnDemandBroadcasting - 1107 total (1 active), Execution time: mean = 6.999 us, total = 7.748 ms, Queueing time: mean = 8.495 ms, max = 58.722 ms, min = 4.687 ms, total = 9.404 s
+[state-dump] 	ObjectManager.UpdateAvailableMemory - 1106 total (0 active), Execution time: mean = 2.375 us, total = 2.627 ms, Queueing time: mean = 30.214 us, max = 1.173 ms, min = 1.738 us, total = 33.417 ms
+[state-dump] 	RayletWorkerPool.deadline_timer.kill_idle_workers - 584 total (1 active), Execution time: mean = 11.849 us, total = 6.920 ms, Queueing time: mean = 5.648 ms, max = 15.573 ms, min = 15.673 us, total = 3.299 s
+[state-dump] 	ClientConnection.async_read.ProcessMessageHeader - 123 total (16 active), Execution time: mean = 6.423 us, total = 789.995 us, Queueing time: mean = 534.672 ms, max = 14.637 s, min = 22.372 us, total = 65.765 s
+[state-dump] 	NodeManager.deadline_timer.flush_free_objects - 120 total (1 active), Execution time: mean = 3.914 us, total = 469.676 us, Queueing time: mean = 8.164 ms, max = 15.557 ms, min = -0.000 s, total = 979.633 ms
+[state-dump] 	NodeManager.deadline_timer.spill_objects_when_over_threshold - 120 total (1 active), Execution time: mean = 3.122 us, total = 374.668 us, Queueing time: mean = 8.164 ms, max = 15.551 ms, min = -0.000 s, total = 979.738 ms
+[state-dump] 	NodeManager.ScheduleAndDispatchTasks - 120 total (1 active), Execution time: mean = 6.146 us, total = 737.499 us, Queueing time: mean = 8.178 ms, max = 15.545 ms, min = -0.000 s, total = 981.420 ms
+[state-dump] 	NodeManagerService.grpc_server.GetResourceLoad.HandleRequestImpl - 119 total (0 active), Execution time: mean = 40.309 us, total = 4.797 ms, Queueing time: mean = 26.450 us, max = 56.185 us, min = 4.004 us, total = 3.148 ms
+[state-dump] 	NodeManagerService.grpc_server.GetResourceLoad - 119 total (0 active), Execution time: mean = 180.015 us, total = 21.422 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	ClientConnection.async_read.ProcessMessage - 104 total (0 active), Execution time: mean = 747.508 us, total = 77.741 ms, Queueing time: mean = 4.084 us, max = 64.894 us, min = 1.472 us, total = 424.777 us
+[state-dump] 	ClusterResourceManager.ResetRemoteNodeView - 40 total (1 active), Execution time: mean = 4.796 us, total = 191.835 us, Queueing time: mean = 6.650 ms, max = 15.464 ms, min = 65.650 us, total = 266.009 ms
+[state-dump] 	NodeInfoGcsService.grpc_client.CheckAlive.OnReplyReceived - 24 total (0 active), Execution time: mean = 15.792 us, total = 378.997 us, Queueing time: mean = 29.845 us, max = 54.370 us, min = 4.931 us, total = 716.277 us
+[state-dump] 	NodeInfoGcsService.grpc_client.CheckAlive - 24 total (0 active), Execution time: mean = 436.711 us, total = 10.481 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManager.deadline_timer.record_metrics - 24 total (1 active), Execution time: mean = 210.962 us, total = 5.063 ms, Queueing time: mean = 8.524 ms, max = 15.078 ms, min = 1.257 ms, total = 204.567 ms
+[state-dump] 	NodeManager.GcsCheckAlive - 24 total (1 active), Execution time: mean = 115.749 us, total = 2.778 ms, Queueing time: mean = 8.588 ms, max = 15.284 ms, min = 1.266 ms, total = 206.124 ms
+[state-dump] 	ObjectManager.ObjectAdded - 22 total (0 active), Execution time: mean = 6.960 us, total = 153.118 us, Queueing time: mean = 6.305 us, max = 15.924 us, min = 3.953 us, total = 138.704 us
+[state-dump] 	NodeManagerService.grpc_server.GetSystemConfig - 22 total (0 active), Execution time: mean = 157.836 us, total = 3.472 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	ObjectManager.ObjectDeleted - 22 total (0 active), Execution time: mean = 13.620 us, total = 299.644 us, Queueing time: mean = 38.009 us, max = 70.037 us, min = 26.633 us, total = 836.193 us
+[state-dump] 	NodeManagerService.grpc_server.GetSystemConfig.HandleRequestImpl - 22 total (0 active), Execution time: mean = 26.407 us, total = 580.957 us, Queueing time: mean = 49.010 us, max = 646.096 us, min = 4.617 us, total = 1.078 ms
+[state-dump] 	ClientConnection.async_write.DoAsyncWrites - 22 total (0 active), Execution time: mean = 845.864 ns, total = 18.609 us, Queueing time: mean = 26.371 us, max = 63.739 us, min = 17.186 us, total = 580.167 us
+[state-dump] 	PeriodicalRunner.RunFnPeriodically - 12 total (0 active), Execution time: mean = 178.158 us, total = 2.138 ms, Queueing time: mean = 3.236 ms, max = 12.983 ms, min = 26.500 us, total = 38.829 ms
+[state-dump] 	NodeManager.deadline_timer.debug_state_dump - 12 total (1 active), Execution time: mean = 946.600 us, total = 11.359 ms, Queueing time: mean = 6.232 ms, max = 14.006 ms, min = 583.080 us, total = 74.788 ms
+[state-dump] 	RaySyncer.BroadcastMessage - 8 total (0 active), Execution time: mean = 100.021 us, total = 800.166 us, Queueing time: mean = 624.750 ns, max = 945.000 ns, min = 377.000 ns, total = 4.998 us
+[state-dump] 	 - 8 total (0 active), Execution time: mean = 152.000 ns, total = 1.216 us, Queueing time: mean = 13.225 us, max = 37.693 us, min = 3.690 us, total = 105.798 us
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberPoll - 6 total (1 active), Execution time: mean = 2.762 s, total = 16.570 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.RequestWorkerLease.HandleRequestImpl - 6 total (0 active), Execution time: mean = 1.307 ms, total = 7.844 ms, Queueing time: mean = 538.114 us, max = 3.172 ms, min = 4.157 us, total = 3.229 ms
+[state-dump] 	NodeManagerService.grpc_server.RequestWorkerLease - 6 total (0 active), Execution time: mean = 560.046 ms, total = 3.360 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	Subscriber.HandlePublishedMessage_GCS_WORKER_DELTA_CHANNEL - 6 total (0 active), Execution time: mean = 2.458 us, total = 14.746 us, Queueing time: mean = 97.405 us, max = 174.633 us, min = 65.366 us, total = 584.429 us
+[state-dump] 	WorkerInfoGcsService.grpc_client.ReportWorkerFailure.OnReplyReceived - 6 total (0 active), Execution time: mean = 7.699 us, total = 46.195 us, Queueing time: mean = 526.037 us, max = 1.041 ms, min = 57.921 us, total = 3.156 ms
+[state-dump] 	WorkerInfoGcsService.grpc_client.ReportWorkerFailure - 6 total (0 active), Execution time: mean = 858.442 us, total = 5.151 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberPoll.OnReplyReceived - 5 total (0 active), Execution time: mean = 91.979 us, total = 459.896 us, Queueing time: mean = 200.956 us, max = 980.408 us, min = 4.380 us, total = 1.005 ms
+[state-dump] 	CoreWorkerService.grpc_client.Exit - 3 total (0 active), Execution time: mean = 1.003 ms, total = 3.010 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.CancelResourceReserve - 3 total (0 active), Execution time: mean = 682.531 us, total = 2.048 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.CancelResourceReserve.HandleRequestImpl - 3 total (0 active), Execution time: mean = 235.410 us, total = 706.231 us, Queueing time: mean = 381.089 us, max = 615.280 us, min = 6.387 us, total = 1.143 ms
+[state-dump] 	CoreWorkerService.grpc_client.Exit.OnReplyReceived - 3 total (0 active), Execution time: mean = 14.438 us, total = 43.314 us, Queueing time: mean = 4.668 us, max = 5.145 us, min = 4.160 us, total = 14.003 us
+[state-dump] 	NodeManager.deadline_timer.print_event_loop_stats - 2 total (1 active, 1 running), Execution time: mean = 552.394 us, total = 1.105 ms, Queueing time: mean = 7.382 ms, max = 14.765 ms, min = 14.765 ms, total = 14.765 ms
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch.OnReplyReceived - 2 total (0 active), Execution time: mean = 83.150 us, total = 166.300 us, Queueing time: mean = 1.074 ms, max = 1.980 ms, min = 167.600 us, total = 2.148 ms
+[state-dump] 	RaySyncerRegister - 2 total (0 active), Execution time: mean = 3.650 us, total = 7.300 us, Queueing time: mean = 1.850 us, max = 3.400 us, min = 300.000 ns, total = 3.700 us
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch - 2 total (0 active), Execution time: mean = 187.250 us, total = 374.500 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.CommitBundleResources.HandleRequestImpl - 1 total (0 active), Execution time: mean = 215.589 us, total = 215.589 us, Queueing time: mean = 4.863 us, max = 4.863 us, min = 4.863 us, total = 4.863 us
+[state-dump] 	NodeManagerService.grpc_server.ReturnWorker.HandleRequestImpl - 1 total (0 active), Execution time: mean = 43.555 us, total = 43.555 us, Queueing time: mean = 5.986 us, max = 5.986 us, min = 5.986 us, total = 5.986 us
+[state-dump] 	NodeInfoGcsService.grpc_client.RegisterNode.OnReplyReceived - 1 total (0 active), Execution time: mean = 210.800 us, total = 210.800 us, Queueing time: mean = 4.700 us, max = 4.700 us, min = 4.700 us, total = 4.700 us
+[state-dump] 	NodeInfoGcsService.grpc_client.GetInternalConfig.OnReplyReceived - 1 total (0 active), Execution time: mean = 19.163 ms, total = 19.163 ms, Queueing time: mean = 7.800 us, max = 7.800 us, min = 7.800 us, total = 7.800 us
+[state-dump] 	NodeInfoGcsService.grpc_client.RegisterNode - 1 total (0 active), Execution time: mean = 544.200 us, total = 544.200 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	JobInfoGcsService.grpc_client.GetAllJobInfo - 1 total (0 active), Execution time: mean = 196.300 us, total = 196.300 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	Subscriber.HandlePublishedMessage_GCS_JOB_CHANNEL - 1 total (0 active), Execution time: mean = 219.346 us, total = 219.346 us, Queueing time: mean = 77.304 us, max = 77.304 us, min = 77.304 us, total = 77.304 us
+[state-dump] 	NodeManagerService.grpc_server.ReturnWorker - 1 total (0 active), Execution time: mean = 140.084 us, total = 140.084 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeInfoGcsService.grpc_client.GetAllNodeInfo - 1 total (0 active), Execution time: mean = 215.300 us, total = 215.300 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.PrepareBundleResources - 1 total (0 active), Execution time: mean = 344.303 us, total = 344.303 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.PrepareBundleResources.HandleRequestImpl - 1 total (0 active), Execution time: mean = 225.409 us, total = 225.409 us, Queueing time: mean = 4.850 us, max = 4.850 us, min = 4.850 us, total = 4.850 us
+[state-dump] 	NodeManagerService.grpc_server.CommitBundleResources - 1 total (0 active), Execution time: mean = 258.241 us, total = 258.241 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeInfoGcsService.grpc_client.GetInternalConfig - 1 total (0 active), Execution time: mean = 330.900 us, total = 330.900 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManager.GCTaskFailureReason - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	JobInfoGcsService.grpc_client.AddJob.OnReplyReceived - 1 total (0 active), Execution time: mean = 37.222 us, total = 37.222 us, Queueing time: mean = 284.083 us, max = 284.083 us, min = 284.083 us, total = 284.083 us
+[state-dump] 	JobInfoGcsService.grpc_client.AddJob - 1 total (0 active), Execution time: mean = 322.999 us, total = 322.999 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeInfoGcsService.grpc_client.GetAllNodeInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 158.600 us, total = 158.600 us, Queueing time: mean = 9.600 us, max = 9.600 us, min = 9.600 us, total = 9.600 us
+[state-dump] 	WorkerPool.PopWorkerCallback - 1 total (0 active), Execution time: mean = 15.003 us, total = 15.003 us, Queueing time: mean = 8.794 us, max = 8.794 us, min = 8.794 us, total = 8.794 us
+[state-dump] 	JobInfoGcsService.grpc_client.GetAllJobInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 9.500 us, total = 9.500 us, Queueing time: mean = 5.000 us, max = 5.000 us, min = 5.000 us, total = 5.000 us
+[state-dump] DebugString() time ms: 1
+[state-dump] 
+[state-dump] 
+[2024-09-05 18:06:16,167 I 20884 20868] (raylet.exe) store.cc:564: ========== Plasma store: =================
+Current usage: 0 / 2.43585 GB
+- num bytes created total: 176
+0 pending objects of total size 0MB
+- objects spillable: 0
+- bytes spillable: 0
+- objects unsealed: 0
+- bytes unsealed: 0
+- objects in use: 0
+- bytes in use: 0
+- objects evictable: 0
+- bytes evictable: 0
+
+- objects created by worker: 0
+- bytes created by worker: 0
+- objects restored: 0
+- bytes restored: 0
+- objects received: 0
+- bytes received: 0
+- objects errored: 0
+- bytes errored: 0
+
+[2024-09-05 18:06:16,198 I 20884 21284] (raylet.exe) node_manager.cc:502: [state-dump] NodeManager:
+[state-dump] Node ID: b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11
+[state-dump] Node name: 127.0.0.1
+[state-dump] InitialConfigResources: {node:__internal_head__: 10000, CPU: 160000, node:127.0.0.1: 10000, memory: 48716906510000, object_store_memory: 24358453240000, accelerator_type:G: 10000, GPU: 10000}
+[state-dump] ClusterTaskManager:
+[state-dump] ========== Node: b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11 =================
+[state-dump] Infeasible queue length: 0
+[state-dump] Schedule queue length: 0
+[state-dump] Dispatch queue length: 0
+[state-dump] num_waiting_for_resource: 0
+[state-dump] num_waiting_for_plasma_memory: 0
+[state-dump] num_waiting_for_remote_node_resources: 0
+[state-dump] num_worker_not_started_by_job_config_not_exist: 0
+[state-dump] num_worker_not_started_by_registration_timeout: 0
+[state-dump] num_tasks_waiting_for_workers: 0
+[state-dump] num_cancelled_tasks: 0
+[state-dump] cluster_resource_scheduler state: 
+[state-dump] Local id: 1345268899905793263 Local resources: {"total":{accelerator_type:G: [10000], GPU: [10000], node:__internal_head__: [10000], node:127.0.0.1: [10000], memory: [48716906510000], object_store_memory: [24358453240000], CPU: [160000]}}, "available": {GPU: [10000], accelerator_type:G: [10000], memory: [48716906510000], object_store_memory: [24358453240000], CPU: [160000], node:__internal_head__: [10000], node:127.0.0.1: [10000]}}, "labels":{"ray.io/node_id":"b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11",} is_draining: 0 is_idle: 0 Cluster resources: node id: 1345268899905793263{"total":{accelerator_type:G: 10000, GPU: 10000, CPU: 160000, node:127.0.0.1: 10000, node:__internal_head__: 10000, object_store_memory: 24358453240000, memory: 48716906510000}}, "available": {memory: 48716906510000, accelerator_type:G: 10000, CPU: 160000, GPU: 10000, node:127.0.0.1: 10000, node:__internal_head__: 10000, object_store_memory: 24358453240000}}, "labels":{"ray.io/node_id":"b77ac263dbe1e2e5e6a35bc25e20e21264a0db33f170f24cb9fc3a11",}, "is_draining": 0, "draining_deadline_timestamp_ms": -1} { "placment group locations": [], "node to bundles": []}
+[state-dump] Waiting tasks size: 0
+[state-dump] Number of executing tasks: 0
+[state-dump] Number of pinned task arguments: 0
+[state-dump] Number of total spilled tasks: 0
+[state-dump] Number of spilled waiting tasks: 0
+[state-dump] Number of spilled unschedulable tasks: 0
+[state-dump] Resource usage {
+[state-dump]     - (language=PYTHON actor_or_task=_QueueActor.__init__ pid=18344): {}
+[state-dump]     - (language=PYTHON actor_or_task=_WandbLoggingActor.__init__ pid=21316): {}
+[state-dump] }
+[state-dump] Running tasks by scheduling class:
+[state-dump] ==================================================
+[state-dump] 
+[state-dump] ClusterResources:
+[state-dump] LocalObjectManager:
+[state-dump] - num pinned objects: 0
+[state-dump] - pinned objects size: 0
+[state-dump] - num objects pending restore: 0
+[state-dump] - num objects pending spill: 0
+[state-dump] - num bytes pending spill: 0
+[state-dump] - num bytes currently spilled: 0
+[state-dump] - cumulative spill requests: 0
+[state-dump] - cumulative restore requests: 0
+[state-dump] - spilled objects pending delete: 0
+[state-dump] 
+[state-dump] ObjectManager:
+[state-dump] - num local objects: 0
+[state-dump] - num unfulfilled push requests: 0
+[state-dump] - num object pull requests: 0
+[state-dump] - num chunks received total: 0
+[state-dump] - num chunks received failed (all): 0
+[state-dump] - num chunks received failed / cancelled: 0
+[state-dump] - num chunks received failed / plasma error: 0
+[state-dump] Event stats:
+[state-dump] Global stats: 0 total (0 active)
+[state-dump] Queueing time: mean = -nan(ind) s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] Execution time:  mean = -nan(ind) s, total = 0.000 s
+[state-dump] Event stats:
+[state-dump] PushManager:
+[state-dump] - num pushes in flight: 0
+[state-dump] - num chunks in flight: 0
+[state-dump] - num chunks remaining: 0
+[state-dump] - max chunks allowed: 409
+[state-dump] OwnershipBasedObjectDirectory:
+[state-dump] - num listeners: 0
+[state-dump] - cumulative location updates: 0
+[state-dump] - num location updates per second: 0.000
+[state-dump] - num location lookups per second: 0.000
+[state-dump] - num locations added per second: 0.000
+[state-dump] - num locations removed per second: 0.000
+[state-dump] BufferPool:
+[state-dump] - create buffer state map size: 0
+[state-dump] PullManager:
+[state-dump] - num bytes available for pulled objects: 2435845324
+[state-dump] - num bytes being pulled (all): 0
+[state-dump] - num bytes being pulled / pinned: 0
+[state-dump] - get request bundles: BundlePullRequestQueue{0 total, 0 active, 0 inactive, 0 unpullable}
+[state-dump] - wait request bundles: BundlePullRequestQueue{0 total, 0 active, 0 inactive, 0 unpullable}
+[state-dump] - task request bundles: BundlePullRequestQueue{0 total, 0 active, 0 inactive, 0 unpullable}
+[state-dump] - first get request bundle: N/A
+[state-dump] - first wait request bundle: N/A
+[state-dump] - first task request bundle: N/A
+[state-dump] - num objects queued: 0
+[state-dump] - num objects actively pulled (all): 0
+[state-dump] - num objects actively pulled / pinned: 0
+[state-dump] - num bundles being pulled: 0
+[state-dump] - num pull retries: 0
+[state-dump] - max timeout seconds: 0
+[state-dump] - max timeout request is already processed. No entry.
+[state-dump] 
+[state-dump] WorkerPool:
+[state-dump] - registered jobs: 1
+[state-dump] - process_failed_job_config_missing: 0
+[state-dump] - process_failed_rate_limited: 0
+[state-dump] - process_failed_pending_registration: 0
+[state-dump] - process_failed_runtime_env_setup_failed: 0
+[state-dump] - num PYTHON workers: 15
+[state-dump] - num PYTHON drivers: 1
+[state-dump] - num object spill callbacks queued: 0
+[state-dump] - num object restore queued: 0
+[state-dump] - num util functions queued: 0
+[state-dump] - num idle workers: 13
+[state-dump] TaskDependencyManager:
+[state-dump] - task deps map size: 0
+[state-dump] - get req map size: 0
+[state-dump] - wait req map size: 0
+[state-dump] - local objects map size: 0
+[state-dump] WaitManager:
+[state-dump] - num active wait requests: 0
+[state-dump] Subscriber:
+[state-dump] Channel WORKER_OBJECT_LOCATIONS_CHANNEL
+[state-dump] - cumulative subscribe requests: 0
+[state-dump] - cumulative unsubscribe requests: 0
+[state-dump] - active subscribed publishers: 0
+[state-dump] - cumulative published messages: 0
+[state-dump] - cumulative processed messages: 0
+[state-dump] Channel WORKER_REF_REMOVED_CHANNEL
+[state-dump] - cumulative subscribe requests: 0
+[state-dump] - cumulative unsubscribe requests: 0
+[state-dump] - active subscribed publishers: 0
+[state-dump] - cumulative published messages: 0
+[state-dump] - cumulative processed messages: 0
+[state-dump] Channel WORKER_OBJECT_EVICTION
+[state-dump] - cumulative subscribe requests: 0
+[state-dump] - cumulative unsubscribe requests: 0
+[state-dump] - active subscribed publishers: 0
+[state-dump] - cumulative published messages: 0
+[state-dump] - cumulative processed messages: 0
+[state-dump] num async plasma notifications: 0
+[state-dump] Remote node managers: 
+[state-dump] Event stats:
+[state-dump] Global stats: 13139 total (29 active)
+[state-dump] Queueing time: mean = 7.939 ms, max = 14.637 s, min = -0.000 s, total = 104.317 s
+[state-dump] Execution time:  mean = 1.563 ms, total = 20.540 s
+[state-dump] Event stats:
+[state-dump] 	NodeManagerService.grpc_server.ReportWorkerBacklog.HandleRequestImpl - 2860 total (0 active), Execution time: mean = 9.520 us, total = 27.228 ms, Queueing time: mean = 23.527 us, max = 186.707 us, min = 1.262 us, total = 67.287 ms
+[state-dump] 	NodeManagerService.grpc_server.ReportWorkerBacklog - 2860 total (0 active), Execution time: mean = 117.108 us, total = 334.930 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManager.CheckGC - 1661 total (1 active), Execution time: mean = 2.597 us, total = 4.313 ms, Queueing time: mean = 8.397 ms, max = 58.727 ms, min = 4.553 ms, total = 13.947 s
+[state-dump] 	RaySyncer.OnDemandBroadcasting - 1661 total (1 active), Execution time: mean = 6.913 us, total = 11.483 ms, Queueing time: mean = 8.393 ms, max = 58.722 ms, min = 4.540 ms, total = 13.940 s
+[state-dump] 	ObjectManager.UpdateAvailableMemory - 1660 total (0 active), Execution time: mean = 2.451 us, total = 4.069 ms, Queueing time: mean = 29.135 us, max = 1.173 ms, min = 1.738 us, total = 48.364 ms
+[state-dump] 	RayletWorkerPool.deadline_timer.kill_idle_workers - 876 total (1 active), Execution time: mean = 11.689 us, total = 10.239 ms, Queueing time: mean = 5.679 ms, max = 15.573 ms, min = 15.673 us, total = 4.975 s
+[state-dump] 	NodeManager.deadline_timer.flush_free_objects - 179 total (1 active), Execution time: mean = 4.011 us, total = 717.984 us, Queueing time: mean = 8.113 ms, max = 15.557 ms, min = -0.000 s, total = 1.452 s
+[state-dump] 	NodeManager.deadline_timer.spill_objects_when_over_threshold - 179 total (1 active), Execution time: mean = 3.278 us, total = 586.749 us, Queueing time: mean = 8.114 ms, max = 15.551 ms, min = -0.000 s, total = 1.452 s
+[state-dump] 	NodeManager.ScheduleAndDispatchTasks - 179 total (1 active), Execution time: mean = 6.500 us, total = 1.163 ms, Queueing time: mean = 8.122 ms, max = 15.545 ms, min = -0.000 s, total = 1.454 s
+[state-dump] 	NodeManagerService.grpc_server.GetResourceLoad.HandleRequestImpl - 178 total (0 active), Execution time: mean = 38.976 us, total = 6.938 ms, Queueing time: mean = 26.482 us, max = 60.891 us, min = 4.004 us, total = 4.714 ms
+[state-dump] 	NodeManagerService.grpc_server.GetResourceLoad - 178 total (0 active), Execution time: mean = 178.144 us, total = 31.710 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	ClientConnection.async_read.ProcessMessageHeader - 123 total (16 active), Execution time: mean = 6.423 us, total = 789.995 us, Queueing time: mean = 534.672 ms, max = 14.637 s, min = 22.372 us, total = 65.765 s
+[state-dump] 	ClientConnection.async_read.ProcessMessage - 104 total (0 active), Execution time: mean = 747.508 us, total = 77.741 ms, Queueing time: mean = 4.084 us, max = 64.894 us, min = 1.472 us, total = 424.777 us
+[state-dump] 	ClusterResourceManager.ResetRemoteNodeView - 60 total (1 active), Execution time: mean = 5.052 us, total = 303.114 us, Queueing time: mean = 7.364 ms, max = 15.464 ms, min = 65.650 us, total = 441.826 ms
+[state-dump] 	NodeInfoGcsService.grpc_client.CheckAlive.OnReplyReceived - 36 total (0 active), Execution time: mean = 16.323 us, total = 587.639 us, Queueing time: mean = 27.635 us, max = 54.370 us, min = 4.785 us, total = 994.860 us
+[state-dump] 	NodeInfoGcsService.grpc_client.CheckAlive - 36 total (0 active), Execution time: mean = 428.978 us, total = 15.443 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManager.deadline_timer.record_metrics - 36 total (1 active), Execution time: mean = 217.873 us, total = 7.843 ms, Queueing time: mean = 7.982 ms, max = 15.078 ms, min = 1.257 ms, total = 287.340 ms
+[state-dump] 	NodeManager.GcsCheckAlive - 36 total (1 active), Execution time: mean = 111.331 us, total = 4.008 ms, Queueing time: mean = 8.075 ms, max = 15.284 ms, min = 1.266 ms, total = 290.714 ms
+[state-dump] 	ObjectManager.ObjectAdded - 22 total (0 active), Execution time: mean = 6.960 us, total = 153.118 us, Queueing time: mean = 6.305 us, max = 15.924 us, min = 3.953 us, total = 138.704 us
+[state-dump] 	NodeManagerService.grpc_server.GetSystemConfig - 22 total (0 active), Execution time: mean = 157.836 us, total = 3.472 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	ObjectManager.ObjectDeleted - 22 total (0 active), Execution time: mean = 13.620 us, total = 299.644 us, Queueing time: mean = 38.009 us, max = 70.037 us, min = 26.633 us, total = 836.193 us
+[state-dump] 	NodeManagerService.grpc_server.GetSystemConfig.HandleRequestImpl - 22 total (0 active), Execution time: mean = 26.407 us, total = 580.957 us, Queueing time: mean = 49.010 us, max = 646.096 us, min = 4.617 us, total = 1.078 ms
+[state-dump] 	ClientConnection.async_write.DoAsyncWrites - 22 total (0 active), Execution time: mean = 845.864 ns, total = 18.609 us, Queueing time: mean = 26.371 us, max = 63.739 us, min = 17.186 us, total = 580.167 us
+[state-dump] 	NodeManager.deadline_timer.debug_state_dump - 18 total (1 active), Execution time: mean = 950.254 us, total = 17.105 ms, Queueing time: mean = 6.270 ms, max = 14.006 ms, min = 583.080 us, total = 112.868 ms
+[state-dump] 	PeriodicalRunner.RunFnPeriodically - 12 total (0 active), Execution time: mean = 178.158 us, total = 2.138 ms, Queueing time: mean = 3.236 ms, max = 12.983 ms, min = 26.500 us, total = 38.829 ms
+[state-dump] 	RaySyncer.BroadcastMessage - 8 total (0 active), Execution time: mean = 100.021 us, total = 800.166 us, Queueing time: mean = 624.750 ns, max = 945.000 ns, min = 377.000 ns, total = 4.998 us
+[state-dump] 	 - 8 total (0 active), Execution time: mean = 152.000 ns, total = 1.216 us, Queueing time: mean = 13.225 us, max = 37.693 us, min = 3.690 us, total = 105.798 us
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberPoll - 6 total (1 active), Execution time: mean = 2.762 s, total = 16.570 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.RequestWorkerLease.HandleRequestImpl - 6 total (0 active), Execution time: mean = 1.307 ms, total = 7.844 ms, Queueing time: mean = 538.114 us, max = 3.172 ms, min = 4.157 us, total = 3.229 ms
+[state-dump] 	NodeManagerService.grpc_server.RequestWorkerLease - 6 total (0 active), Execution time: mean = 560.046 ms, total = 3.360 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	Subscriber.HandlePublishedMessage_GCS_WORKER_DELTA_CHANNEL - 6 total (0 active), Execution time: mean = 2.458 us, total = 14.746 us, Queueing time: mean = 97.405 us, max = 174.633 us, min = 65.366 us, total = 584.429 us
+[state-dump] 	WorkerInfoGcsService.grpc_client.ReportWorkerFailure.OnReplyReceived - 6 total (0 active), Execution time: mean = 7.699 us, total = 46.195 us, Queueing time: mean = 526.037 us, max = 1.041 ms, min = 57.921 us, total = 3.156 ms
+[state-dump] 	WorkerInfoGcsService.grpc_client.ReportWorkerFailure - 6 total (0 active), Execution time: mean = 858.442 us, total = 5.151 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberPoll.OnReplyReceived - 5 total (0 active), Execution time: mean = 91.979 us, total = 459.896 us, Queueing time: mean = 200.956 us, max = 980.408 us, min = 4.380 us, total = 1.005 ms
+[state-dump] 	NodeManager.deadline_timer.print_event_loop_stats - 3 total (1 active, 1 running), Execution time: mean = 720.753 us, total = 2.162 ms, Queueing time: mean = 8.204 ms, max = 14.765 ms, min = 9.847 ms, total = 24.611 ms
+[state-dump] 	CoreWorkerService.grpc_client.Exit - 3 total (0 active), Execution time: mean = 1.003 ms, total = 3.010 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.CancelResourceReserve - 3 total (0 active), Execution time: mean = 682.531 us, total = 2.048 ms, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.CancelResourceReserve.HandleRequestImpl - 3 total (0 active), Execution time: mean = 235.410 us, total = 706.231 us, Queueing time: mean = 381.089 us, max = 615.280 us, min = 6.387 us, total = 1.143 ms
+[state-dump] 	CoreWorkerService.grpc_client.Exit.OnReplyReceived - 3 total (0 active), Execution time: mean = 14.438 us, total = 43.314 us, Queueing time: mean = 4.668 us, max = 5.145 us, min = 4.160 us, total = 14.003 us
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch.OnReplyReceived - 2 total (0 active), Execution time: mean = 83.150 us, total = 166.300 us, Queueing time: mean = 1.074 ms, max = 1.980 ms, min = 167.600 us, total = 2.148 ms
+[state-dump] 	RaySyncerRegister - 2 total (0 active), Execution time: mean = 3.650 us, total = 7.300 us, Queueing time: mean = 1.850 us, max = 3.400 us, min = 300.000 ns, total = 3.700 us
+[state-dump] 	InternalPubSubGcsService.grpc_client.GcsSubscriberCommandBatch - 2 total (0 active), Execution time: mean = 187.250 us, total = 374.500 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.CommitBundleResources.HandleRequestImpl - 1 total (0 active), Execution time: mean = 215.589 us, total = 215.589 us, Queueing time: mean = 4.863 us, max = 4.863 us, min = 4.863 us, total = 4.863 us
+[state-dump] 	NodeManagerService.grpc_server.ReturnWorker.HandleRequestImpl - 1 total (0 active), Execution time: mean = 43.555 us, total = 43.555 us, Queueing time: mean = 5.986 us, max = 5.986 us, min = 5.986 us, total = 5.986 us
+[state-dump] 	NodeInfoGcsService.grpc_client.RegisterNode.OnReplyReceived - 1 total (0 active), Execution time: mean = 210.800 us, total = 210.800 us, Queueing time: mean = 4.700 us, max = 4.700 us, min = 4.700 us, total = 4.700 us
+[state-dump] 	NodeInfoGcsService.grpc_client.GetInternalConfig.OnReplyReceived - 1 total (0 active), Execution time: mean = 19.163 ms, total = 19.163 ms, Queueing time: mean = 7.800 us, max = 7.800 us, min = 7.800 us, total = 7.800 us
+[state-dump] 	NodeInfoGcsService.grpc_client.RegisterNode - 1 total (0 active), Execution time: mean = 544.200 us, total = 544.200 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	JobInfoGcsService.grpc_client.GetAllJobInfo - 1 total (0 active), Execution time: mean = 196.300 us, total = 196.300 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	Subscriber.HandlePublishedMessage_GCS_JOB_CHANNEL - 1 total (0 active), Execution time: mean = 219.346 us, total = 219.346 us, Queueing time: mean = 77.304 us, max = 77.304 us, min = 77.304 us, total = 77.304 us
+[state-dump] 	NodeManagerService.grpc_server.ReturnWorker - 1 total (0 active), Execution time: mean = 140.084 us, total = 140.084 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeInfoGcsService.grpc_client.GetAllNodeInfo - 1 total (0 active), Execution time: mean = 215.300 us, total = 215.300 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.PrepareBundleResources - 1 total (0 active), Execution time: mean = 344.303 us, total = 344.303 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManagerService.grpc_server.PrepareBundleResources.HandleRequestImpl - 1 total (0 active), Execution time: mean = 225.409 us, total = 225.409 us, Queueing time: mean = 4.850 us, max = 4.850 us, min = 4.850 us, total = 4.850 us
+[state-dump] 	NodeManagerService.grpc_server.CommitBundleResources - 1 total (0 active), Execution time: mean = 258.241 us, total = 258.241 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeInfoGcsService.grpc_client.GetInternalConfig - 1 total (0 active), Execution time: mean = 330.900 us, total = 330.900 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeManager.GCTaskFailureReason - 1 total (1 active), Execution time: mean = 0.000 s, total = 0.000 s, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	JobInfoGcsService.grpc_client.AddJob.OnReplyReceived - 1 total (0 active), Execution time: mean = 37.222 us, total = 37.222 us, Queueing time: mean = 284.083 us, max = 284.083 us, min = 284.083 us, total = 284.083 us
+[state-dump] 	JobInfoGcsService.grpc_client.AddJob - 1 total (0 active), Execution time: mean = 322.999 us, total = 322.999 us, Queueing time: mean = 0.000 s, max = -0.000 s, min = 9223372036.855 s, total = 0.000 s
+[state-dump] 	NodeInfoGcsService.grpc_client.GetAllNodeInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 158.600 us, total = 158.600 us, Queueing time: mean = 9.600 us, max = 9.600 us, min = 9.600 us, total = 9.600 us
+[state-dump] 	WorkerPool.PopWorkerCallback - 1 total (0 active), Execution time: mean = 15.003 us, total = 15.003 us, Queueing time: mean = 8.794 us, max = 8.794 us, min = 8.794 us, total = 8.794 us
+[state-dump] 	JobInfoGcsService.grpc_client.GetAllJobInfo.OnReplyReceived - 1 total (0 active), Execution time: mean = 9.500 us, total = 9.500 us, Queueing time: mean = 5.000 us, max = 5.000 us, min = 5.000 us, total = 5.000 us
+[state-dump] DebugString() time ms: 0
+[state-dump] 
+[state-dump] 
