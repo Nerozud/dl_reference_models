@@ -1,9 +1,12 @@
+"""Create boxplots for the results of the RL and A* algorithms."""
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 def calculate_boxplot_values(data_column):
+    """Calculate the boxplot values for the given data column."""
     q1 = np.percentile(data_column, 25)
     q3 = np.percentile(data_column, 75)
     iqr = q3 - q1
@@ -22,25 +25,55 @@ def calculate_boxplot_values(data_column):
     }
 
 
-def main():
-    file_path = r"experiments\results\ReferenceModel-2-1_PPO_2024-10-30_15-55-55.csv"  # Update with your CSV file path
+def process_results(file_path):
+    """Process results for both RL and A* algorithms."""
+    # Load data
     data = pd.read_csv(file_path)
-    column_name = "timesteps"  # Update with your column name
-    reward_column = "total_reward"  # Update with your reward column name
 
-    # Filter data where the maximum reward is reached
-    max_reward = data[reward_column].max()
-    filtered_data = data[data[reward_column] == max_reward]
+    # Determine if it is RL or A* results based on columns
+    if "total_reward" in data.columns:
+        # RL results processing
+        print("Processing RL algorithm results...")
+        reward_column = "total_reward"
+        column_name = "timesteps"
 
-    data_column = filtered_data[column_name].dropna()
+        # Ensure required columns exist
+        if column_name not in data.columns or reward_column not in data.columns:
+            raise ValueError("Required columns for RL results are missing.")
+
+        # Filter rows where maximum reward is achieved
+        max_reward = data[reward_column].max()
+        filtered_data = data[data[reward_column] == max_reward]
+
+        # Drop NaN values in the relevant column
+        data_column = filtered_data[column_name].dropna()
+    elif "max_steps" in data.columns:
+        # A* results processing
+        print("Processing A* algorithm results...")
+        column_name = "max_steps"
+
+        # Drop NaN values in the relevant column
+        data_column = data[column_name].dropna()
+    else:
+        raise ValueError(
+            "Unknown data format. Ensure the file contains either RL or A* results."
+        )
+
+    # Ensure the column has valid numeric data
+    if data_column.empty:
+        raise ValueError(f"Column '{column_name}' contains no valid data.")
+    data_column = data_column.astype(float)
+
+    # Calculate boxplot values
     boxplot_values = calculate_boxplot_values(data_column)
 
+    # Print the calculated statistics
     print(f"    median={np.median(data_column)},")
     print(f"    upper quartile={boxplot_values['Q3']},")
     print(f"    lower quartile={boxplot_values['Q1']},")
     print(f"    upper whisker={boxplot_values['upper_whisker']},")
     print(f"    lower whisker={boxplot_values['lower_whisker']},")
-    print("] coordinates {{")
+    print("] coordinates {")
     print(
         "    ",
         " ".join(
@@ -48,10 +81,15 @@ def main():
         ),
     )
 
+    # Plot the boxplot
     plt.boxplot(data_column, vert=True)
     plt.title(f"Boxplot for {column_name}")
+    plt.xlabel(column_name)
+    plt.ylabel("Values")
     plt.show()
 
 
-if __name__ == "__main__":
-    main()
+# Process the provided file with flexibility for both RL and A* results
+process_results(
+    r"experiments\results\ReferenceModel-2-1_IMPALA_2024-11-22_17-29-37.csv"
+)
