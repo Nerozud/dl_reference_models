@@ -45,12 +45,22 @@ def process_results(file_path):
         max_reward = data[reward_column].max()
         filtered_data = data[data[reward_column] == max_reward]
 
+        # Calculate success rate; ToDo: make it flexible regarding different number of agents
+        success_rate = len(filtered_data[filtered_data[reward_column] == 6]) / len(data)
+
         # Drop NaN values in the relevant column
         data_column = filtered_data[column_name].dropna()
     elif "max_steps" in data.columns:
         # A* results processing
         print("Processing A* algorithm results...")
         column_name = "max_steps"
+
+        # Exclude the first episode with id 0
+        data = data[data["episode"] != 0]
+        print("Number of evaluated episodes:", len(data))
+
+        # Calculate success rate
+        success_rate = len(data[column_name].dropna()) / len(data)
 
         # Drop NaN values in the relevant column
         data_column = data[column_name].dropna()
@@ -81,6 +91,9 @@ def process_results(file_path):
         ),
     )
 
+    # Print the success rate
+    print(f"Success rate: {success_rate:.2%}")
+
     # Plot the boxplot
     plt.boxplot(data_column, vert=True)
     plt.title(f"Boxplot for {column_name}")
@@ -90,6 +103,4 @@ def process_results(file_path):
 
 
 # Process the provided file with flexibility for both RL and A* results
-process_results(
-    r"experiments\results\ReferenceModel-2-1_IMPALA_2024-11-22_17-29-37.csv"
-)
+process_results(r"experiments\results\A_star_results_2024-10-31_20-24-01.csv")
