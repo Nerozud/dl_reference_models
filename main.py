@@ -4,6 +4,10 @@ import os
 import time
 from datetime import datetime
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 import torch
 import ray
 from ray.tune.registry import register_env
@@ -13,16 +17,16 @@ from src.agents.dqn import get_dqn_config
 from src.agents.impala import get_impala_config
 from src.trainers.tuner import tune_with_callback
 
-ENV_NAME = "ReferenceModel-3-1"
+ENV_NAME = "ReferenceModel-2-1-b"
 ALGO_NAME = "IMPALA"  # PPO or IMPALA
-MODE = "train"  # train or test, test only works with CTDE for now
-CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2024-11-22_02-08-52\IMPALA-ReferenceModel-2-1-5690c_00000\checkpoint_000000"  # just for MODE = test
+MODE = "test"  # train or test, test only works with CTDE for now
+CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2024-11-18_00-33-40\IMPALA-ReferenceModel-2-1-b-603b3_00000\checkpoint_000000"  # just for MODE = test
 # experiments\trained_models\IMPALA_2024-10-31_20-25-09\IMPALA-ReferenceModel-2-1-b-d7c2f_00000\checkpoint_000000
 CHECKPOINT_RNN = True  # if the checkpoint model has RNN or LSTM layers
 
 env_setup = {
     "env_name": ENV_NAME,
-    "seed": None,  # int or None, same seed creates same sequence of starts and goals
+    "seed": 42,  # int or None, same seed creates same sequence of starts and goals
     "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
     "num_agents": 4,
     "steps_per_episode": 100,
@@ -53,7 +57,21 @@ def env_creator(env_config=None):
 
 def test_trained_model(cp_path, num_episodes=100):
     """
-    Test a trained model with a given checkpoint path and store the results in CSV format.
+    Test a trained reinforcement learning model using a given checkpoint path and store the results in CSV format.
+    Args:
+        cp_path (str): Path to the checkpoint file of the trained model.
+        num_episodes (int, optional): Number of episodes to run for testing. Defaults to 100.
+    Returns:
+        None
+    The function performs the following steps:
+    1. Initializes the RLlib Algorithm from the provided checkpoint.
+    2. Creates the environment using the `env_creator` function.
+    3. Runs the specified number of episodes, collecting rewards and other metrics.
+    4. If using RNN checkpoints, manages the state for each agent.
+    5. Records the total reward, timesteps, and CPU time for each episode.
+    6. Collects per-agent rewards and positions.
+    7. Stores the results in a pandas DataFrame and saves it as a CSV file in the "experiments/results" directory.
+    8. Prints average reward and timesteps across all episodes.
     """
     # Initialize the RLlib Algorithm from a checkpoint.
     algo = Algorithm.from_checkpoint(cp_path)
@@ -64,6 +82,10 @@ def test_trained_model(cp_path, num_episodes=100):
 
     # Initialize a list to store results for each episode
     results = []
+
+    # Initialize occupancy grid
+    grid_height, grid_width = env.grid.shape
+    occupancy_grid = np.zeros((grid_height, grid_width), dtype=int)
 
     for episode in range(num_episodes):
         start_time = time.process_time()
@@ -113,12 +135,15 @@ def test_trained_model(cp_path, num_episodes=100):
             obs, rewards, done, _, _ = env.step(actions)
             episode_reward += sum(rewards.values())
 
-            # Update per-agent rewards
-            for agent_id in obs:
+            # Update per-agent rewards and record positions
+            for agent_id, agent_obs in obs.items():
                 agent_episode_rewards[agent_id] += rewards[agent_id]
-                # Optionally, collect positions
-                # position = obs[agent_id]['position'].tolist()
-                # agent_trajectories[agent_id].append(position)
+
+                # agent_obs["position"] gives [y, x]
+                pos_y, pos_x = agent_obs["position"]
+                # Update the occupancy grid
+                if 0 <= pos_y < grid_height and 0 <= pos_x < grid_width:
+                    occupancy_grid[pos_y, pos_x] += 1
 
             # Update states for all agents.
             if CHECKPOINT_RNN:
@@ -183,8 +208,31 @@ def test_trained_model(cp_path, num_episodes=100):
     df.to_csv(output_file, index=False)
     print(f"Results saved to {output_file}")
 
-    # Optionally, return the DataFrame for immediate use
-    # return df
+    # Create a heatmap of occupancy
+    plt.figure()
+    ax = plt.gca()
+    plt.xlabel("X")
+    plt.ylabel("Y")
+
+    # Note: origin='upper' matches the indexing [y,x] with y=0 at top
+    heatmap_plot = plt.imshow(occupancy_grid, origin="upper")
+
+    # create an axes on the right side of ax. The width of cax will be 5%
+    # of ax and the padding between cax and ax will be fixed at 0.05 inch.
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.05)
+
+    plt.colorbar(heatmap_plot, label="Number of visits", cax=cax)
+
+    # Save the heatmap
+    heatmap_file = os.path.join(
+        "experiments/results", f"{ENV_NAME}_{ALGO_NAME}_{current_time}_heatmap.pdf"
+    )
+    plt.savefig(heatmap_file, bbox_inches="tight")
+    print(f"Heatmap saved to {heatmap_file}")
+
+    # Optionally show the plot
+    # plt.show()
 
 
 if __name__ == "__main__":
