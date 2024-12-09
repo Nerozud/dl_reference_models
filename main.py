@@ -18,9 +18,9 @@ from src.agents.impala import get_impala_config
 from src.trainers.tuner import tune_with_callback
 
 ENV_NAME = "ReferenceModel-2-1-b"
-ALGO_NAME = "IMPALA"  # PPO or IMPALA
+ALGO_NAME = "PPO"  # PPO or IMPALA
 MODE = "test"  # train or test, test only works with CTDE for now
-CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2024-11-18_00-33-40\IMPALA-ReferenceModel-2-1-b-603b3_00000\checkpoint_000000"  # just for MODE = test
+CHECKPOINT_PATH = r"experiments\trained_models\PPO_2024-11-20_02-06-24\PPO-ReferenceModel-2-1-b-a9a2f_00000\checkpoint_000000"  # just for MODE = test
 # experiments\trained_models\IMPALA_2024-10-31_20-25-09\IMPALA-ReferenceModel-2-1-b-d7c2f_00000\checkpoint_000000
 CHECKPOINT_RNN = True  # if the checkpoint model has RNN or LSTM layers
 
