@@ -57,7 +57,9 @@ def env_creator(env_config=None):
 
 def test_trained_model(cp_path, num_episodes=100):
     """
-    Test a trained reinforcement learning model using a given checkpoint path and store the results in CSV format.
+    Test a trained reinforcement learning model using a given checkpoint path and
+    store the results in CSV format.
+
     Args:
         cp_path (str): Path to the checkpoint file of the trained model.
         num_episodes (int, optional): Number of episodes to run for testing. Defaults to 100.
@@ -70,7 +72,7 @@ def test_trained_model(cp_path, num_episodes=100):
     4. If using RNN checkpoints, manages the state for each agent.
     5. Records the total reward, timesteps, and CPU time for each episode.
     6. Collects per-agent rewards and positions.
-    7. Stores the results in a pandas DataFrame and saves it as a CSV file in the "experiments/results" directory.
+    7. Stores the results in a pandas DataFrame and saves it as CSV in "experiments/results".
     8. Prints average reward and timesteps across all episodes.
     """
     # Initialize the RLlib Algorithm from a checkpoint.
