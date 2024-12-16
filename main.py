@@ -17,10 +17,10 @@ from src.agents.dqn import get_dqn_config
 from src.agents.impala import get_impala_config
 from src.trainers.tuner import tune_with_callback
 
-ENV_NAME = "ReferenceModel-2-2"
-ALGO_NAME = "IMPALA"  # PPO or IMPALA
+ENV_NAME = "ReferenceModel-3-1"
+ALGO_NAME = "IMPALA"  # PPO, IMPALA, RANDOM
 MODE = "test"  # train or test, test only works with CTDE for now
-CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2024-11-17_00-33-04\IMPALA-ReferenceModel-2-2-20aa6_00000\checkpoint_000000"  # just for MODE = test
+CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000"  # just for MODE = test
 # experiments\trained_models\IMPALA_2024-10-31_20-25-09\IMPALA-ReferenceModel-2-1-b-d7c2f_00000\checkpoint_000000
 CHECKPOINT_RNN = True  # if the checkpoint model has RNN or LSTM layers
 
@@ -76,7 +76,8 @@ def test_trained_model(cp_path, num_episodes=100):
     8. Prints average reward and timesteps across all episodes.
     """
     # Initialize the RLlib Algorithm from a checkpoint.
-    algo = Algorithm.from_checkpoint(cp_path)
+    if ALGO_NAME != "RANDOM":
+        algo = Algorithm.from_checkpoint(cp_path)
     env = env_creator(env_config=env_setup)
 
     total_reward = 0
@@ -115,7 +116,9 @@ def test_trained_model(cp_path, num_episodes=100):
         while not done["__all__"]:
             steps += 1
             for agent_id, observation in obs.items():
-                if CHECKPOINT_RNN:
+                if ALGO_NAME == "RANDOM":
+                    actions[agent_id] = env.action_space.sample()
+                elif CHECKPOINT_RNN:
                     actions[agent_id], next_state_list[agent_id], _ = (
                         algo.compute_single_action(
                             observation,
