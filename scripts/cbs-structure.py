@@ -1,4 +1,4 @@
-""" A* algorithm for multiple agents in a grid world environment. """
+""" CBS algorithm for multiple agents in a grid world environment. """
 
 import os
 import heapq
@@ -14,7 +14,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 SEED = 42  # int or None, same seed creates same sequence of starts and goals
 NUM_AGENTS = 4
-NUM_EPISODES = 1
+NUM_EPISODES = 0
 MAX_CPU_TIME = 60  # seconds
 DRAW_PLOT = True
 
@@ -476,7 +476,7 @@ for episode in range(NUM_EPISODES + 1):
             episode_data[f"agent_{agent_id}_goal_x"] = goal_pos[0]
             episode_data[f"agent_{agent_id}_goal_y"] = goal_pos[1]
 
-        for path in zip(*paths):
+        for path in paths:
             for position in path:
                 visit_counts[position] += 1
 
@@ -509,7 +509,7 @@ os.makedirs("experiments/results", exist_ok=True)
 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 output_file = os.path.join(
     "experiments/results",
-    f"A_star_results_{current_time}.csv",
+    f"CBS_results_{current_time}.csv",
 )
 
 # Save the DataFrame to CSV
@@ -534,10 +534,17 @@ plt.colorbar(heatmap_plot, label="Number of visits", cax=cax)
 
 # Save the heatmap
 heatmap_file = os.path.join(
-    "experiments/results", f"A_star_results_{current_time}_heatmap.pdf"
+    "experiments/results", f"CBS_results_{current_time}_heatmap.pdf"
 )
 plt.savefig(heatmap_file, bbox_inches="tight")
 print(f"Heatmap saved to {heatmap_file}")
+
+
+# Length of the largest sublist
+if grid_list:
+    length_of_largest_sublist = max(len(sublist) for sublist in grid_list)
+else:
+    length_of_largest_sublist = 0  # Define as 0 if the outer list is empty
 
 if DRAW_PLOT:
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -548,8 +555,8 @@ if DRAW_PLOT:
     ]
 
     # Set up the plot limits
-    ax.set_xlim(-1, 5)
-    ax.set_ylim(-1, 13)
+    ax.set_xlim(-1, len(grid_list))
+    ax.set_ylim(-1, length_of_largest_sublist)
     ax.set_xlabel("X Coordinate")
     ax.set_ylabel("Y Coordinate")
     ax.set_title("Paths of Agents")
@@ -564,7 +571,7 @@ if DRAW_PLOT:
 
     # Function to update the plot for each frame
     def update(num):
-        for i, path in enumerate(zip(*paths)):
+        for i, path in enumerate(paths):
             if num < len(path):
                 x, y = zip(*path[: num + 1])
                 lines[i].set_data(x, y)
@@ -574,7 +581,8 @@ if DRAW_PLOT:
     ani = animation.FuncAnimation(
         fig,
         update,
-        frames=max(len(path) for path in zip(*paths)),
+        frames=max(len(path) for path in paths),
+        # frames=max(len(path) for path in zip(*paths)),
         init_func=init,
         blit=True,
         repeat=False,
