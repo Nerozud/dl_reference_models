@@ -28,7 +28,7 @@ env_setup = {
     "env_name": ENV_NAME,
     "seed": 42,  # int or None, same seed creates same sequence of starts and goals
     "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
-    "num_agents": 4,
+    "num_agents": 6,
     "steps_per_episode": 100,
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE use single agent env
@@ -98,7 +98,7 @@ def test_trained_model(cp_path, num_episodes=100):
         steps = 0
 
         if CHECKPOINT_RNN:
-            # Initialize the state for all agents; adjust the size as needed.
+            # Initialize the state for all agents; adjust the ANN size as needed.
             state_list = {
                 agent_id: [torch.zeros(64), torch.zeros(64)] for agent_id in obs
             }
