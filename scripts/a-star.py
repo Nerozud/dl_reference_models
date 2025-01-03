@@ -15,7 +15,7 @@ SEED = 42  # int or None, same seed creates same sequence of starts and goals
 NUM_AGENTS = 4
 NUM_EPISODES = 1
 MAX_CPU_TIME = 60  # seconds
-DRAW_PLOT = False
+DRAW_PLOT = True
 
 results = []
 rng = np.random.default_rng(SEED)  # set seed for reproducibility
@@ -949,6 +949,13 @@ heatmap_file = os.path.join(
 plt.savefig(heatmap_file, bbox_inches="tight")
 print(f"Heatmap saved to {heatmap_file}")
 
+# Length of the largest sublist
+if grid_list:
+    length_of_largest_sublist = max(len(sublist) for sublist in grid_list)
+else:
+    length_of_largest_sublist = 0  # Define as 0 if the outer list is empty
+
+
 if DRAW_PLOT:
     fig, ax = plt.subplots(figsize=(10, 8))
 
@@ -958,8 +965,8 @@ if DRAW_PLOT:
     ]
 
     # Set up the plot limits
-    ax.set_xlim(-1, 5)
-    ax.set_ylim(-1, 13)
+    ax.set_xlim(-1, len(grid_list))
+    ax.set_ylim(-1, length_of_largest_sublist)
     ax.set_xlabel("X Coordinate")
     ax.set_ylabel("Y Coordinate")
     ax.set_title("Paths of Agents")
