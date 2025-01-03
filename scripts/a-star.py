@@ -13,7 +13,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 SEED = 42  # int or None, same seed creates same sequence of starts and goals
 NUM_AGENTS = 4
-NUM_EPISODES = 100
+NUM_EPISODES = 1
 MAX_CPU_TIME = 60  # seconds
 DRAW_PLOT = False
 
@@ -869,7 +869,7 @@ for episode in range(NUM_EPISODES + 1):
                 max_steps = steps_to_goal
 
             print(f"Path for agent {agent_index + 1}: {agent_path}")
-            print(f"Number of steps for agent {agent_index + 1}: {steps_to_goal - 1}")
+            print(f"Number of steps for agent {agent_index + 1}: {len(agent_path)}")
             print(
                 f"Total distance traveled by agent {agent_index + 1}: {total_distance}"
             )
