@@ -18,9 +18,10 @@ from src.agents.impala import get_impala_config
 from src.trainers.tuner import tune_with_callback
 
 ENV_NAME = "ReferenceModel-3-1"
-ALGO_NAME = "IMPALA"  # PPO, IMPALA, RANDOM
+ALGO_NAME = "PPO"  # PPO, IMPALA, RANDOM
 MODE = "test"  # train or test, test only works with CTDE for now
-CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000"  # just for MODE = test
+CHECKPOINT_PATH = r"experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000"  # just for MODE = test
+# experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000
 # experiments\trained_models\IMPALA_2024-10-31_20-25-09\IMPALA-ReferenceModel-2-1-b-d7c2f_00000\checkpoint_000000
 CHECKPOINT_RNN = True  # if the checkpoint model has RNN or LSTM layers
 
@@ -28,7 +29,7 @@ env_setup = {
     "env_name": ENV_NAME,
     "seed": 42,  # int or None, same seed creates same sequence of starts and goals
     "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
-    "num_agents": 6,
+    "num_agents": 16,
     "steps_per_episode": 100,
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE use single agent env
@@ -195,8 +196,19 @@ def test_trained_model(cp_path, num_episodes=100):
 
         results.append(episode_data)
 
+    # Calculate and print average reward and timesteps
     print("Average reward:", total_reward / num_episodes)
     print("Average timesteps:", total_timesteps / num_episodes)
+
+    # Calculate and print success rate
+    successful_episodes = [
+        result
+        for result in results
+        if result["timesteps"] <= env_setup["steps_per_episode"]
+        and result["total_reward"] == 1.5 * env_setup["num_agents"]
+    ]
+    success_rate = len(successful_episodes) / num_episodes
+    print("Success rate:", success_rate * 100, "%")
 
     df = pd.DataFrame(results)
     # Ensure the directory exists

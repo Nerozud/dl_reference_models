@@ -46,7 +46,9 @@ def process_results(file_path):
         filtered_data = data[data[reward_column] == max_reward]
 
         # Calculate success rate; ToDo: make it flexible regarding different number of agents
-        success_rate = len(filtered_data[filtered_data[reward_column] == 6]) / len(data)
+        success_rate = len(filtered_data[filtered_data[reward_column] == 25.5]) / len(
+            data
+        )
 
         # Drop NaN values in the relevant column
         data_column = filtered_data[column_name].dropna()
@@ -104,5 +106,5 @@ def process_results(file_path):
 
 # Process the provided file with flexibility for both RL and A* results
 process_results(
-    r"experiments\results\ReferenceModel-2-2_IMPALA_2024-12-11_17-51-58.csv"
+    r"experiments\results\ReferenceModel-3-1_IMPALA_2025-01-03_18-57-45.csv"
 )
