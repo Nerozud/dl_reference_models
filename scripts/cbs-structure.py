@@ -14,9 +14,9 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 SEED = 42  # int or None, same seed creates same sequence of starts and goals
 NUM_AGENTS = 4
-NUM_EPISODES = 0
+NUM_EPISODES = 100
 MAX_CPU_TIME = 60  # seconds
-DRAW_PLOT = True
+DRAW_PLOT = False
 
 
 ###############################################################################
@@ -214,9 +214,9 @@ def detect_conflict(paths):
             # Check for vertex conflict
             if pos in position_map:
                 j = position_map[pos]
-                print(
-                    f"Vertex conflict between Agent {i} and Agent {j} at {pos} at time {t}"
-                )
+                # print(
+                #     f"Vertex conflict between Agent {i} and Agent {j} at {pos} at time {t}"
+                # )
                 return (i, j, "vertex", pos, t)
             position_map[pos] = i
 
@@ -232,9 +232,9 @@ def detect_conflict(paths):
                 move_j = movement_map[j]
                 # Edge conflict: agent i moves from A to B and agent j moves from B to A
                 if move_i[0] == move_j[1] and move_i[1] == move_j[0]:
-                    print(
-                        f"Edge conflict between Agent {i} and Agent {j} swapping {move_i[0]} <-> {move_i[1]} at time {t}"
-                    )
+                    # print(
+                    #     f"Edge conflict between Agent {i} and Agent {j} swapping {move_i[0]} <-> {move_i[1]} at time {t}"
+                    # )
                     return (i, j, "edge", (move_i[0], move_i[1]), t)
 
     return None
@@ -269,7 +269,7 @@ def cbs(grid, starts, goals):
     for i in range(num_agents):
         path = a_star(grid, starts[i], goals[i], root_constraints, i)
         if not path:
-            print(f"No initial path found for agent {i}.")
+            # print(f"No initial path found for agent {i}.")
             return None  # If any agent can't reach its goal with no constraints, fail
         root_paths.append(path)
     root_cost = compute_cost(root_paths)
@@ -280,6 +280,11 @@ def cbs(grid, starts, goals):
     heapq.heappush(open_list, (root_node.cost, root_node))
 
     while open_list:
+        if time.process_time() - start_time > MAX_CPU_TIME:
+            print(
+                f"CBS exceeded the time limit ({MAX_CPU_TIME}) with {time.process_time() - start_time} seconds."
+            )
+            return None
         current_cost, node = heapq.heappop(open_list)
 
         # 2. Check for conflicts
@@ -293,9 +298,9 @@ def cbs(grid, starts, goals):
 
         if conflict_type == "vertex":
             conflict_cell = details
-            print(
-                f"Resolving vertex conflict between Agent {i} and Agent {j} at {conflict_cell} at time {t}"
-            )
+            # print(
+            #     f"Resolving vertex conflict between Agent {i} and Agent {j} at {conflict_cell} at time {t}"
+            # )
 
             # Child 1: Constrain agent i from being at conflict_cell at time t
             child1_constraints = node.constraints.copy()
@@ -307,9 +312,9 @@ def cbs(grid, starts, goals):
                 child1_cost = compute_cost(child1_paths)
                 child1_node = CBSNode(child1_constraints, child1_paths, child1_cost)
                 heapq.heappush(open_list, (child1_node.cost, child1_node))
-                print(
-                    f"Child1 created by constraining Agent {i} from {conflict_cell} at time {t}"
-                )
+                # print(
+                #     f"Child1 created by constraining Agent {i} from {conflict_cell} at time {t}"
+                # )
 
             # Child 2: Constrain agent j from being at conflict_cell at time t
             child2_constraints = node.constraints.copy()
@@ -321,15 +326,15 @@ def cbs(grid, starts, goals):
                 child2_cost = compute_cost(child2_paths)
                 child2_node = CBSNode(child2_constraints, child2_paths, child2_cost)
                 heapq.heappush(open_list, (child2_node.cost, child2_node))
-                print(
-                    f"Child2 created by constraining Agent {j} from {conflict_cell} at time {t}"
-                )
+                # print(
+                #     f"Child2 created by constraining Agent {j} from {conflict_cell} at time {t}"
+                # )
 
         elif conflict_type == "edge":
             cellA, cellB = details
-            print(
-                f"Resolving edge conflict between Agent {i} and Agent {j} swapping {cellA} <-> {cellB} at time {t}"
-            )
+            # print(
+            #     f"Resolving edge conflict between Agent {i} and Agent {j} swapping {cellA} <-> {cellB} at time {t}"
+            # )
 
             # Child 1: Constrain agent i from moving from cellA to cellB at time t
             child1_constraints = node.constraints.copy()
@@ -341,9 +346,9 @@ def cbs(grid, starts, goals):
                 child1_cost = compute_cost(child1_paths)
                 child1_node = CBSNode(child1_constraints, child1_paths, child1_cost)
                 heapq.heappush(open_list, (child1_node.cost, child1_node))
-                print(
-                    f"Child1 created by constraining Agent {i} from moving {cellA} -> {cellB} at time {t}"
-                )
+                # print(
+                #     f"Child1 created by constraining Agent {i} from moving {cellA} -> {cellB} at time {t}"
+                # )
 
             # Child 2: Constrain agent j from moving from cellB to cellA at time t
             child2_constraints = node.constraints.copy()
@@ -355,9 +360,9 @@ def cbs(grid, starts, goals):
                 child2_cost = compute_cost(child2_paths)
                 child2_node = CBSNode(child2_constraints, child2_paths, child2_cost)
                 heapq.heappush(open_list, (child2_node.cost, child2_node))
-                print(
-                    f"Child2 created by constraining Agent {j} from moving {cellB} -> {cellA} at time {t}"
-                )
+                # print(
+                #     f"Child2 created by constraining Agent {j} from moving {cellB} -> {cellA} at time {t}"
+                # )
 
     # If the open list is exhausted without finding a solution
     return None
@@ -370,19 +375,51 @@ results = []
 rng = np.random.default_rng(SEED)  # set seed for reproducibility
 
 # block layout 2.1
+# grid_list = [
+#     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#     [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+#     [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+#     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#     [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+#     [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+#     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+#     [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+#     [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+#     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+# ]
+
+# layout with dead ends 2.1 b
 grid_list = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-    [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+    [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-    [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+    [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-    [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+    [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ]
 
+# fishbone layout 2.2
+# grid_list = [
+#     [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1],
+#     [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1],
+#     [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1],
+#     [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1],
+#     [0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0],
+#     [0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0],
+#     [0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0],
+#     [1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1],
+#     [0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0],
+#     [1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1],
+#     [1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
+#     [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+#     [1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1],
+#     [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+#     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+# ]
 
 # TODO: use get_grid function to get the grid
 grid = np.array(grid_list)
@@ -459,11 +496,11 @@ for episode in range(NUM_EPISODES + 1):
                 abs(path[i][0] - path[i - 1][0]) + abs(path[i][1] - path[i - 1][1])
                 for i in range(1, steps_to_goal)
             )
-            print(f"Path for agent {agent_index + 1}: {path}")
-            print(f"Number of steps for agent {agent_index + 1}: {steps_to_goal}")
-            print(
-                f"Total distance traveled by agent {agent_index + 1}: {total_distance}"
-            )
+            # print(f"Path for agent {agent_index + 1}: {path}")
+            # print(f"Number of steps for agent {agent_index + 1}: {steps_to_goal}")
+            # print(
+            #     f"Total distance traveled by agent {agent_index + 1}: {total_distance}"
+            # )
             # Collect per-agent data
             episode_data["max_steps"] = max_steps
             agent_id = agent_index

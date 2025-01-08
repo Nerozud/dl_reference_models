@@ -46,7 +46,7 @@ def process_results(file_path):
         filtered_data = data[data[reward_column] == max_reward]
 
         # Calculate success rate; ToDo: make it flexible regarding different number of agents
-        success_rate = len(filtered_data[filtered_data[reward_column] == 25.5]) / len(
+        success_rate = len(filtered_data[filtered_data[reward_column] == 22.5]) / len(
             data
         )
 
@@ -54,7 +54,7 @@ def process_results(file_path):
         data_column = filtered_data[column_name].dropna()
     elif "max_steps" in data.columns:
         # A* results processing
-        print("Processing A* algorithm results...")
+        print("Processing A*/CBS algorithm results...")
         column_name = "max_steps"
 
         # Exclude the first episode with id 0
@@ -105,6 +105,4 @@ def process_results(file_path):
 
 
 # Process the provided file with flexibility for both RL and A* results
-process_results(
-    r"experiments\results\ReferenceModel-3-1_IMPALA_2025-01-03_18-57-45.csv"
-)
+process_results(r"experiments\results\CBS_results_2025-01-07_16-29-57.csv")
