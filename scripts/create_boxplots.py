@@ -46,9 +46,7 @@ def process_results(file_path):
         filtered_data = data[data[reward_column] == max_reward]
 
         # Calculate success rate; ToDo: make it flexible regarding different number of agents
-        success_rate = len(filtered_data[filtered_data[reward_column] == 22.5]) / len(
-            data
-        )
+        success_rate = len(filtered_data[filtered_data[reward_column] == 6]) / len(data)
 
         # Drop NaN values in the relevant column
         data_column = filtered_data[column_name].dropna()
