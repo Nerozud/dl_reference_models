@@ -1189,7 +1189,7 @@ os.makedirs("experiments/results", exist_ok=True)
 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 output_file = os.path.join(
     "experiments/results",
-    f"CBS_results_{current_time}.csv",
+    f"CBS_{NUM_AGENTS}agents_{current_time}.csv",
 )
 
 # Save the DataFrame to CSV
@@ -1214,7 +1214,7 @@ plt.colorbar(heatmap_plot, label="Number of visits", cax=cax)
 
 # Save the heatmap
 heatmap_file = os.path.join(
-    "experiments/results", f"CBS_results_{current_time}_heatmap.pdf"
+    "experiments/results", f"CBS_{NUM_AGENTS}agents_{current_time}_heatmap.pdf"
 )
 plt.savefig(heatmap_file, bbox_inches="tight")
 print(f"Heatmap saved to {heatmap_file}")
