@@ -18,7 +18,7 @@ from src.agents.impala import get_impala_config
 from src.trainers.tuner import tune_with_callback
 
 ENV_NAME = "ReferenceModel-3-1"
-ALGO_NAME = "PPO"  # PPO, IMPALA, RANDOM
+ALGO_NAME = "IMPALA"  # PPO, IMPALA, RANDOM
 MODE = "train"  # train or test, test only works with CTDE for now
 CHECKPOINT_PATH = r"experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000"  # just for MODE = test
 # experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000
@@ -218,7 +218,7 @@ def test_trained_model(cp_path, num_episodes=100):
     current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     output_file = os.path.join(
         "experiments/results",
-        f"{ENV_NAME}_{ALGO_NAME}_{current_time}.csv",
+        f"{ENV_NAME}_{ALGO_NAME}_{env_setup['num_agents']}_agents_{current_time}.csv",
     )
 
     # Save the DataFrame to CSV
@@ -243,7 +243,8 @@ def test_trained_model(cp_path, num_episodes=100):
 
     # Save the heatmap
     heatmap_file = os.path.join(
-        "experiments/results", f"{ENV_NAME}_{ALGO_NAME}_{current_time}_heatmap.pdf"
+        "experiments/results",
+        f"{ENV_NAME}_{ALGO_NAME}_{env_setup['num_agents']}_agents_{current_time}_heatmap.pdf",
     )
     plt.savefig(heatmap_file, bbox_inches="tight")
     print(f"Heatmap saved to {heatmap_file}")
