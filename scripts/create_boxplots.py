@@ -103,4 +103,4 @@ def process_results(file_path):
 
 
 # Process the provided file with flexibility for both RL and A* results
-process_results(r"experiments\results\CBS_8agents_2025-01-20_17-56-59.csv")
+process_results(r"experiments\results\CBS_12agents_2025-01-21_16-29-27.csv")
