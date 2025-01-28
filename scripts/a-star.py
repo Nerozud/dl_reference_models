@@ -12,7 +12,7 @@ from matplotlib import animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 SEED = 42  # int or None, same seed creates same sequence of starts and goals
-NUM_AGENTS = 5
+NUM_AGENTS = 9
 NUM_EPISODES = 100
 MAX_CPU_TIME = 60  # seconds
 DRAW_PLOT = False
