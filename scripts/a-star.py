@@ -1,13 +1,14 @@
-""" A* algorithm for multiple agents in a grid world environment. """
+"""A* algorithm for multiple agents in a grid world environment."""
 
 import os
 import time
 from datetime import datetime
 from heapq import heappop, heappush
 from itertools import product
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from matplotlib import animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -318,7 +319,8 @@ if DRAW_PLOT:
 
     # Initialize the lines for each agent
     lines = [
-        ax.plot([], [], marker="o", label=f"Agent {i+1}")[0] for i in range(NUM_AGENTS)
+        ax.plot([], [], marker="o", label=f"Agent {i + 1}")[0]
+        for i in range(NUM_AGENTS)
     ]
 
     # Set up the plot limits

@@ -1,10 +1,9 @@
 import torch
-from torch import nn
-
 from gymnasium.spaces import Dict
-from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 from ray.rllib.models.torch.complex_input_net import ComplexInputNetwork
+from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 from ray.rllib.utils.torch_utils import FLOAT_MIN
+from torch import nn
 
 
 class TorchActionMaskModel(TorchModelV2, nn.Module):

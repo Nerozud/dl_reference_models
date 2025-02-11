@@ -1,6 +1,6 @@
 """
 This module contains the ReferenceModel class, which is a multi-agent environment.
-The environment is interpreted as single RL agent environment, 
+The environment is interpreted as single RL agent environment,
 where all agents are controlled by the same policy.
 
 Initialize the ReferenceModel environment.
@@ -94,13 +94,9 @@ class ReferenceModel(gym.Env):
         self.grid = get_grid.get_grid(env_config["env_name"])
 
         if self.deterministic:
-            self.starts = get_grid.get_start_positions(
-                env_config["env_name"], self.num_agents
-            )
+            self.starts = get_grid.get_start_positions(env_config["env_name"], self.num_agents)
             self.positions = self.starts.copy()
-            self.goals = get_grid.get_goal_positions(
-                env_config["env_name"], self.num_agents
-            )
+            self.goals = get_grid.get_goal_positions(env_config["env_name"], self.num_agents)
         else:
             self.generate_starts_goals()
 
@@ -138,7 +134,6 @@ class ReferenceModel(gym.Env):
             positions (dict): A copy of the starts dictionary representing the current positions of the agents.
             goals (dict): A dictionary where keys are agent identifiers (e.g., 'agent_0') and values are the goal positions.
         """
-
         self.starts = {}
         available_positions = np.argwhere(self.grid == 0)
         for i in range(self.num_agents):
@@ -146,9 +141,7 @@ class ReferenceModel(gym.Env):
                 idx = self.rng.choice(len(available_positions))
                 start_pos = available_positions[idx]
                 # Ensure that the starting position is unique
-                if not any(
-                    np.array_equal(start_pos, pos) for pos in self.starts.values()
-                ):
+                if not any(np.array_equal(start_pos, pos) for pos in self.starts.values()):
                     self.starts[f"agent_{i}"] = start_pos
                     break
         self.positions = self.starts.copy()
@@ -160,9 +153,7 @@ class ReferenceModel(gym.Env):
                 # Ensure that the goal position is unique and not the same as any start position
                 if not any(
                     np.array_equal(goal_pos, pos) for pos in self.goals.values()
-                ) and not any(
-                    np.array_equal(goal_pos, pos) for pos in self.starts.values()
-                ):
+                ) and not any(np.array_equal(goal_pos, pos) for pos in self.starts.values()):
                     self.goals[f"agent_{i}"] = goal_pos
                     break
 
@@ -230,9 +221,7 @@ class ReferenceModel(gym.Env):
         # minus reward for agents on the same position, shouldn't happen
         for i in range(self.num_agents):
             for j in range(i + 1, self.num_agents):
-                if np.array_equal(
-                    self.positions[f"agent_{i}"], self.positions[f"agent_{j}"]
-                ):
+                if np.array_equal(self.positions[f"agent_{i}"], self.positions[f"agent_{j}"]):
                     reward -= 1
                     print(
                         f"Agents {i} and {j} are on the same position {self.positions[f'agent_{i}']}"
@@ -257,9 +246,7 @@ class ReferenceModel(gym.Env):
         ):  # If the step limit is reached, end the episode and mark it as truncated
             # minus reward for not reaching the goal
             for i in range(self.num_agents):
-                if not np.array_equal(
-                    self.positions[f"agent_{i}"], self.goals[f"agent_{i}"]
-                ):
+                if not np.array_equal(self.positions[f"agent_{i}"], self.goals[f"agent_{i}"]):
                     reward -= 1
             terminated = True
             truncated = True
@@ -405,14 +392,10 @@ class ReferenceModel(gym.Env):
             for i in range(self.grid.shape[0]):
                 for j in range(self.grid.shape[1]):
                     if self.grid[i, j] == 1:  # Obstacle cell
-                        self.ax.add_patch(
-                            patches.Rectangle((j, i), 1, 1, color="black")
-                        )
+                        self.ax.add_patch(patches.Rectangle((j, i), 1, 1, color="black"))
                     else:  # Empty cell
                         self.ax.add_patch(
-                            patches.Rectangle(
-                                (j, i), 1, 1, edgecolor="gray", fill=False
-                            )
+                            patches.Rectangle((j, i), 1, 1, edgecolor="gray", fill=False)
                         )
 
             # Initialize goal patches

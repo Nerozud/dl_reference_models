@@ -3,18 +3,19 @@
 import os
 import time
 from datetime import datetime
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-import torch
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import ray
-from ray.tune.registry import register_env
+import torch
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from ray.rllib.algorithms.algorithm import Algorithm
-from src.agents.ppo import get_ppo_config
+from ray.tune.registry import register_env
+
 from src.agents.dqn import get_dqn_config
 from src.agents.impala import get_impala_config
+from src.agents.ppo import get_ppo_config
 from src.trainers.tuner import tune_with_callback
 
 ENV_NAME = "ReferenceModel-2-1"
@@ -40,16 +41,12 @@ env_setup = {
 # Import the correct environment based on the training execution mode
 if env_setup["training_execution_mode"] == "CTE":
     from src.environments.reference_model_single_agent import ReferenceModel
-elif (
-    env_setup["training_execution_mode"] == "CTDE"
-    or env_setup["training_execution_mode"] == "DTE"
-):
+elif env_setup["training_execution_mode"] == "CTDE" or env_setup["training_execution_mode"] == "DTE":
     from src.environments.reference_model_multi_agent import ReferenceModel
 
 else:
-    raise ValueError(
-        f"Training execution mode {env_setup['training_execution_mode']} not supported."
-    )
+    msg = f"Training execution mode {env_setup['training_execution_mode']} not supported."
+    raise ValueError(msg)
 
 
 def env_creator(env_config=None):
@@ -65,6 +62,7 @@ def test_trained_model(cp_path, num_episodes=100):
     Args:
         cp_path (str): Path to the checkpoint file of the trained model.
         num_episodes (int, optional): Number of episodes to run for testing. Defaults to 100.
+
     Returns:
         None
     The function performs the following steps:
@@ -76,6 +74,7 @@ def test_trained_model(cp_path, num_episodes=100):
     6. Collects per-agent rewards and positions.
     7. Stores the results in a pandas DataFrame and saves it as CSV in "experiments/results".
     8. Prints average reward and timesteps across all episodes.
+
     """
     # Initialize the RLlib Algorithm from a checkpoint.
     if ALGO_NAME != "RANDOM":
@@ -101,9 +100,7 @@ def test_trained_model(cp_path, num_episodes=100):
 
         if CHECKPOINT_RNN:
             # Initialize the state for all agents; adjust the ANN size as needed.
-            state_list = {
-                agent_id: [torch.zeros(64), torch.zeros(64)] for agent_id in obs
-            }
+            state_list = {agent_id: [torch.zeros(64), torch.zeros(64)] for agent_id in obs}
             initial_state_list = state_list.copy()
             next_state_list = {}
 
@@ -121,15 +118,13 @@ def test_trained_model(cp_path, num_episodes=100):
                 if ALGO_NAME == "RANDOM":
                     actions[agent_id] = env.action_space.sample()
                 elif CHECKPOINT_RNN:
-                    actions[agent_id], next_state_list[agent_id], _ = (
-                        algo.compute_single_action(
-                            observation,
-                            state=state_list[agent_id],
-                            policy_id="shared_policy",
-                            prev_action=actions[agent_id],
-                            prev_reward=rewards[agent_id],
-                            explore=True,
-                        )
+                    actions[agent_id], next_state_list[agent_id], _ = algo.compute_single_action(
+                        observation,
+                        state=state_list[agent_id],
+                        policy_id="shared_policy",
+                        prev_action=actions[agent_id],
+                        prev_reward=rewards[agent_id],
+                        explore=True,
                     )
                 else:
                     actions[agent_id] = algo.compute_single_action(
@@ -182,9 +177,7 @@ def test_trained_model(cp_path, num_episodes=100):
         for agent_id in env._agent_ids:
             agent_index = agent_id.split("_")[1]  # Extract agent index
             # Flatten the data by creating separate columns for each agent
-            episode_data[f"agent_{agent_index}_reward"] = agent_episode_rewards[
-                agent_id
-            ]
+            episode_data[f"agent_{agent_index}_reward"] = agent_episode_rewards[agent_id]
             start_pos = env.starts[agent_id].tolist()
             goal_pos = env.goals[agent_id].tolist()
             episode_data[f"agent_{agent_index}_start_x"] = start_pos[0]
@@ -211,7 +204,7 @@ def test_trained_model(cp_path, num_episodes=100):
     success_rate = len(successful_episodes) / num_episodes
     print("Success rate:", success_rate * 100, "%")
 
-    df = pd.DataFrame(results)
+    results_df = pd.DataFrame(results)
     # Ensure the directory exists
     os.makedirs("experiments/results", exist_ok=True)
 
@@ -223,7 +216,7 @@ def test_trained_model(cp_path, num_episodes=100):
     )
 
     # Save the DataFrame to CSV
-    df.to_csv(output_file, index=False)
+    results_df.to_csv(output_file, index=False)
     print(f"Results saved to {output_file}")
 
     # Create a heatmap of occupancy
@@ -255,11 +248,8 @@ def test_trained_model(cp_path, num_episodes=100):
 
 
 if __name__ == "__main__":
-
     drive = os.path.splitdrive(os.getcwd())[0]
-    ray.init(
-        _temp_dir=drive + "\\tmp"
-    )  # make sure everything is on the same drive C: or D: etc.
+    ray.init(_temp_dir=drive + "\\tmp")  # make sure everything is on the same drive C: or D: etc.
 
     register_env(ENV_NAME, env_creator)
 
@@ -271,7 +261,8 @@ if __name__ == "__main__":
         elif ALGO_NAME == "IMPALA":
             config = get_impala_config(ENV_NAME, env_config=env_setup)
         else:
-            raise ValueError(f"Algorithm {ALGO_NAME} not supported.")
+            msg = f"Algorithm {ALGO_NAME} not supported."
+            raise ValueError(msg)
 
         tune_with_callback(
             config,
@@ -281,4 +272,5 @@ if __name__ == "__main__":
     elif MODE == "test":
         test_trained_model(CHECKPOINT_PATH)
     else:
-        raise ValueError(f"Mode {MODE} not supported.")
+        msg = f"Mode {MODE} not supported."
+        raise ValueError(msg)
