@@ -1,16 +1,15 @@
-""" Proximal Policy Optimization (PPO) agent configuration. """
+"""Proximal Policy Optimization (PPO) agent configuration."""
 
-from ray.rllib.algorithms.ppo import PPOConfig
-from ray.rllib.policy.policy import PolicySpec
-from ray.rllib.models import ModelCatalog
 from ray import tune
+from ray.rllib.algorithms.ppo import PPOConfig
+from ray.rllib.models import ModelCatalog
+from ray.rllib.policy.policy import PolicySpec
+
 from models.action_mask_model import TorchActionMaskModel
 from models.action_mask_model_single import TorchActionMaskModelSingle
 
 ModelCatalog.register_custom_model("action_mask_model", TorchActionMaskModel)
-ModelCatalog.register_custom_model(
-    "action_mask_model_single", TorchActionMaskModelSingle
-)
+ModelCatalog.register_custom_model("action_mask_model_single", TorchActionMaskModelSingle)
 
 
 def get_ppo_config(env_name, env_config=None):
@@ -20,9 +19,7 @@ def get_ppo_config(env_name, env_config=None):
     if env_config.get("training_execution_mode") == "CTE":
         config = (
             PPOConfig()  # single agent config, CTE
-            .environment(
-                env_name, render_env=env_config["render_env"], env_config=env_config
-            )
+            .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .resources(num_gpus=1)
             .env_runners(
@@ -57,9 +54,7 @@ def get_ppo_config(env_name, env_config=None):
 
         config = (
             PPOConfig()  # multi agent config, CTDE or DTE
-            .environment(
-                env_name, render_env=env_config["render_env"], env_config=env_config
-            )
+            .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .resources(num_gpus=1)
             .env_runners(
@@ -97,9 +92,7 @@ def get_ppo_config(env_name, env_config=None):
             .multi_agent(
                 policies=policies,
                 policy_mapping_fn=lambda agent_id, *args, **kwargs: (
-                    agent_id
-                    if env_config.get("training_execution_mode") == "DTE"
-                    else "shared_policy"
+                    agent_id if env_config.get("training_execution_mode") == "DTE" else "shared_policy"
                 ),
             )
         )

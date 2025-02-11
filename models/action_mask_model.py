@@ -20,13 +20,6 @@ class TorchActionMaskModel(TorchModelV2, nn.Module):
     ):
         orig_space = getattr(obs_space, "original_space", obs_space)
 
-        assert (
-            isinstance(orig_space, Dict)
-            and "observations" in orig_space.spaces
-            and "position" in orig_space.spaces
-            and "goal" in orig_space.spaces
-        )
-
         relevant_obs_space = Dict(
             {
                 "observations": orig_space.spaces["observations"],
@@ -35,9 +28,7 @@ class TorchActionMaskModel(TorchModelV2, nn.Module):
             }
         )
 
-        TorchModelV2.__init__(
-            self, obs_space, action_space, num_outputs, model_config, name, **kwargs
-        )
+        TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name, **kwargs)
         nn.Module.__init__(self)
 
         self.internal_model = ComplexInputNetwork(

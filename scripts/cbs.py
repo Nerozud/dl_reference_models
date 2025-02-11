@@ -1,14 +1,13 @@
-""" CBS algorithm for multiple agents in a grid world environment. """
+"""CBS algorithm for multiple agents in a grid world environment."""
 
-import os
 import heapq
+import os
 import time
 from datetime import datetime
-from heapq import heappop, heappush
-from itertools import product
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from matplotlib import animation
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -43,6 +42,7 @@ def a_star(grid, start, goal, constraints, agent_id):
     -------
     list[tuple(int, int)] or None
         Path from start to goal if found, otherwise None.
+
     """
 
     def heuristic(cell, goal, constrained_positions):
@@ -82,11 +82,7 @@ def a_star(grid, start, goal, constraints, agent_id):
         neighbors = []
         for dx, dy in directions:
             nr, nc = cell[0] + dx, cell[1] + dy
-            if (
-                (0 <= nr < len(grid))
-                and (0 <= nc < len(grid[0]))
-                and (grid[nr][nc] == 0)
-            ):
+            if (0 <= nr < len(grid)) and (0 <= nc < len(grid[0])) and (grid[nr][nc] == 0):
                 neighbors.append((nr, nc))
         return neighbors
 
@@ -129,9 +125,7 @@ def a_star(grid, start, goal, constraints, agent_id):
             tentative_g = g_score[(current_cell, current_time)] + 1
 
             # Check if this state has been visited with a lower g_score
-            if ((nxt, next_time) not in g_score) or (
-                tentative_g < g_score[(nxt, next_time)]
-            ):
+            if ((nxt, next_time) not in g_score) or (tentative_g < g_score[(nxt, next_time)]):
                 g_score[(nxt, next_time)] = tentative_g
                 came_from[(nxt, next_time)] = (current_cell, current_time)
                 f_score = tentative_g + heuristic(nxt, goal, constrained_positions)
@@ -260,6 +254,7 @@ def cbs(grid, starts, goals):
     -------
     list[list[tuple(int, int)]] or None
         List of paths, one per agent, if a solution is found. Otherwise None.
+
     """
     num_agents = len(starts)
 
@@ -281,9 +276,7 @@ def cbs(grid, starts, goals):
 
     while open_list:
         if time.process_time() - start_time > MAX_CPU_TIME:
-            print(
-                f"CBS exceeded the time limit ({MAX_CPU_TIME}) with {time.process_time() - start_time} seconds."
-            )
+            print(f"CBS exceeded the time limit ({MAX_CPU_TIME}) with {time.process_time() - start_time} seconds.")
             return None
         current_cost, node = heapq.heappop(open_list)
 
@@ -494,8 +487,7 @@ for episode in range(NUM_EPISODES + 1):
             if steps_to_goal > max_steps:
                 max_steps = steps_to_goal
             total_distance = sum(
-                abs(path[i][0] - path[i - 1][0]) + abs(path[i][1] - path[i - 1][1])
-                for i in range(1, steps_to_goal)
+                abs(path[i][0] - path[i - 1][0]) + abs(path[i][1] - path[i - 1][1]) for i in range(1, steps_to_goal)
             )
             # print(f"Path for agent {agent_index + 1}: {path}")
             # print(f"Number of steps for agent {agent_index + 1}: {steps_to_goal}")
@@ -571,9 +563,7 @@ cax = divider.append_axes("right", size="5%", pad=0.05)
 plt.colorbar(heatmap_plot, label="Number of visits", cax=cax)
 
 # Save the heatmap
-heatmap_file = os.path.join(
-    "experiments/results", f"CBS_{NUM_AGENTS}agents_{current_time}_heatmap.pdf"
-)
+heatmap_file = os.path.join("experiments/results", f"CBS_{NUM_AGENTS}agents_{current_time}_heatmap.pdf")
 plt.savefig(heatmap_file, bbox_inches="tight")
 print(f"Heatmap saved to {heatmap_file}")
 
@@ -588,9 +578,7 @@ if DRAW_PLOT:
     fig, ax = plt.subplots(figsize=(10, 8))
 
     # Initialize the lines for each agent
-    lines = [
-        ax.plot([], [], marker="o", label=f"Agent {i+1}")[0] for i in range(NUM_AGENTS)
-    ]
+    lines = [ax.plot([], [], marker="o", label=f"Agent {i + 1}")[0] for i in range(NUM_AGENTS)]
 
     # Set up the plot limits
     ax.set_xlim(-1, len(grid_list))
@@ -599,7 +587,7 @@ if DRAW_PLOT:
     ax.set_ylabel("Y Coordinate")
     ax.set_title("Paths of Agents")
     ax.legend()
-    ax.grid(True)
+    ax.grid(visible=True)
 
     # Function to initialize the plot
     def init():

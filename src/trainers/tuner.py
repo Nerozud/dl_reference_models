@@ -1,7 +1,8 @@
 """Tuner module for training models with Ray Tune."""
 
 import os
-from ray import tune, air
+
+from ray import air, tune
 
 # from ray.tune.search.bayesopt import BayesOptSearch
 from ray.air.integrations.wandb import WandbLoggerCallback
@@ -10,14 +11,16 @@ from ray.air.integrations.wandb import WandbLoggerCallback
 def tune_with_callback(config, algo_name, env_name):
     """
     Tune the model using a wandb callback.
+
     Args:
         config (dict): The configuration parameters for the tuner.
         algo_name (str): The name of the algorithm.
         env_name (str): The name of the environment.
+
     Returns:
         None
-    """
 
+    """
     tuner = tune.Tuner(
         algo_name,
         param_space=config,
@@ -33,8 +36,7 @@ def tune_with_callback(config, algo_name, env_name):
             # stop={"timesteps_total": 1e6 * 2},
             # stop={"env_runners/episode_reward_mean": 3, "timesteps_total": 1e6 / 2},
             stop={
-                "env_runners/episode_reward_mean": 1.5
-                * config["env_config"]["num_agents"],
+                "env_runners/episode_reward_mean": 1.5 * config["env_config"]["num_agents"],
                 "time_total_s": 3600 * 18,
             },
             callbacks=[

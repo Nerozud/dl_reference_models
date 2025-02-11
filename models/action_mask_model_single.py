@@ -1,10 +1,8 @@
 import torch
-from torch import nn
-
-from gymnasium.spaces import Dict
-from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 from ray.rllib.models.torch.complex_input_net import ComplexInputNetwork
+from ray.rllib.models.torch.torch_modelv2 import TorchModelV2
 from ray.rllib.utils.torch_utils import FLOAT_MIN
+from torch import nn
 
 
 class TorchActionMaskModelSingle(TorchModelV2, nn.Module):
@@ -20,15 +18,8 @@ class TorchActionMaskModelSingle(TorchModelV2, nn.Module):
         **kwargs,
     ):
         orig_space = getattr(obs_space, "original_space", obs_space)
-        assert (
-            isinstance(orig_space, Dict)
-            and "action_mask" in orig_space.spaces
-            and "observations" in orig_space.spaces
-        )
 
-        TorchModelV2.__init__(
-            self, obs_space, action_space, num_outputs, model_config, name, **kwargs
-        )
+        TorchModelV2.__init__(self, obs_space, action_space, num_outputs, model_config, name, **kwargs)
         nn.Module.__init__(self)
 
         self.internal_model = ComplexInputNetwork(

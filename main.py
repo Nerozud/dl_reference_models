@@ -54,7 +54,7 @@ def env_creator(env_config=None):
     return ReferenceModel(env_config)
 
 
-def test_trained_model(cp_path, num_episodes=100):
+def test_trained_model(cp_path: str, num_episodes: int = 100):
     """
     Test a trained reinforcement learning model using a given checkpoint path and
     store the results in CSV format.
@@ -65,15 +65,17 @@ def test_trained_model(cp_path, num_episodes=100):
 
     Returns:
         None
-    The function performs the following steps:
-    1. Initializes the RLlib Algorithm from the provided checkpoint.
-    2. Creates the environment using the `env_creator` function.
-    3. Runs the specified number of episodes, collecting rewards and other metrics.
-    4. If using RNN checkpoints, manages the state for each agent.
-    5. Records the total reward, timesteps, and CPU time for each episode.
-    6. Collects per-agent rewards and positions.
-    7. Stores the results in a pandas DataFrame and saves it as CSV in "experiments/results".
-    8. Prints average reward and timesteps across all episodes.
+
+    Description:
+        The function performs the following steps:
+        1. Initializes the RLlib Algorithm from the provided checkpoint.
+        2. Creates the environment using the `env_creator` function.
+        3. Runs the specified number of episodes, collecting rewards and other metrics.
+        4. If using RNN checkpoints, manages the state for each agent.
+        5. Records the total reward, timesteps, and CPU time for each episode.
+        6. Collects per-agent rewards and positions.
+        7. Stores the results in a pandas DataFrame and saves it as CSV in "experiments/results".
+        8. Prints average reward and timesteps across all episodes.
 
     """
     # Initialize the RLlib Algorithm from a checkpoint.

@@ -141,8 +141,8 @@ class ReferenceModel(MultiAgentEnv):
             starts (dict): A dictionary where keys are agent identifiers (e.g., 'agent_0') and values are the starting positions.
             positions (dict): A copy of the starts dictionary representing the current positions of the agents.
             goals (dict): A dictionary where keys are agent identifiers (e.g., 'agent_0') and values are the goal positions.
-        """
 
+        """
         self.starts = {}
         available_positions = np.argwhere(self.grid == 0)
         for i in range(self.num_agents):
@@ -292,14 +292,17 @@ class ReferenceModel(MultiAgentEnv):
         # print("Stepping env with number of obs:", len(obs))
         return obs, rewards, terminated, truncated, info
 
-    def get_next_position(self, action, pos):
+    def get_next_position(self, action: int, pos):
         """
         Get the next position based on the given action and current position.
-        Parameters:
+
+        Args:
             action (int): The action to be taken.
             pos (tuple): The current position.
+
         Returns:
             numpy.ndarray: The next position.
+
         Description:
             This function calculates the next position based on given action and current position.
             The possible actions are:
@@ -310,6 +313,7 @@ class ReferenceModel(MultiAgentEnv):
                 - 4: Move left
             The next position is calculated by adding or subtracting 1 to the corresponding
             coordinate of the current position.
+
         """
         if action == 0:  # no-op
             next_pos = np.array([pos[0], pos[1]], dtype=np.uint8)
@@ -322,7 +326,8 @@ class ReferenceModel(MultiAgentEnv):
         elif action == 4:  # left
             next_pos = np.array([pos[0], pos[1] - 1], dtype=np.uint8)
         else:
-            raise ValueError("Invalid action")
+            msg = "Invalid action"
+            raise ValueError(msg)
 
         return next_pos
 
@@ -330,16 +335,13 @@ class ReferenceModel(MultiAgentEnv):
         """
         Get the observation for a given agent.
 
-        Parameters
-        ----------
+        Args:
             agent_id (str): The ID of the agent.
 
-        Returns
-        -------
+        Returns:
             numpy.ndarray: The observation array.
 
-        Description
-        -----------
+        Description:
             This function calculates the observation array for a given agent based on its position.
             The observation array is a 2D np array with the same shape as the env's obs space.
             Each element in the array represents the state of a cell in the grid.
@@ -397,11 +399,13 @@ class ReferenceModel(MultiAgentEnv):
     def get_action_mask(self, obs):
         """
         Get the action mask for a given agent.
-        Parameters:
-            agent_id (str): The ID of the agent.
+
+        Args:
             obs (numpy.ndarray): The observation array for the agent.
+
         Returns:
             numpy.ndarray: The action mask array.
+
         Description:
             This function calculates the action mask for a given agent based on its observation.
             The action mask is a binary array indicating which actions are valid for the agent.
@@ -414,8 +418,8 @@ class ReferenceModel(MultiAgentEnv):
             The action mask is calculated based on the current observation of the agent.
             Action 0 is always possible.
             Movement actions (1-4) are only possible if the corresponding cell in the observation is empty or a goal.
-        """
 
+        """
         action_mask = np.zeros(
             self.observation_space["action_mask"].shape,
             dtype=self.observation_space["action_mask"].dtype,
@@ -521,7 +525,7 @@ class ReferenceModel(MultiAgentEnv):
             # Add grid lines for clarity
             self.ax.set_xticks(np.arange(0, self.grid.shape[1], 1))
             self.ax.set_yticks(np.arange(0, self.grid.shape[0], 1))
-            self.ax.grid(True, which="both", color="gray", linestyle="-", linewidth=0.5)
+            self.ax.grid(visible=True, which="both", color="gray", linestyle="-", linewidth=0.5)
 
             # Reverse the y-axis to match typical grid layout (0,0 at top-left)
             self.ax.invert_yaxis()
