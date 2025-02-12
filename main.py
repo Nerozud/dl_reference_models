@@ -3,10 +3,12 @@
 import os
 import time
 from datetime import datetime
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pytz
 import ray
 import torch
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -20,7 +22,7 @@ from src.trainers.tuner import tune_with_callback
 
 ENV_NAME = "ReferenceModel-2-1"
 ALGO_NAME = "PPO"  # PPO, IMPALA, RANDOM
-MODE = "train"  # train or test, test only works with CTDE for now
+MODE = "test"  # train or test, test only works with CTDE for now
 CHECKPOINT_PATH = r"experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000"  # just for MODE = test
 # experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000
 # experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000
@@ -176,7 +178,7 @@ def test_trained_model(cp_path: str, num_episodes: int = 100):
         }
 
         # Add per-agent rewards and positions
-        for agent_id in env._agent_ids:
+        for agent_id in env.get_agent_ids():
             agent_index = agent_id.split("_")[1]  # Extract agent index
             # Flatten the data by creating separate columns for each agent
             episode_data[f"agent_{agent_index}_reward"] = agent_episode_rewards[agent_id]
@@ -208,13 +210,14 @@ def test_trained_model(cp_path: str, num_episodes: int = 100):
 
     results_df = pd.DataFrame(results)
     # Ensure the directory exists
-    os.makedirs("experiments/results", exist_ok=True)
+    Path("experiments/results").mkdir(parents=True, exist_ok=True)
 
     # Generate a suitable filename with current date and time
-    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_file = os.path.join(
-        "experiments/results",
-        f"{ENV_NAME}_{ALGO_NAME}_{env_setup['num_agents']}_agents_{current_time}.csv",
+
+    current_time = datetime.now(pytz.utc).strftime("%Y-%m-%d_%H-%M-%S")
+
+    output_file = (
+        Path("experiments/results") / f"{ENV_NAME}_{ALGO_NAME}_{env_setup['num_agents']}_agents_{current_time}.csv"
     )
 
     # Save the DataFrame to CSV
@@ -238,9 +241,9 @@ def test_trained_model(cp_path: str, num_episodes: int = 100):
     plt.colorbar(heatmap_plot, label="Number of visits", cax=cax)
 
     # Save the heatmap
-    heatmap_file = os.path.join(
-        "experiments/results",
-        f"{ENV_NAME}_{ALGO_NAME}_{env_setup['num_agents']}_agents_{current_time}_heatmap.pdf",
+    heatmap_file = (
+        Path("experiments/results")
+        / f"{ENV_NAME}_{ALGO_NAME}_{env_setup['num_agents']}_agents_{current_time}_heatmap.pdf"
     )
     plt.savefig(heatmap_file, bbox_inches="tight")
     print(f"Heatmap saved to {heatmap_file}")
@@ -250,7 +253,7 @@ def test_trained_model(cp_path: str, num_episodes: int = 100):
 
 
 if __name__ == "__main__":
-    drive = os.path.splitdrive(os.getcwd())[0]
+    drive = os.path.splitdrive(str(Path.cwd()))[0]
     ray.init(_temp_dir=drive + "\\tmp")  # make sure everything is on the same drive C: or D: etc.
 
     register_env(ENV_NAME, env_creator)
