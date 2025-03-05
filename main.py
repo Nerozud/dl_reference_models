@@ -23,7 +23,8 @@ from src.trainers.tuner import tune_with_callback
 ENV_NAME = "ReferenceModel-2-1"
 ALGO_NAME = "PPO"  # PPO, IMPALA, RANDOM
 MODE = "test"  # train or test, test only works with CTDE for now
-CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2024-11-22_02-08-52\IMPALA-ReferenceModel-2-1-5690c_00000\checkpoint_000000"  # just for MODE = test
+SAVE_RESULTS = False  # save results to CSV and heatmap
+CHECKPOINT_PATH = r"experiments\trained_models\PPO_2024-10-29_01-02-32\PPO-ReferenceModel-2-1-18a43_00000\checkpoint_000000"  # just for MODE = test
 # experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000
 # experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000
 # experiments\trained_models\IMPALA_2024-10-31_20-25-09\IMPALA-ReferenceModel-2-1-b-d7c2f_00000\checkpoint_000000
@@ -31,7 +32,7 @@ CHECKPOINT_RNN = True  # if the checkpoint model has RNN or LSTM layers
 
 env_setup = {
     "env_name": ENV_NAME,
-    "seed": None,  # int or None, same seed creates same sequence of starts and goals
+    "seed": 42,  # int or None, same seed creates same sequence of starts and goals
     "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
     "num_agents": 4,
     "steps_per_episode": 100,
@@ -209,47 +210,49 @@ def test_trained_model(cp_path: str, num_episodes: int = 100):
     print("Success rate:", success_rate * 100, "%")
 
     results_df = pd.DataFrame(results)
-    # Ensure the directory exists
-    Path("experiments/results").mkdir(parents=True, exist_ok=True)
 
-    # Generate a suitable filename with current date and time
+    if SAVE_RESULTS:
+        # Ensure the directory exists
+        Path("experiments/results").mkdir(parents=True, exist_ok=True)
 
-    current_time = datetime.now(pytz.utc).strftime("%Y-%m-%d_%H-%M-%S")
+        # Generate a suitable filename with current date and time
 
-    output_file = (
-        Path("experiments/results") / f"{ENV_NAME}_{ALGO_NAME}_{env_setup['num_agents']}_agents_{current_time}.csv"
-    )
+        current_time = datetime.now(pytz.utc).strftime("%Y-%m-%d_%H-%M-%S")
 
-    # Save the DataFrame to CSV
-    results_df.to_csv(output_file, index=False)
-    print(f"Results saved to {output_file}")
+        output_file = (
+            Path("experiments/results") / f"{ENV_NAME}_{ALGO_NAME}_{env_setup['num_agents']}_agents_{current_time}.csv"
+        )
 
-    # Create a heatmap of occupancy
-    plt.figure()
-    ax = plt.gca()
-    plt.xlabel("X")
-    plt.ylabel("Y")
+        # Save the DataFrame to CSV
+        results_df.to_csv(output_file, index=False)
+        print(f"Results saved to {output_file}")
 
-    # Note: origin='upper' matches the indexing [y,x] with y=0 at top
-    heatmap_plot = plt.imshow(occupancy_grid, origin="upper")
+        # Create a heatmap of occupancy
+        plt.figure()
+        ax = plt.gca()
+        plt.xlabel("X")
+        plt.ylabel("Y")
 
-    # create an axes on the right side of ax. The width of cax will be 5%
-    # of ax and the padding between cax and ax will be fixed at 0.05 inch.
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="5%", pad=0.05)
+        # Note: origin='upper' matches the indexing [y,x] with y=0 at top
+        heatmap_plot = plt.imshow(occupancy_grid, origin="upper")
 
-    plt.colorbar(heatmap_plot, label="Number of visits", cax=cax)
+        # create an axes on the right side of ax. The width of cax will be 5%
+        # of ax and the padding between cax and ax will be fixed at 0.05 inch.
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
 
-    # Save the heatmap
-    heatmap_file = (
-        Path("experiments/results")
-        / f"{ENV_NAME}_{ALGO_NAME}_{env_setup['num_agents']}_agents_{current_time}_heatmap.pdf"
-    )
-    plt.savefig(heatmap_file, bbox_inches="tight")
-    print(f"Heatmap saved to {heatmap_file}")
+        plt.colorbar(heatmap_plot, label="Number of visits", cax=cax)
 
-    # Optionally show the plot
-    # plt.show()
+        # Save the heatmap
+        heatmap_file = (
+            Path("experiments/results")
+            / f"{ENV_NAME}_{ALGO_NAME}_{env_setup['num_agents']}_agents_{current_time}_heatmap.pdf"
+        )
+        plt.savefig(heatmap_file, bbox_inches="tight")
+        print(f"Heatmap saved to {heatmap_file}")
+
+        # Optionally show the plot
+        # plt.show()
 
 
 if __name__ == "__main__":
