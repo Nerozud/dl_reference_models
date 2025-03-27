@@ -21,7 +21,6 @@ Module containing the ReferenceModel class, which is a multi-agent environment.
 """
 
 import logging
-import random
 
 import gymnasium as gym
 import matplotlib.pyplot as plt
@@ -81,7 +80,7 @@ class ReferenceModel(MultiAgentEnv):
         else:
             self.rng = np.random.default_rng()
 
-        # TODO: Implement the environment initialization depending on the env_config´
+        # TODO: Implement the environment initialization depending on the env_config
         # 0 - empty cell, 1 - obstacle,
         # coords are [y-1, x-1] from upper left, so [0, 4] is the aisle
         self.grid = get_grid.get_grid(env_config["env_name"])
