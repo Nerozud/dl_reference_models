@@ -20,21 +20,22 @@ from src.agents.impala import get_impala_config
 from src.agents.ppo import get_ppo_config
 from src.trainers.tuner import tune_with_callback
 
-ENV_NAME = "ReferenceModel-2-1"
-ALGO_NAME = "PPO"  # PPO, IMPALA, RANDOM
-MODE = "test"  # train or test, test only works with CTDE for now
+ENV_NAME = "ReferenceModel-3-1"
+ALGO_NAME = "RANDOM"  # PPO, IMPALA, RANDOM
+MODE = "train"  # train or test, test only works with CTDE for now
 SAVE_RESULTS = False  # save results to CSV and heatmap
-CHECKPOINT_PATH = r"experiments\trained_models\PPO_2024-10-29_01-02-32\PPO-ReferenceModel-2-1-18a43_00000\checkpoint_000000"  # just for MODE = test
+CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2024-11-17_00-33-04\IMPALA-ReferenceModel-2-2-20aa6_00000\checkpoint_000000"  # just for MODE = test
 # experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000
 # experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000
 # experiments\trained_models\IMPALA_2024-10-31_20-25-09\IMPALA-ReferenceModel-2-1-b-d7c2f_00000\checkpoint_000000
 CHECKPOINT_RNN = True  # if the checkpoint model has RNN or LSTM layers
+CP_TRAINED_ON_ENV_NAME = "ReferenceModel-2-2"  # the environment the model was trained on
 
 env_setup = {
     "env_name": ENV_NAME,
     "seed": 42,  # int or None, same seed creates same sequence of starts and goals
     "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
-    "num_agents": 10,
+    "num_agents": 4,
     "steps_per_episode": 100,
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE use single agent env
@@ -57,7 +58,7 @@ def env_creator(env_config=None):
     return ReferenceModel(env_config)
 
 
-def test_trained_model(cp_path: str, num_episodes: int = 100):
+def test_trained_model(cp_path: str, num_episodes: int = 1000):
     """
     Test a trained reinforcement learning model using a given checkpoint path and
     store the results in CSV format.
@@ -83,6 +84,7 @@ def test_trained_model(cp_path: str, num_episodes: int = 100):
     """
     # Initialize the RLlib Algorithm from a checkpoint.
     if ALGO_NAME != "RANDOM":
+        register_env(CP_TRAINED_ON_ENV_NAME, env_creator)
         algo = Algorithm.from_checkpoint(cp_path)
     env = env_creator(env_config=env_setup)
 
@@ -129,13 +131,13 @@ def test_trained_model(cp_path: str, num_episodes: int = 100):
                         policy_id="shared_policy",
                         prev_action=actions[agent_id],
                         prev_reward=rewards[agent_id],
-                        explore=True,
+                        explore=False,  # for deterministic actions
                     )
                 else:
                     actions[agent_id] = algo.compute_single_action(
                         observation,
                         policy_id="shared_policy",
-                        explore=True,
+                        explore=False,  # for deterministic actions
                     )
 
             # Step the environment.

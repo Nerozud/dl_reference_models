@@ -1,5 +1,5 @@
 """
-This module contains the ReferenceModel class, which is a multi-agent environment.
+Module containing the ReferenceModel class, which is a multi-agent environment.
     Initialize the ReferenceModel environment.
         env_config (dict): Configuration options for the environment.
         None
