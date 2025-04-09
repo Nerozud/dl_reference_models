@@ -1,3 +1,4 @@
+trained_models
 experiments/config
 experiments/logs
 experiments/wandb
