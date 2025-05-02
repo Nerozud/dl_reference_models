@@ -83,7 +83,13 @@ class ReferenceModel(MultiAgentEnv):
         # TODO: Implement the environment initialization depending on the env_config
         # 0 - empty cell, 1 - obstacle,
         # coords are [y-1, x-1] from upper left, so [0, 4] is the aisle
-        self.grid = get_grid.get_grid(env_config["env_name"])
+        # self.grid = get_grid.get_grid(env_config["env_name"])
+
+        # TODO: Make env name fix and make env as list of envs to give as env_config
+        random_env_name = np.random.choice(
+            ["ReferenceModel-1-2", "ReferenceModel-1-3", "ReferenceModel-1-4", "ReferenceModel-3-1"]
+        )
+        self.grid = get_grid.get_grid(random_env_name)
 
         if self.deterministic:
             self.starts = get_grid.get_start_positions(env_config["env_name"], self.num_agents)
@@ -93,7 +99,6 @@ class ReferenceModel(MultiAgentEnv):
             self.generate_starts_goals()
 
         # POMPD, small grid around the agent
-
         # Assuming all agents have the same observation space
         self.observation_space = gym.spaces.Dict(
             {
@@ -105,13 +110,15 @@ class ReferenceModel(MultiAgentEnv):
                 ),
                 "position": gym.spaces.Box(
                     low=0,
-                    high=max(self.grid.shape),
+                    # high=max(self.grid.shape),
+                    high=35,
                     shape=(2,),
                     dtype=np.uint8,
                 ),
                 "goal": gym.spaces.Box(
                     low=0,
-                    high=max(self.grid.shape),
+                    # high=max(self.grid.shape),
+                    high=35,
                     shape=(2,),
                     dtype=np.uint8,
                 ),

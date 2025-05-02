@@ -793,9 +793,7 @@ def get_start_positions(env_name: str, num_agents: int):
 
     # Ensure the number of agents does not exceed available positions
     if num_agents > len(env_start_positions):
-        raise ValueError(
-            f"Requested number of agents ({num_agents}) exceeds available positions in {env_name}"
-        )
+        raise ValueError(f"Requested number of agents ({num_agents}) exceeds available positions in {env_name}")
 
     # Generate the dictionary with dynamic agent names
     return {f"agent_{i}": env_start_positions[i] for i in range(num_agents)}
@@ -863,9 +861,7 @@ def get_goal_positions(env_name: str, num_agents: int):
 
     # Ensure the number of agents does not exceed available goal positions
     if num_agents > len(env_goal_positions):
-        raise ValueError(
-            f"Requested number of agents ({num_agents}) exceeds available goal positions in {env_name}"
-        )
+        raise ValueError(f"Requested number of agents ({num_agents}) exceeds available goal positions in {env_name}")
 
     # Generate the dictionary with dynamic agent names
     return {f"agent_{i}": env_goal_positions[i] for i in range(num_agents)}
