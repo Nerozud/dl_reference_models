@@ -38,7 +38,7 @@ def tune_with_callback(config, algo_name, env_name):
             stop={
                 # "env_runners/episode_reward_mean": 1.5 * config["env_config"]["num_agents"],
                 # "time_total_s": 3600 * 18,
-                "counters/num_env_steps_sampled": 30000000,
+                "counters/num_env_steps_sampled": 14360000,
             },
             callbacks=[
                 WandbLoggerCallback(

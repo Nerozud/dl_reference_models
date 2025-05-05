@@ -83,13 +83,16 @@ class ReferenceModel(MultiAgentEnv):
         # TODO: Implement the environment initialization depending on the env_config
         # 0 - empty cell, 1 - obstacle,
         # coords are [y-1, x-1] from upper left, so [0, 4] is the aisle
-        # self.grid = get_grid.get_grid(env_config["env_name"])
+        self.grid = get_grid.get_grid(env_config["env_name"])
 
         # TODO: Make env name fix and make env as list of envs to give as env_config
-        random_env_name = np.random.choice(
-            ["ReferenceModel-1-2", "ReferenceModel-1-3", "ReferenceModel-1-4", "ReferenceModel-3-1"]
-        )
-        self.grid = get_grid.get_grid(random_env_name)
+        # random_env_name = np.random.choice(
+        #     ["ReferenceModel-1-2", "ReferenceModel-1-3", "ReferenceModel-1-4", "ReferenceModel-3-1"]
+        # )
+        # random_env_name = np.random.choice(
+        #     ["ReferenceModel-2-1", "ReferenceModel-3-1"]
+        # )
+        # self.grid = get_grid.get_grid(random_env_name)
 
         if self.deterministic:
             self.starts = get_grid.get_start_positions(env_config["env_name"], self.num_agents)

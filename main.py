@@ -21,15 +21,15 @@ from src.agents.ppo import get_ppo_config
 from src.trainers.tuner import tune_with_callback
 
 ENV_NAME = "ReferenceModel-3-1"
-ALGO_NAME = "RANDOM"  # PPO, IMPALA, RANDOM
-MODE = "train"  # train or test, test only works with CTDE for now
+ALGO_NAME = "PPO"  # PPO, IMPALA, RANDOM
+MODE = "test"  # train or test, test only works with CTDE for now
 SAVE_RESULTS = False  # save results to CSV and heatmap
-CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2024-11-17_00-33-04\IMPALA-ReferenceModel-2-2-20aa6_00000\checkpoint_000000"  # just for MODE = test
+CHECKPOINT_PATH = r"experiments\trained_models\PPO_2025-05-02_14-51-47\PPO-ReferenceModel-3-1-35936_00000\checkpoint_000000"  # just for MODE = test
 # experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000
 # experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000
 # experiments\trained_models\IMPALA_2024-10-31_20-25-09\IMPALA-ReferenceModel-2-1-b-d7c2f_00000\checkpoint_000000
 CHECKPOINT_RNN = True  # if the checkpoint model has RNN or LSTM layers
-CP_TRAINED_ON_ENV_NAME = "ReferenceModel-2-2"  # the environment the model was trained on
+CP_TRAINED_ON_ENV_NAME = "ReferenceModel-3-1"  # the environment the model was trained on
 
 env_setup = {
     "env_name": ENV_NAME,
