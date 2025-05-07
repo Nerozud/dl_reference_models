@@ -284,3 +284,5 @@ if __name__ == "__main__":
     else:
         msg = f"Mode {MODE} not supported."
         raise ValueError(msg)
+
+    ray.shutdown()
