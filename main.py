@@ -20,11 +20,11 @@ from src.agents.impala import get_impala_config
 from src.agents.ppo import get_ppo_config
 from src.trainers.tuner import tune_with_callback
 
-ENV_NAME = "ReferenceModel-3-1"
+ENV_NAME = "ReferenceModel-2-1"
 ALGO_NAME = "PPO"  # PPO, IMPALA, RANDOM
 MODE = "test"  # train or test, test only works with CTDE for now
 SAVE_RESULTS = False  # save results to CSV and heatmap
-CHECKPOINT_PATH = r"experiments\trained_models\PPO_2025-05-02_14-51-47\PPO-ReferenceModel-3-1-35936_00000\checkpoint_000000"  # just for MODE = test
+CHECKPOINT_PATH = r"experiments\trained_models\PPO_2025-05-07_17-01-47\PPO-ReferenceModel-3-1-32df9_00000\checkpoint_000000"  # just for MODE = test
 # experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000
 # experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000
 # experiments\trained_models\IMPALA_2024-10-31_20-25-09\IMPALA-ReferenceModel-2-1-b-d7c2f_00000\checkpoint_000000
@@ -58,7 +58,49 @@ def env_creator(env_config=None):
     return ReferenceModel(env_config)
 
 
-def test_trained_model(cp_path: str, num_episodes: int = 1000):
+def load_checkpoint_local(cp_path: str) -> Algorithm:
+    """Build a *fresh* tiny-footprint algo and then restore the weights."""
+    # Select the appropriate config based on the algorithm name
+    if ALGO_NAME == "PPO":
+        from ray.rllib.algorithms.ppo import PPOConfig
+
+        cfg = (
+            PPOConfig()
+            .environment(CP_TRAINED_ON_ENV_NAME, env_config=env_setup)
+            .rollouts(
+                num_rollout_workers=0,
+                num_envs_per_worker=1,
+                create_env_on_local_worker=True,
+            )
+            .evaluation(evaluation_num_workers=0)
+            .resources(num_gpus=1)
+            .framework("torch")
+        )
+    elif ALGO_NAME == "IMPALA":
+        from ray.rllib.algorithms.impala import ImpalaConfig
+
+        cfg = (
+            ImpalaConfig()
+            .environment(CP_TRAINED_ON_ENV_NAME, env_config=env_setup)
+            .rollouts(
+                num_rollout_workers=0,
+                num_envs_per_worker=1,
+                create_env_on_local_worker=True,
+            )
+            .evaluation(evaluation_num_workers=0)
+            .resources(num_gpus=1)
+            .framework("torch")
+        )
+    else:
+        error_message = f"Algorithm {ALGO_NAME} not supported for checkpoint loading."
+        raise ValueError(error_message)
+
+    algo = cfg.build()  # allocates just the driver process
+    algo.restore(cp_path)  # ← only weights / optimizer state are loaded
+    return algo
+
+
+def test_trained_model(num_episodes: int = 1000):
     """
     Test a trained reinforcement learning model using a given checkpoint path and
     store the results in CSV format.
@@ -85,7 +127,8 @@ def test_trained_model(cp_path: str, num_episodes: int = 1000):
     # Initialize the RLlib Algorithm from a checkpoint.
     if ALGO_NAME != "RANDOM":
         register_env(CP_TRAINED_ON_ENV_NAME, env_creator)
-        algo = Algorithm.from_checkpoint(cp_path)
+        algo = load_checkpoint_local(CHECKPOINT_PATH)
+
     env = env_creator(env_config=env_setup)
 
     total_reward = 0
@@ -280,7 +323,7 @@ if __name__ == "__main__":
             ENV_NAME,
         )
     elif MODE == "test":
-        test_trained_model(CHECKPOINT_PATH)
+        test_trained_model()
     else:
         msg = f"Mode {MODE} not supported."
         raise ValueError(msg)
