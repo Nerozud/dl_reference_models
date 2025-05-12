@@ -20,11 +20,11 @@ from src.agents.impala import get_impala_config
 from src.agents.ppo import get_ppo_config
 from src.trainers.tuner import tune_with_callback
 
-ENV_NAME = "ReferenceModel-2-1"
-ALGO_NAME = "PPO"  # PPO, IMPALA, RANDOM
+ENV_NAME = "ReferenceModel-3-1"
+ALGO_NAME = "IMPALA"  # PPO, IMPALA, RANDOM
 MODE = "test"  # train or test, test only works with CTDE for now
 SAVE_RESULTS = False  # save results to CSV and heatmap
-CHECKPOINT_PATH = r"experiments\trained_models\PPO_2025-05-07_17-01-47\PPO-ReferenceModel-3-1-32df9_00000\checkpoint_000000"  # just for MODE = test
+CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2025-05-08_16-18-00\IMPALA-ReferenceModel-3-1-3f831_00000\checkpoint_000124"  # just for MODE = test
 # experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000
 # experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000
 # experiments\trained_models\IMPALA_2024-10-31_20-25-09\IMPALA-ReferenceModel-2-1-b-d7c2f_00000\checkpoint_000000
