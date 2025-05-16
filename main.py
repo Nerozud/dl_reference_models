@@ -154,11 +154,11 @@ def test_trained_model(num_episodes: int = 1000):
             initial_state_list = state_list.copy()
             next_state_list = {}
 
-        actions = {agent_id: 0 for agent_id in obs}
-        rewards = {agent_id: 0.0 for agent_id in obs}
+        actions = dict.fromkeys(obs, 0)
+        rewards = dict.fromkeys(obs, 0.0)
 
         # Track per-agent rewards
-        agent_episode_rewards = {agent_id: 0.0 for agent_id in obs}
+        agent_episode_rewards = dict.fromkeys(obs, 0.0)
         # Optionally, track trajectories if needed
         # agent_trajectories = {agent_id: [] for agent_id in obs}
 
