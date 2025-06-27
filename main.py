@@ -22,7 +22,7 @@ from src.trainers.tuner import tune_with_callback
 
 ENV_NAME = "ReferenceModel-3-1"
 ALGO_NAME = "IMPALA"  # PPO, IMPALA, RANDOM
-MODE = "test"  # train or test, test only works with CTDE for now
+MODE = "train"  # train or test, test only works with CTDE for now
 SAVE_RESULTS = False  # save results to CSV and heatmap
 CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2025-05-08_16-18-00\IMPALA-ReferenceModel-3-1-3f831_00000\checkpoint_000124"  # just for MODE = test
 # experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000
@@ -33,7 +33,7 @@ CP_TRAINED_ON_ENV_NAME = "ReferenceModel-3-1"  # the environment the model was t
 
 env_setup = {
     "env_name": ENV_NAME,
-    "seed": 42,  # int or None, same seed creates same sequence of starts and goals
+    "seed": None,  # int or None, same seed creates same sequence of starts and goals
     "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
     "num_agents": 4,
     "steps_per_episode": 100,

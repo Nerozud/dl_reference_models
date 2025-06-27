@@ -22,6 +22,8 @@ Module containing the ReferenceModel class, which is a multi-agent environment.
 
 import logging
 
+logger = logging.getLogger(__name__)
+
 import gymnasium as gym
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,6 +31,7 @@ from matplotlib import patches
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
 from src.environments import get_grid
+from src.environments.actions import DOWN, LEFT, NO_OP, RIGHT, UP
 
 
 class ReferenceModel(MultiAgentEnv):
@@ -208,14 +211,10 @@ class ReferenceModel(MultiAgentEnv):
         truncated = {}
         reached_goal = {}
 
-        # Default to no-op actions if no actions are provided or missing agent actions
         if not action_dict or len(action_dict) != self.num_agents:
             print("action_dict:", action_dict)
-            action_dict = {agent_id: 0 for agent_id in self._agent_ids}
-            logging.warning(
-                "No actions provided or missing agent actions. Defaulting to no-op actions: %s",
-                action_dict,
-            )
+            action_dict = dict.fromkeys(self._agent_ids, 0)
+            logger.warning("No actions provided or missing agent actions. Defaulting to no-op actions: %s", action_dict)
 
         for i in range(self.num_agents):
             rewards[f"agent_{i}"] = 0
@@ -324,15 +323,15 @@ class ReferenceModel(MultiAgentEnv):
             coordinate of the current position.
 
         """
-        if action == 0:  # no-op
+        if action == NO_OP:  # no-op
             next_pos = np.array([pos[0], pos[1]], dtype=np.uint8)
-        elif action == 1:  # up
+        elif action == UP:  # up
             next_pos = np.array([pos[0] - 1, pos[1]], dtype=np.uint8)
-        elif action == 2:  # right
+        elif action == RIGHT:  # right
             next_pos = np.array([pos[0], pos[1] + 1], dtype=np.uint8)
-        elif action == 3:  # down
+        elif action == DOWN:  # down
             next_pos = np.array([pos[0] + 1, pos[1]], dtype=np.uint8)
-        elif action == 4:  # left
+        elif action == LEFT:  # left
             next_pos = np.array([pos[0], pos[1] - 1], dtype=np.uint8)
         else:
             msg = "Invalid action"
@@ -383,22 +382,18 @@ class ReferenceModel(MultiAgentEnv):
                     # Check if the cell is an obstacle
                     if self.grid[x, y] == 1:
                         obs[i, j] = 1
-                    else:
-                        # Check if another agent occupies the cell
-                        if any(
-                            np.array_equal(self.positions[agent], (x, y))
-                            for agent in self.positions
-                            if agent != agent_id
-                        ):
-                            obs[i, j] = 2
-                        # Check if this is current agent's goal and not occupied by another agent
-                        elif np.array_equal(self.goals[agent_id], (x, y)):
-                            obs[i, j] = 3
-                        # Check if this is another agent's goal and not occupied by another agent
-                        elif any(
-                            np.array_equal(self.goals[agent], (x, y)) for agent in self.positions if agent != agent_id
-                        ):
-                            obs[i, j] = 4
+                    elif any(
+                        np.array_equal(self.positions[agent], (x, y)) for agent in self.positions if agent != agent_id
+                    ):
+                        obs[i, j] = 2
+                    # Check if this is current agent's goal and not occupied by another agent
+                    elif np.array_equal(self.goals[agent_id], (x, y)):
+                        obs[i, j] = 3
+                    # Check if this is another agent's goal and not occupied by another agent
+                    elif any(
+                        np.array_equal(self.goals[agent], (x, y)) for agent in self.positions if agent != agent_id
+                    ):
+                        obs[i, j] = 4
                 else:
                     # If the cell is outside the grid, treat it as an obstacle
                     obs[i, j] = 1
