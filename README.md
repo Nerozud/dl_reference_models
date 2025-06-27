@@ -1,3 +1,6 @@
+![Environment Overview](assets/reference_model_technical_implementation.pdf)
+
+
 # Deadlock Reference Models for Multi-Agent Pathfinding with RLlib
 
 This repository collects reference implementations for training and evaluating reinforcement learning agents on multi-agent pathfinding problems. The environments explicitly support deadlocks so that agents must cooperate to resolve them. All algorithms are built with RLlib to encourage reproducibility and extensibility.
@@ -11,6 +14,11 @@ The code base is part of ongoing doctoral research; version `v1.0.0` corresponds
 - **Training Script**: [`main.py`](main.py) can train or test agents depending on the selected mode.
 - **Classical Planners**: Baseline implementations such as A* and CBS in [`scripts`](scripts).
 - **Experiment Results**: Logs and heatmaps are stored under [`experiments`](experiments).
+
+## Overview of available Reference Models
+
+![Reference Model Overview](assets/overview_reference_models.PNG)
+
 
 ## Getting Started
 
