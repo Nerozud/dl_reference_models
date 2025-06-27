@@ -17,6 +17,7 @@ The code base is part of ongoing doctoral research; version `v1.0.0` corresponds
 Install the project dependencies (Python 3.11 is recommended) and run the training script:
 
 ```bash
+pip install -r requirements.txt
 python main.py
 ```
 

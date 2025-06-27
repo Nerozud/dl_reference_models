@@ -1,0 +1,6 @@
+ray[rllib]==2.35.0
+torch
+gymnasium
+numpy
+pandas
+matplotlib
