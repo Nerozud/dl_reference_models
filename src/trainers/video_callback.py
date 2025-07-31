@@ -18,7 +18,7 @@ class VideoCallback(DefaultCallbacks):
         frames = []
         obs, _ = env.reset()
         done = {"__all__": False}
-        while not done["__all__"]:
+        while not (done if isinstance(done, bool) else done.get("__all__", True)):
             actions = {
                 a: algorithm.compute_single_action(o, explore=False)
                 for a, o in obs.items()
