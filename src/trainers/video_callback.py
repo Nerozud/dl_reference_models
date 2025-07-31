@@ -26,6 +26,8 @@ class VideoCallback(DefaultCallbacks):
             obs, _, done, _, _ = env.step(actions)
             frames.append(env.render(return_array=True))
 
+        if not frames:  # Ensure frames is not empty
+            return
         video = np.stack(frames)
         wandb.log({"episode_video": wandb.Video(video, fps=4, format="mp4")})
 
