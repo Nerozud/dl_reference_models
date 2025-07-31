@@ -451,8 +451,12 @@ class ReferenceModel(MultiAgentEnv):
 
         return action_mask
 
-    def render(self):
-        """Render the environment."""
+    def render(self, return_array: bool = False):
+        """Render the environment.
+
+        Args:
+            return_array: If True, return the RGB image of the current figure.
+        """
         if not hasattr(self, "fig") or self.fig is None:
             # Initialize the rendering environment if it hasn't been done yet
             plt.ion()
@@ -556,6 +560,13 @@ class ReferenceModel(MultiAgentEnv):
         # Redraw the updated plot
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+
+        if return_array:
+            frame = np.frombuffer(self.fig.canvas.tostring_rgb(), dtype=np.uint8)
+            frame = frame.reshape(
+                self.fig.canvas.get_width_height()[::-1] + (3,)
+            )
+            return frame
 
         return True
 
