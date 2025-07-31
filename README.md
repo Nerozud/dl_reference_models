@@ -12,6 +12,7 @@ The code base is part of ongoing doctoral research; version `v1.0.0` corresponds
 - **RLlib Agents**: Configuration helpers for PPO, DQN and IMPALA located in [`src/agents`](src/agents).
 - **Custom Models**: Action masking models in [`models`](models) integrate with RLlib.
 - **Training Script**: [`main.py`](main.py) can train or test agents depending on the selected mode.
+- **Video Logging**: Automatic wandb video recording of training episodes to monitor agent behavior during training.
 - **Classical Planners**: Baseline implementations such as A* and CBS in [`scripts`](scripts).
 - **Experiment Results**: Logs and heatmaps are stored under [`experiments`](experiments).
 
@@ -34,6 +35,50 @@ Run tests with:
 ```bash
 pytest
 ```
+
+## Video Logging
+
+The repository includes automatic video logging functionality to monitor agent behavior during training. Videos are recorded and uploaded to wandb every x iterations.
+
+### Configuration
+
+Enable video logging by modifying the `video_logging` section in the `env_setup` dictionary in `main.py`:
+
+```python
+env_setup = {
+    # ... other config ...
+    "video_logging": {
+        "enabled": True,  # Enable video logging to wandb
+        "frequency": 50,  # Record videos every 50 iterations
+        "max_episodes_per_iteration": 1,  # Record 1 episode per iteration
+        "fps": 5,  # Video frames per second
+        "max_frames_per_episode": 200,  # Maximum frames to record per episode
+    },
+}
+```
+
+### Configuration Options
+
+- `enabled`: Enable or disable video logging (default: False)
+- `frequency`: Record videos every N training iterations (default: 50)
+- `max_episodes_per_iteration`: Maximum number of episodes to record per iteration when video logging is active (default: 1)
+- `fps`: Frames per second for the generated videos (default: 5)
+- `max_frames_per_episode`: Maximum number of frames to record per episode (default: 200)
+
+### How it Works
+
+1. The `WandbVideoCallback` monitors training iterations
+2. Every N iterations (based on frequency), it enables video recording
+3. The environment captures frames during episode execution using matplotlib
+4. Frames are collected and converted to video format
+5. Videos are automatically uploaded to wandb for visualization
+
+### Requirements
+
+Video logging requires:
+- wandb for video uploads
+- matplotlib for rendering
+- Pillow for image processing
 
 ## Project Structure
 

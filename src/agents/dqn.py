@@ -6,6 +6,7 @@ from ray.rllib.models import ModelCatalog
 
 from models.action_mask_model import TorchActionMaskModel
 from models.action_mask_model_single import TorchActionMaskModelSingle
+from src.utils.wandb_video_callback import WandbVideoCallback
 
 ModelCatalog.register_custom_model("action_mask_model", TorchActionMaskModel)
 ModelCatalog.register_custom_model(
@@ -16,6 +17,25 @@ ModelCatalog.register_custom_model(
 def get_dqn_config(env_name, env_config=None):
     """Get the DQN configuration."""
     num_agents = env_config.get("num_agents", 2)
+    
+    # Video logging configuration
+    video_config = env_config.get("video_logging", {})
+    enable_video_logging = video_config.get("enabled", False)
+    video_frequency = video_config.get("frequency", 50)
+    
+    # Create video callback if enabled
+    callbacks_class = None
+    if enable_video_logging:
+        # Create a custom callback class with the configuration
+        class ConfiguredWandbVideoCallback(WandbVideoCallback):
+            def __init__(self):
+                super().__init__(
+                    video_frequency=video_frequency,
+                    max_episodes_per_iteration=video_config.get("max_episodes_per_iteration", 1),
+                    video_fps=video_config.get("fps", 5),
+                    max_frames_per_episode=video_config.get("max_frames_per_episode", 200)
+                )
+        callbacks_class = ConfiguredWandbVideoCallback
 
     if env_config.get("training_execution_mode") == "CTE":
         config = (
@@ -42,6 +62,7 @@ def get_dqn_config(env_name, env_config=None):
                     },
                 },
             )
+            .callbacks(callbacks_class=callbacks_class)
         )
 
     else:
@@ -81,6 +102,7 @@ def get_dqn_config(env_name, env_config=None):
                     else "shared_policy"
                 ),
             )
+            .callbacks(callbacks_class=callbacks_class)
         )
 
     return config
