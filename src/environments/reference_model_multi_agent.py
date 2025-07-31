@@ -74,6 +74,8 @@ class ReferenceModel(MultiAgentEnv):
         self.deterministic = env_config.get("deterministic", False)
         self._agent_ids = {f"agent_{i}" for i in range(self.num_agents)}
         self.render_env = env_config.get("render_env", False)
+        self.capture_video = env_config.get("capture_video", False)
+        self.video_logger = env_config.get("video_logger", None)
         self.goal_reached_once = {f"agent_{i}": False for i in range(self.num_agents)}
 
         # Initialize a random number generator with the provided seed
@@ -135,7 +137,7 @@ class ReferenceModel(MultiAgentEnv):
         # Assuming all agents have the same action space
         self.action_space = gym.spaces.Discrete(5)
 
-        if self.render_env:
+        if self.render_env or self.capture_video:
             # Initialize rendering attributes
             self.agent_patches = {}  # Initialize agent_patches as an empty dictionary
             self.goal_patches = {}  # Initialize goal_patches as an empty dictionary
@@ -197,7 +199,7 @@ class ReferenceModel(MultiAgentEnv):
             obs[f"agent_{i}"]["goal"] = np.array(self.goals[f"agent_{i}"])
             obs[f"agent_{i}"]["observations"] = self.get_obs(f"agent_{i}")
             obs[f"agent_{i}"]["action_mask"] = self.get_action_mask(obs[f"agent_{i}"]["observations"])
-        if self.render_env:
+        if self.render_env or self.capture_video:
             self.render()
 
         return obs, info
@@ -294,7 +296,7 @@ class ReferenceModel(MultiAgentEnv):
             terminated["__all__"] = False
             truncated["__all__"] = False
 
-        if self.render_env:
+        if self.render_env or self.capture_video:
             self.render()
 
         # print("Stepping env with number of obs:", len(obs))
@@ -556,6 +558,10 @@ class ReferenceModel(MultiAgentEnv):
         # Redraw the updated plot
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+
+        # Capture frame for video if enabled
+        if self.capture_video and self.video_logger is not None:
+            self.video_logger.capture_frame_from_matplotlib_figure(self.fig)
 
         return True
 

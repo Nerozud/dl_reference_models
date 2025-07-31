@@ -3,3 +3,9 @@ experiments/config
 experiments/logs
 experiments/wandb
 experiments/trained_models
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.log
+**/__pycache__/

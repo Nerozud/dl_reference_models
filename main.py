@@ -40,6 +40,13 @@ env_setup = {
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE use single agent env
     "render_env": False,
+    "video_logging": {
+        "enabled": True,  # Enable video logging to wandb
+        "frequency": 50,  # Record videos every 50 iterations
+        "max_episodes_per_iteration": 1,  # Record 1 episode per iteration when video logging is active
+        "fps": 5,  # Video frames per second
+        "max_frames_per_episode": 200,  # Maximum frames to record per episode
+    },
 }
 
 # Import the correct environment based on the training execution mode

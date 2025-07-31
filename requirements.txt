@@ -4,3 +4,4 @@ gymnasium
 numpy
 pandas
 matplotlib
+Pillow
