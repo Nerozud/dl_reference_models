@@ -1,6 +1,5 @@
 """Main script to run the training of a chosen environment with chosen algorithm."""
 
-import os
 import time
 from datetime import datetime
 from pathlib import Path
@@ -301,8 +300,7 @@ def test_trained_model(num_episodes: int = 1000):
 
 
 if __name__ == "__main__":
-    drive = os.path.splitdrive(str(Path.cwd()))[0]
-    ray.init(_temp_dir=drive + "\\tmp")  # make sure everything is on the same drive C: or D: etc.
+    ray.init()
 
     register_env(ENV_NAME, env_creator)
 
