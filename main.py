@@ -20,7 +20,8 @@ from src.agents.impala import get_impala_config
 from src.agents.ppo import get_ppo_config
 from src.trainers.tuner import tune_with_callback
 
-ENV_NAME = "ReferenceModel-3-1"
+ENV_NAME = "ReferenceModelMultiAgent"
+GRID_NAME = "ReferenceModel-3-1"  # Which grid to use for training/evaluation
 ALGO_NAME = "IMPALA"  # PPO, IMPALA, RANDOM
 MODE = "train"  # train or test, test only works with CTDE for now
 SAVE_RESULTS = False  # save results to CSV and heatmap
@@ -29,10 +30,11 @@ CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2025-05-08_16-18-00\IMPALA
 # experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000
 # experiments\trained_models\IMPALA_2024-10-31_20-25-09\IMPALA-ReferenceModel-2-1-b-d7c2f_00000\checkpoint_000000
 CHECKPOINT_RNN = True  # if the checkpoint model has RNN or LSTM layers
-CP_TRAINED_ON_ENV_NAME = "ReferenceModel-3-1"  # the environment the model was trained on
+CP_TRAINED_ON_GRID_NAME = "ReferenceModel-3-1"  # the grid the model was trained on
 
 env_setup = {
     "env_name": ENV_NAME,
+    "grid_name": GRID_NAME,  # Which grid layout to use
     "seed": None,  # int or None, same seed creates same sequence of starts and goals
     "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
     "num_agents": 4,
@@ -60,13 +62,17 @@ def env_creator(env_config=None):
 
 def load_checkpoint_local(cp_path: str) -> Algorithm:
     """Build a *fresh* tiny-footprint algo and then restore the weights."""
+    # Create env_setup for checkpoint loading with the correct grid
+    cp_env_setup = env_setup.copy()
+    cp_env_setup["grid_name"] = CP_TRAINED_ON_GRID_NAME
+
     # Select the appropriate config based on the algorithm name
     if ALGO_NAME == "PPO":
         from ray.rllib.algorithms.ppo import PPOConfig
 
         cfg = (
             PPOConfig()
-            .environment(CP_TRAINED_ON_ENV_NAME, env_config=env_setup)
+            .environment(ENV_NAME, env_config=cp_env_setup)
             .rollouts(
                 num_rollout_workers=0,
                 num_envs_per_worker=1,
@@ -81,7 +87,7 @@ def load_checkpoint_local(cp_path: str) -> Algorithm:
 
         cfg = (
             ImpalaConfig()
-            .environment(CP_TRAINED_ON_ENV_NAME, env_config=env_setup)
+            .environment(ENV_NAME, env_config=cp_env_setup)
             .rollouts(
                 num_rollout_workers=0,
                 num_envs_per_worker=1,
@@ -126,7 +132,7 @@ def test_trained_model(num_episodes: int = 1000):
     """
     # Initialize the RLlib Algorithm from a checkpoint.
     if ALGO_NAME != "RANDOM":
-        register_env(CP_TRAINED_ON_ENV_NAME, env_creator)
+        register_env(ENV_NAME, env_creator)
         algo = load_checkpoint_local(CHECKPOINT_PATH)
 
     env = env_creator(env_config=env_setup)
