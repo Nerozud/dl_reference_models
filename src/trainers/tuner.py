@@ -7,6 +7,8 @@ from ray import air, tune
 # from ray.tune.search.bayesopt import BayesOptSearch
 from ray.air.integrations.wandb import WandbLoggerCallback
 
+from .video_callback import VideoCallback
+
 
 def tune_with_callback(config, algo_name, env_name):
     """
@@ -46,7 +48,8 @@ def tune_with_callback(config, algo_name, env_name):
                     # project=f"{env_name}-comparison",
                     dir=os.path.abspath("./experiments"),
                     group=f"{algo_name}-{config['env_config']['training_execution_mode']}",
-                )
+                ),
+                VideoCallback(),
             ],
         ),
     )
