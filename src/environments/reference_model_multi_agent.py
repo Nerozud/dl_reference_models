@@ -451,8 +451,18 @@ class ReferenceModel(MultiAgentEnv):
 
         return action_mask
 
-    def render(self):
-        """Render the environment."""
+    def render(self, mode="human"):
+        """
+        Render the environment.
+
+        Args:
+            mode (str): "human" updates the Matplotlib figure, "rgb_array" returns an RGB frame.
+
+        """
+        if mode not in {"human", "rgb_array"}:
+            msg = f"Unsupported render mode {mode}. Expected 'human' or 'rgb_array'."
+            raise ValueError(msg)
+
         if not hasattr(self, "fig") or self.fig is None:
             # Initialize the rendering environment if it hasn't been done yet
             plt.ion()
@@ -553,11 +563,16 @@ class ReferenceModel(MultiAgentEnv):
                 ]
                 goal_patch.set_xy(goal_vertices)
 
-        # Redraw the updated plot
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
-        return True
+        if mode == "human":
+            return True
+
+        width, height = self.fig.canvas.get_width_height()
+        frame = np.frombuffer(self.fig.canvas.tostring_rgb(), dtype=np.uint8)
+        frame = frame.reshape((height, width, 3))
+        return frame.copy()
 
     def close(self):
         plt.close()
