@@ -1,4 +1,4 @@
-![Environment Overview](assets/rendered_environment.png)
+![Environment Overview](assets/rendered_env.gif)
 
 
 # Deadlock Reference Models for Multi-Agent Pathfinding with RLlib

@@ -7,4 +7,4 @@ experiments/results/videos
 # Python cache artifacts
 __pycache__/
 *.py[cod]
-*.pyo
+*.pyc

@@ -24,19 +24,19 @@ ENV_NAME = "ReferenceModel-3-1"
 ALGO_NAME = "IMPALA"  # PPO, IMPALA, RANDOM
 MODE = "test"  # train or test, test only works with CTDE for now
 
-TEST_NUM_EPISODES = 10  # number of episodes to run when testing
+TEST_NUM_EPISODES = 5  # number of episodes to run when testing
 SAVE_RESULTS = False  # save results to CSV and heatmap
 CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2025-05-08_16-18-00\IMPALA-ReferenceModel-3-1-3f831_00000\checkpoint_000124"  # just for MODE = test
 # experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000
+# experiments\trained_models\IMPALA_2025-05-08_16-18-00\IMPALA-ReferenceModel-3-1-3f831_00000\checkpoint_000124
 # experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000
-# experiments\trained_models\IMPALA_2024-10-31_20-25-09\IMPALA-ReferenceModel-2-1-b-d7c2f_00000\checkpoint_000000
 CHECKPOINT_RNN = True  # if the checkpoint model has RNN or LSTM layers
 CP_TRAINED_ON_ENV_NAME = "ReferenceModel-3-1"  # the environment the model was trained on
 
 SAVE_VIDEO = True  # record evaluation episodes as a GIF when testing
-VIDEO_EPISODES_TO_SAVE = 3  # number of episodes to include in the exported video
+VIDEO_EPISODES_TO_SAVE = 5  # number of episodes to include in the exported video
 VIDEO_FRAME_RATE = 5  # frames per second for the generated GIF
-VIDEO_FINAL_FRAME_HOLD = 10  # duplicate last frame this many times between episodes
+VIDEO_FINAL_FRAME_HOLD = 3  # duplicate last frame this many times between episodes
 VIDEO_OUTPUT_DIR = Path("experiments/results/videos")
 
 env_setup = {
