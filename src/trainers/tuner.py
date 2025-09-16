@@ -1,6 +1,6 @@
 """Tuner module for training models with Ray Tune."""
 
-import os
+from pathlib import Path
 
 from ray import air, tune
 
@@ -31,7 +31,7 @@ def tune_with_callback(config, algo_name, env_name):
             # time_budget_s=3600 * 4,
         ),
         run_config=air.RunConfig(
-            storage_path=os.path.abspath("./experiments/trained_models"),
+            storage_path=Path("./experiments/trained_models").resolve(),
             # stop=MaximumIterationStopper(max_iter=100),
             # stop={"timesteps_total": 1e6 * 2},
             # stop={"env_runners/episode_reward_mean": 3, "timesteps_total": 1e6 / 2},
@@ -44,7 +44,7 @@ def tune_with_callback(config, algo_name, env_name):
                 WandbLoggerCallback(
                     project=env_name,
                     # project=f"{env_name}-comparison",
-                    dir=os.path.abspath("./experiments"),
+                    dir=Path("./experiments").resolve(),
                     group=f"{algo_name}-{config['env_config']['training_execution_mode']}",
                 )
             ],
