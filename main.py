@@ -20,18 +20,19 @@ from src.agents.impala import get_impala_config
 from src.agents.ppo import get_ppo_config
 from src.trainers.tuner import tune_with_callback
 
-ENV_NAME = "ReferenceModel-3-1"
-ALGO_NAME = "IMPALA"  # PPO, IMPALA, RANDOM
+ENV_NAME = "ReferenceModel-1-1"
+ALGO_NAME = "PPO"  # PPO, IMPALA, RANDOM
 MODE = "test"  # train or test, test only works with CTDE for now
 
+### Only relevant for MODE = test
 TEST_NUM_EPISODES = 5  # number of episodes to run when testing
 SAVE_RESULTS = False  # save results to CSV and heatmap
-CHECKPOINT_PATH = r"experiments\trained_models\IMPALA_2025-05-08_16-18-00\IMPALA-ReferenceModel-3-1-3f831_00000\checkpoint_000124"  # just for MODE = test
+CHECKPOINT_PATH = r"experiments\trained_models\PPO_2025-10-24_19-27-48\PPO-ReferenceModel-1-1-c2997_00000\checkpoint_000000"  # just for MODE = test
 # experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000
 # experiments\trained_models\IMPALA_2025-05-08_16-18-00\IMPALA-ReferenceModel-3-1-3f831_00000\checkpoint_000124
 # experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000
 CHECKPOINT_RNN = True  # if the checkpoint model has RNN or LSTM layers
-CP_TRAINED_ON_ENV_NAME = "ReferenceModel-3-1"  # the environment the model was trained on
+CP_TRAINED_ON_ENV_NAME = "ReferenceModel-1-1"  # the environment the model was trained on
 
 SAVE_VIDEO = True  # record evaluation episodes as a GIF when testing
 VIDEO_EPISODES_TO_SAVE = 5  # number of episodes to include in the exported video
@@ -41,9 +42,9 @@ VIDEO_OUTPUT_DIR = Path("experiments/results/videos")
 
 env_setup = {
     "env_name": ENV_NAME,
-    "seed": None,  # int or None, same seed creates same sequence of starts and goals
-    "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
-    "num_agents": 4,
+    "seed": 42,  # int or None, same seed creates same sequence of starts and goals
+    "deterministic": True,  # True: given difficult start and goals, False: random starts and goals, depending on seed
+    "num_agents": 2,
     "steps_per_episode": 100,
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE use single agent env
@@ -266,8 +267,8 @@ def test_trained_model(num_episodes: int):
             agent_index = agent_id.split("_")[1]  # Extract agent index
             # Flatten the data by creating separate columns for each agent
             episode_data[f"agent_{agent_index}_reward"] = agent_episode_rewards[agent_id]
-            start_pos = env.starts[agent_id].tolist()
-            goal_pos = env.goals[agent_id].tolist()
+            start_pos = np.asarray(env.starts[agent_id]).tolist()
+            goal_pos = np.asarray(env.goals[agent_id]).tolist()
             episode_data[f"agent_{agent_index}_start_x"] = start_pos[0]
             episode_data[f"agent_{agent_index}_start_y"] = start_pos[1]
             episode_data[f"agent_{agent_index}_goal_x"] = goal_pos[0]
