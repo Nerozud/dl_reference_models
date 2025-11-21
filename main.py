@@ -20,21 +20,23 @@ from src.agents.impala import get_impala_config
 from src.agents.ppo import get_ppo_config
 from src.trainers.tuner import tune_with_callback
 
-ENV_NAME = "ReferenceModel-1-1"
+ENV_NAME = "ReferenceModel-3-1"
 ALGO_NAME = "PPO"  # PPO, IMPALA, RANDOM
 MODE = "test"  # train or test, test only works with CTDE for now
 
 ### Only relevant for MODE = test
-TEST_NUM_EPISODES = 5  # number of episodes to run when testing
+TEST_NUM_EPISODES = 50  # number of episodes to run when testing
 SAVE_RESULTS = False  # save results to CSV and heatmap
-CHECKPOINT_PATH = r"experiments\trained_models\PPO_2025-10-24_19-27-48\PPO-ReferenceModel-1-1-c2997_00000\checkpoint_000000"  # just for MODE = test
+# CHECKPOINT_PATH = r"experiments\trained_models\PPO_2025-10-24_19-27-48\PPO-ReferenceModel-1-1-c2997_00000\checkpoint_000000"  # just for MODE = test
 # experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000
-# experiments\trained_models\IMPALA_2025-05-08_16-18-00\IMPALA-ReferenceModel-3-1-3f831_00000\checkpoint_000124
+CHECKPOINT_PATH = (
+    r"experiments\trained_models\IMPALA_2025-05-08_16-18-00\IMPALA-ReferenceModel-3-1-3f831_00000\checkpoint_000124"
+)
 # experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000
 CHECKPOINT_RNN = True  # if the checkpoint model has RNN or LSTM layers
-CP_TRAINED_ON_ENV_NAME = "ReferenceModel-1-1"  # the environment the model was trained on
+CP_TRAINED_ON_ENV_NAME = "ReferenceModel-3-1"  # the environment the model was trained on
 
-SAVE_VIDEO = True  # record evaluation episodes as a GIF when testing
+SAVE_VIDEO = False  # record evaluation episodes as a GIF when testing
 VIDEO_EPISODES_TO_SAVE = 5  # number of episodes to include in the exported video
 VIDEO_FRAME_RATE = 5  # frames per second for the generated GIF
 VIDEO_FINAL_FRAME_HOLD = 3  # duplicate last frame this many times between episodes
@@ -43,12 +45,12 @@ VIDEO_OUTPUT_DIR = Path("experiments/results/videos")
 env_setup = {
     "env_name": ENV_NAME,
     "seed": 42,  # int or None, same seed creates same sequence of starts and goals
-    "deterministic": True,  # True: given difficult start and goals, False: random starts and goals, depending on seed
-    "num_agents": 2,
+    "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
+    "num_agents": 6,
     "steps_per_episode": 100,
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE use single agent env
-    "render_env": True,
+    "render_env": False,
 }
 
 # Import the correct environment based on the training execution mode
