@@ -1,16 +1,14 @@
-""" Deep Q-Networks (DQN) agent configuration. """
+"""Deep Q-Networks (DQN) agent configuration."""
 
 from ray.rllib.algorithms.dqn import DQNConfig
-from ray.rllib.policy.policy import PolicySpec
 from ray.rllib.models import ModelCatalog
+from ray.rllib.policy.policy import PolicySpec
 
 from models.action_mask_model import TorchActionMaskModel
 from models.action_mask_model_single import TorchActionMaskModelSingle
 
 ModelCatalog.register_custom_model("action_mask_model", TorchActionMaskModel)
-ModelCatalog.register_custom_model(
-    "action_mask_model_single", TorchActionMaskModelSingle
-)
+ModelCatalog.register_custom_model("action_mask_model_single", TorchActionMaskModelSingle)
 
 
 def get_dqn_config(env_name, env_config=None):
@@ -20,15 +18,13 @@ def get_dqn_config(env_name, env_config=None):
     if env_config.get("training_execution_mode") == "CTE":
         config = (
             DQNConfig()  # single agent config, CTE
-            .environment(
-                env_name, render_env=env_config["render_env"], env_config=env_config
-            )
+            .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .env_runners(
                 num_env_runners=10, num_envs_per_env_runner=2, sample_timeout_s=300
             )  # increase num_envs_per_env_runner if render is false
             .training(
-                train_batch_size=4000,
+                train_batch_size_per_learner=4000,
                 lr=0.0003,
                 gamma=0.99,
                 model={
@@ -50,15 +46,13 @@ def get_dqn_config(env_name, env_config=None):
 
         config = (
             DQNConfig()  # multi agent config, CTDE or DTE
-            .environment(
-                env_name, render_env=env_config["render_env"], env_config=env_config
-            )
+            .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .env_runners(
                 num_env_runners=10, num_envs_per_env_runner=2, sample_timeout_s=300
             )  # increase num_envs_per_env_runner if render is false
             .training(
-                train_batch_size=4000,
+                train_batch_size_per_learner=4000,
                 lr=0.0003,
                 gamma=0.99,
                 model={
@@ -76,9 +70,7 @@ def get_dqn_config(env_name, env_config=None):
             .multi_agent(
                 policies=policies,
                 policy_mapping_fn=lambda agent_id, *args, **kwargs: (
-                    agent_id
-                    if env_config.get("training_execution_mode") == "DTE"
-                    else "shared_policy"
+                    agent_id if env_config.get("training_execution_mode") == "DTE" else "shared_policy"
                 ),
             )
         )

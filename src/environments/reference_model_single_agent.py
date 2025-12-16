@@ -100,18 +100,33 @@ class ReferenceModel(gym.Env):
         else:
             self.generate_starts_goals()
 
-        # Assuming all agents have the same observation space
-        self.observation_space = gym.spaces.Dict(
-            {
-                "observations": gym.spaces.Box(
-                    low=0,
-                    high=2 * self.num_agents + 1,
-                    shape=(self.grid.shape[0], self.grid.shape[1]),
-                    dtype=np.uint8,
-                ),
-                "action_mask": gym.spaces.MultiBinary(5 * self.num_agents),
-            }
+        self._grid_obs_space = gym.spaces.Box(
+            low=0,
+            high=2 * self.num_agents + 1,
+            shape=(self.grid.shape[0], self.grid.shape[1]),
+            dtype=np.uint8,
         )
+        self._action_mask_space = gym.spaces.MultiBinary(5 * self.num_agents)
+
+        flat_grid_len = int(np.prod(self._grid_obs_space.shape))
+        flat_mask_len = int(np.prod(self._action_mask_space.shape))
+        low = np.concatenate(
+            [
+                np.zeros(flat_grid_len, dtype=np.float32),
+                np.zeros(flat_mask_len, dtype=np.float32),
+            ]
+        )
+        high = np.concatenate(
+            [
+                np.full(flat_grid_len, self._grid_obs_space.high.max(), dtype=np.float32),
+                np.ones(flat_mask_len, dtype=np.float32),
+            ]
+        )
+        self._obs_slices = {
+            "grid": slice(0, flat_grid_len),
+            "action_mask": slice(flat_grid_len, flat_grid_len + flat_mask_len),
+        }
+        self.observation_space = gym.spaces.Box(low=low, high=high, dtype=np.float32)
 
         # Assuming all agents have the same action space
         self.action_space = gym.spaces.MultiDiscrete([5] * self.num_agents)
@@ -157,6 +172,21 @@ class ReferenceModel(gym.Env):
                     self.goals[f"agent_{i}"] = goal_pos
                     break
 
+    def _flatten_observation(self, obs_grid, action_mask):
+        """Pack grid observations and action mask into a single flat Box."""
+        return np.concatenate(
+            [
+                obs_grid.astype(np.float32).flatten(),
+                action_mask.astype(np.float32),
+            ]
+        )
+
+    def split_flat_observation(self, flat_obs: np.ndarray):
+        """Recover observation grid and mask from a flat observation for debugging."""
+        grid = flat_obs[self._obs_slices["grid"]].reshape(self._grid_obs_space.shape)
+        action_mask = flat_obs[self._obs_slices["action_mask"]]
+        return {"observations": grid, "action_mask": action_mask}
+
     def reset(self, *, seed=None, options=None):
         self.step_count = 0
         info = {}
@@ -168,12 +198,13 @@ class ReferenceModel(gym.Env):
         else:
             self.generate_starts_goals()
 
-        obs = {}
-        obs["observations"] = self.get_obs()
-        obs["action_mask"] = self.get_action_mask(obs["observations"])
+        obs_grid = self.get_obs()
+        action_mask = self.get_action_mask(obs_grid)
+        obs = self._flatten_observation(obs_grid, action_mask)
         if self.render_env:
             self.render()
 
+        info["action_mask"] = action_mask
         return obs, info
 
     def step(self, action):
@@ -214,9 +245,9 @@ class ReferenceModel(gym.Env):
                     self.goal_reached_once[f"agent_{i}"] = True
                     reward += 0.5
 
-        obs = {}
-        obs["observations"] = self.get_obs()
-        obs["action_mask"] = self.get_action_mask(obs["observations"])
+        obs_grid = self.get_obs()
+        action_mask = self.get_action_mask(obs_grid)
+        obs = self._flatten_observation(obs_grid, action_mask)
 
         # minus reward for agents on the same position, shouldn't happen
         for i in range(self.num_agents):
@@ -258,6 +289,8 @@ class ReferenceModel(gym.Env):
             self.render()
 
         # print("Stepping env with number of obs:", len(obs))
+        info["action_mask"] = action_mask
+
         return obs, reward, terminated, truncated, info
 
     def get_next_position(self, action, pos):
@@ -352,8 +385,8 @@ class ReferenceModel(gym.Env):
         """
 
         action_mask = np.zeros(
-            self.observation_space["action_mask"].shape,
-            dtype=self.observation_space["action_mask"].dtype,
+            self._action_mask_space.shape,
+            dtype=self._action_mask_space.dtype,
         )
 
         for i in range(self.num_agents):

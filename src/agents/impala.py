@@ -1,4 +1,4 @@
-""" Importance Weighted Actor-Learner Architecture (IMPALA) agent configuration. """
+"""Importance Weighted Actor-Learner Architecture (IMPALA) agent configuration."""
 
 from ray.rllib.algorithms.impala import IMPALAConfig
 from ray.rllib.policy.policy import PolicySpec
@@ -8,9 +8,7 @@ from models.action_mask_model import TorchActionMaskModel
 from models.action_mask_model_single import TorchActionMaskModelSingle
 
 ModelCatalog.register_custom_model("action_mask_model", TorchActionMaskModel)
-ModelCatalog.register_custom_model(
-    "action_mask_model_single", TorchActionMaskModelSingle
-)
+ModelCatalog.register_custom_model("action_mask_model_single", TorchActionMaskModelSingle)
 
 
 def get_impala_config(env_name, env_config=None):
@@ -20,9 +18,7 @@ def get_impala_config(env_name, env_config=None):
     if env_config.get("training_execution_mode") == "CTE":
         config = (
             IMPALAConfig()  # single agent config, CTE
-            .environment(
-                env_name, render_env=env_config["render_env"], env_config=env_config
-            )
+            .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .resources(num_gpus=1)
             .env_runners(
@@ -30,7 +26,7 @@ def get_impala_config(env_name, env_config=None):
             )  # increase num_envs_per_env_runner if render is false
             .training(
                 # train_batch_size=tune.choice([500, 1000, 4000]),
-                train_batch_size=4000,
+                train_batch_size_per_learner=4000,
                 # lr=tune.choice([0.0001, 0.0003, 0.0005, 0.001]),
                 lr=0.001,
                 gamma=0.99,
@@ -54,9 +50,7 @@ def get_impala_config(env_name, env_config=None):
 
         config = (
             IMPALAConfig()  # multi agent config, CTDE or DTE
-            .environment(
-                env_name, render_env=env_config["render_env"], env_config=env_config
-            )
+            .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .resources(num_gpus=1)
             .env_runners(
@@ -65,7 +59,7 @@ def get_impala_config(env_name, env_config=None):
             .training(
                 # train_batch_size=tune.choice([500, 1000, 4000]),
                 # train_batch_size=1000,
-                train_batch_size=8000,
+                train_batch_size_per_learner=8000,
                 # lr=tune.choice([0.0001, 0.0003, 0.0005, 0.001]),
                 lr=0.001,
                 # lr=0.0001,
@@ -86,14 +80,13 @@ def get_impala_config(env_name, env_config=None):
                     "lstm_cell_size": 64,
                     "lstm_use_prev_action": True,
                     "lstm_use_prev_reward": True,
+                    "max_seq_len": 32,
                 },
             )
             .multi_agent(
                 policies=policies,
                 policy_mapping_fn=lambda agent_id, *args, **kwargs: (
-                    agent_id
-                    if env_config.get("training_execution_mode") == "DTE"
-                    else "shared_policy"
+                    agent_id if env_config.get("training_execution_mode") == "DTE" else "shared_policy"
                 ),
             )
         )

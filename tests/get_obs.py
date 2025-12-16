@@ -8,42 +8,51 @@ class TestEnvironment:
     def __init__(self):
         self.grid = np.array([[1, 1, 0, 1], [0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 0]])
         self.sensor_range = 2
-        self.observation_space = gym.spaces.Dict(
-            {
-                "observations": gym.spaces.Box(
-                    low=0,
-                    high=4,
-                    shape=(self.sensor_range * 2 + 1, self.sensor_range * 2 + 1),
-                    dtype=np.uint8,
-                ),
-                "position": gym.spaces.Box(
-                    low=0,
-                    high=max(self.grid.shape),
-                    shape=(2,),
-                    dtype=np.uint8,
-                ),
-                "goal": gym.spaces.Box(
-                    low=0,
-                    high=max(self.grid.shape),
-                    shape=(2,),
-                    dtype=np.uint8,
-                ),
-                "action_mask": gym.spaces.MultiBinary(5),
-            }
+        self._local_obs_space = gym.spaces.Box(
+            low=0,
+            high=4,
+            shape=(self.sensor_range * 2 + 1, self.sensor_range * 2 + 1),
+            dtype=np.uint8,
         )
+        self._action_mask_space = gym.spaces.MultiBinary(5)
+
+        flat_obs_len = int(np.prod(self._local_obs_space.shape))
+        flat_mask_len = int(np.prod(self._action_mask_space.shape))
+        low = np.concatenate(
+            [
+                np.zeros(flat_obs_len, dtype=np.float32),
+                np.zeros(flat_mask_len, dtype=np.float32),
+            ]
+        )
+        high = np.concatenate(
+            [
+                np.full(flat_obs_len, self._local_obs_space.high.max(), dtype=np.float32),
+                np.ones(flat_mask_len, dtype=np.float32),
+            ]
+        )
+        self.observation_space = gym.spaces.Box(low=low, high=high, dtype=np.float32)
         self.positions = {"agent_0": (1, 1), "agent_1": (3, 3)}
         self.goals = {"agent_0": (1, 2), "agent_1": (0, 2)}
+
+    def flatten_observation(self, local_obs, action_mask):
+        """Pack local observation grid and mask to match the environment contract."""
+        return np.concatenate(
+            [
+                local_obs.astype(np.float32).flatten(),
+                action_mask.astype(np.float32),
+            ]
+        )
 
     def get_obs(self, agent_id: str):
         """Get the observations for the specified agent."""
         pos = self.positions[agent_id]
         obs = np.zeros(
-            self.observation_space["observations"].shape,
-            dtype=self.observation_space["observations"].dtype,
+            self._local_obs_space.shape,
+            dtype=self._local_obs_space.dtype,
         )
 
-        for i in range(self.observation_space["observations"].shape[0]):
-            for j in range(self.observation_space["observations"].shape[1]):
+        for i in range(self._local_obs_space.shape[0]):
+            for j in range(self._local_obs_space.shape[1]):
                 x = pos[0] - self.sensor_range + i
                 y = pos[1] - self.sensor_range + j
 
@@ -94,8 +103,8 @@ class TestEnvironment:
         """
 
         action_mask = np.zeros(
-            self.observation_space["action_mask"].shape,
-            dtype=self.observation_space["action_mask"].dtype,
+            self._action_mask_space.shape,
+            dtype=self._action_mask_space.dtype,
         )
 
         action_mask[0] = 1  # No-op action is always possible
@@ -153,6 +162,12 @@ action_mask_agent_1 = env.get_action_mask(obs_agent_1)
 assert np.array_equal(
     action_mask_agent_1, expected_action_mask_agent_1
 ), f"Test failed for agent_1, got {action_mask_agent_1}, expected {expected_action_mask_agent_1}, with obs {obs_agent_1}"
+
+flat_obs_agent_0 = env.flatten_observation(obs_agent_0, action_mask_agent_0)
+expected_flat_agent_0 = env.flatten_observation(expected_obs_agent_0, expected_action_mask_agent_0)
+assert np.array_equal(
+    flat_obs_agent_0, expected_flat_agent_0
+), f"Flat observation packing failed for agent_0, got {flat_obs_agent_0}, expected {expected_flat_agent_0}"
 
 print("All tests passed!")
 print("Obs agent 0:", obs_agent_0)
