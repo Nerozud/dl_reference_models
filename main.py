@@ -49,7 +49,7 @@ env_setup = {
     "num_agents": 4,
     "steps_per_episode": 100,
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
-    "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE use single agent env
+    "training_execution_mode": "CTE",  # CTDE or CTE or DTE, if CTE use single agent env
     "render_env": False,
 }
 

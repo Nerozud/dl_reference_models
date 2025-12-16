@@ -31,7 +31,7 @@ def get_ppo_config(env_name, env_config=None):
             .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .resources(num_gpus=1)
-            .env_runners(num_env_runners=4, sample_timeout_s=300)
+            .env_runners(num_env_runners=8, sample_timeout_s=300)
             .rl_module(
                 rl_module_spec=RLModuleSpec(
                     model_config={
@@ -41,6 +41,7 @@ def get_ppo_config(env_name, env_config=None):
                         "lstm_use_prev_action": True,
                         "lstm_use_prev_reward": True,
                         "max_seq_len": 32,
+                        "vf_share_layers": True,  # keep a single LSTM state structure (h/c only)
                     }
                 )
             )
@@ -68,7 +69,23 @@ def get_ppo_config(env_name, env_config=None):
         )
 
     else:
-        policies = {"shared_policy": PolicySpec()}
+        model_config = {
+            "fcnet_hiddens": [64, 64],
+            "use_lstm": True,
+            "lstm_cell_size": 64,
+            "lstm_use_prev_action": True,
+            "lstm_use_prev_reward": True,
+            "max_seq_len": 32,
+        }
+
+        if env_config.get("training_execution_mode") == "DTE":
+            policies = {f"agent_{i}": PolicySpec() for i in range(num_agents)}
+            rl_module_specs = {pid: RLModuleSpec(model_config=model_config) for pid in policies}
+            policy_mapping_fn = lambda agent_id, *args, **kwargs: agent_id
+        else:
+            policies = {"shared_policy": PolicySpec()}
+            rl_module_specs = {"shared_policy": RLModuleSpec(model_config=model_config)}
+            policy_mapping_fn = lambda *args, **kwargs: "shared_policy"
 
         config = (
             PPOConfig()  # multi agent config, CTDE or DTE
@@ -79,23 +96,11 @@ def get_ppo_config(env_name, env_config=None):
             .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .resources(num_gpus=1)
-            .env_runners(num_env_runners=4, sample_timeout_s=300)
+            .env_runners(num_env_runners=8, sample_timeout_s=300)
             .rl_module(
                 rl_module_spec=MultiRLModuleSpec(
                     # All agents (0 and 1) use the same (single) RLModule.
-                    rl_module_specs={
-                        "shared_policy": RLModuleSpec(
-                            # module_class=ActionMaskingTorchRLModule,
-                            model_config={
-                                "fcnet_hiddens": [64, 64],
-                                "use_lstm": True,
-                                "lstm_cell_size": 64,
-                                "lstm_use_prev_action": True,
-                                "lstm_use_prev_reward": True,
-                                "max_seq_len": 32,
-                            },
-                        ),
-                    }
+                    rl_module_specs=rl_module_specs
                 ),
             )
             # .rl_module(
@@ -136,12 +141,7 @@ def get_ppo_config(env_name, env_config=None):
                 #     "lstm_use_prev_reward": True,
                 # },
             )
-            .multi_agent(
-                policies=policies,
-                policy_mapping_fn=lambda agent_id, *args, **kwargs: (
-                    agent_id if env_config.get("training_execution_mode") == "DTE" else "shared_policy"
-                ),
-            )
+            .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
         )
 
     return config

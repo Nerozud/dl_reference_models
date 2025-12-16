@@ -29,12 +29,10 @@ Render the environment.
     None
 """
 
-import random
-
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import patches
 import gymnasium as gym
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import patches
 
 from src.environments import get_grid
 
@@ -166,9 +164,9 @@ class ReferenceModel(gym.Env):
                 idx = self.rng.choice(len(available_positions))
                 goal_pos = available_positions[idx]
                 # Ensure that the goal position is unique and not the same as any start position
-                if not any(
-                    np.array_equal(goal_pos, pos) for pos in self.goals.values()
-                ) and not any(np.array_equal(goal_pos, pos) for pos in self.starts.values()):
+                if not any(np.array_equal(goal_pos, pos) for pos in self.goals.values()) and not any(
+                    np.array_equal(goal_pos, pos) for pos in self.starts.values()
+                ):
                     self.goals[f"agent_{i}"] = goal_pos
                     break
 
@@ -227,9 +225,7 @@ class ReferenceModel(gym.Env):
                 and 0 <= next_pos[1] < self.grid.shape[1]
                 and self.grid[next_pos[0], next_pos[1]] == 0
                 and not any(
-                    np.array_equal(self.positions[agent], next_pos)
-                    for agent in self.positions
-                    if agent != f"agent_{i}"
+                    np.array_equal(self.positions[agent], next_pos) for agent in self.positions if agent != f"agent_{i}"
                 )
             ):
                 self.positions[f"agent_{i}"] = next_pos
@@ -254,9 +250,7 @@ class ReferenceModel(gym.Env):
             for j in range(i + 1, self.num_agents):
                 if np.array_equal(self.positions[f"agent_{i}"], self.positions[f"agent_{j}"]):
                     reward -= 1
-                    print(
-                        f"Agents {i} and {j} are on the same position {self.positions[f'agent_{i}']}"
-                    )
+                    print(f"Agents {i} and {j} are on the same position {self.positions[f'agent_{i}']}")
 
         # If all agents have reached their goals, end the episode (not truncated)
         if all(reached_goal.values()):
@@ -312,16 +306,17 @@ class ReferenceModel(gym.Env):
             The next position is calculated by adding or subtracting 1 to the corresponding
             coordinate of the current position.
         """
+        pos = np.asarray(pos, dtype=np.int32)
         if action == 0:  # no-op
-            next_pos = np.array([pos[0], pos[1]], dtype=np.uint8)
+            next_pos = np.array([pos[0], pos[1]], dtype=np.int32)
         elif action == 1:  # up
-            next_pos = np.array([pos[0] - 1, pos[1]], dtype=np.uint8)
+            next_pos = np.array([pos[0] - 1, pos[1]], dtype=np.int32)
         elif action == 2:  # right
-            next_pos = np.array([pos[0], pos[1] + 1], dtype=np.uint8)
+            next_pos = np.array([pos[0], pos[1] + 1], dtype=np.int32)
         elif action == 3:  # down
-            next_pos = np.array([pos[0] + 1, pos[1]], dtype=np.uint8)
+            next_pos = np.array([pos[0] + 1, pos[1]], dtype=np.int32)
         elif action == 4:  # left
-            next_pos = np.array([pos[0], pos[1] - 1], dtype=np.uint8)
+            next_pos = np.array([pos[0], pos[1] - 1], dtype=np.int32)
         else:
             raise ValueError("Invalid action")
 
@@ -417,9 +412,7 @@ class ReferenceModel(gym.Env):
         if not hasattr(self, "fig") or self.fig is None:
             # Initialize the rendering environment if it hasn't been done yet
             plt.ion()
-            self.fig, self.ax = plt.subplots(
-                figsize=(self.grid.shape[1] / 3, self.grid.shape[0] / 3)
-            )
+            self.fig, self.ax = plt.subplots(figsize=(self.grid.shape[1] / 3, self.grid.shape[0] / 3))
 
             # Draw the grid
             for i in range(self.grid.shape[0]):
@@ -427,9 +420,7 @@ class ReferenceModel(gym.Env):
                     if self.grid[i, j] == 1:  # Obstacle cell
                         self.ax.add_patch(patches.Rectangle((j, i), 1, 1, color="black"))
                     else:  # Empty cell
-                        self.ax.add_patch(
-                            patches.Rectangle((j, i), 1, 1, edgecolor="gray", fill=False)
-                        )
+                        self.ax.add_patch(patches.Rectangle((j, i), 1, 1, edgecolor="gray", fill=False))
 
             # Initialize goal patches
             self.goal_patches = {}
