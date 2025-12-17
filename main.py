@@ -13,6 +13,8 @@ import ray
 import torch
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from ray.rllib.algorithms.algorithm import Algorithm
+from ray.rllib.algorithms.impala import ImpalaConfig
+from ray.rllib.algorithms.ppo import PPOConfig
 from ray.tune.registry import register_env
 
 from src.agents.dqn import get_dqn_config
@@ -46,10 +48,10 @@ env_setup = {
     "env_name": ENV_NAME,
     "seed": None,  # int or None, same seed creates same sequence of starts and goals
     "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
-    "num_agents": 4,
+    "num_agents": 16,
     "steps_per_episode": 100,
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
-    "training_execution_mode": "CTE",  # CTDE or CTE or DTE, if CTE use single agent env
+    "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE uses single agent env
     "render_env": False,
 }
 
@@ -73,8 +75,6 @@ def load_checkpoint_local(cp_path: str) -> Algorithm:
     """Build a *fresh* tiny-footprint algo and then restore the weights."""
     # Select the appropriate config based on the algorithm name
     if ALGO_NAME == "PPO":
-        from ray.rllib.algorithms.ppo import PPOConfig
-
         cfg = (
             PPOConfig()
             .environment(CP_TRAINED_ON_ENV_NAME, env_config=env_setup)
@@ -88,8 +88,6 @@ def load_checkpoint_local(cp_path: str) -> Algorithm:
             .framework("torch")
         )
     elif ALGO_NAME == "IMPALA":
-        from ray.rllib.algorithms.impala import ImpalaConfig
-
         cfg = (
             ImpalaConfig()
             .environment(CP_TRAINED_ON_ENV_NAME, env_config=env_setup)

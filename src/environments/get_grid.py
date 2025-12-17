@@ -4,7 +4,8 @@ import numpy as np
 
 
 def get_grid(env_name: str):
-    """Get the grid of the environment.
+    """
+    Get the grid of the environment.
 
     Args:
         env_name (str): The name of the environment.
@@ -13,7 +14,6 @@ def get_grid(env_name: str):
         np.ndarray: The grid of the environment.
 
     """
-
     grids = {
         "ReferenceModel-1-1": [
             [1, 1, 1, 1, 0, 1, 1, 1, 1],

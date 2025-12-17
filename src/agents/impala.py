@@ -1,9 +1,10 @@
 """Importance Weighted Actor-Learner Architecture (IMPALA) agent configuration."""
 
-from ray.rllib.algorithms.impala import IMPALAConfig
-from ray.rllib.policy.policy import PolicySpec
-from ray.rllib.models import ModelCatalog
 from ray import tune
+from ray.rllib.algorithms.impala import IMPALAConfig
+from ray.rllib.models import ModelCatalog
+from ray.rllib.policy.policy import PolicySpec
+
 from models.action_mask_model import TorchActionMaskModel
 from models.action_mask_model_single import TorchActionMaskModelSingle
 
