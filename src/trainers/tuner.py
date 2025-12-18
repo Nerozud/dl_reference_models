@@ -42,8 +42,8 @@ def tune_with_callback(config, algo_name, env_name):
             },
             callbacks=[
                 WandbLoggerCallback(
-                    project=env_name,
-                    # project=f"{env_name}-comparison",
+                    # project=env_name,
+                    project=f"{env_name}-test",
                     dir=Path("./experiments").resolve(),
                     group=f"{algo_name}-{config['env_config']['training_execution_mode']}",
                 )

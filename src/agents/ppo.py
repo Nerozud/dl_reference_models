@@ -1,6 +1,6 @@
 """Proximal Policy Optimization (PPO) agent configuration."""
 
-from ray import tune
+# from ray import tune
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.core.rl_module.multi_rl_module import MultiRLModuleSpec
 from ray.rllib.core.rl_module.rl_module import RLModuleSpec
@@ -41,7 +41,7 @@ def get_ppo_config(env_name, env_config=None):
                         "lstm_use_prev_action": True,
                         "lstm_use_prev_reward": True,
                         "max_seq_len": 32,
-                        "vf_share_layers": True,  # keep a single LSTM state structure (h/c only)
+                        "vf_share_layers": True,
                     }
                 )
             )
@@ -58,13 +58,6 @@ def get_ppo_config(env_name, env_config=None):
                 lambda_=0.95,
                 entropy_coeff=0.01,
                 # entropy_coeff=tune.choice([0, 0.001, 0.01]),
-                # model={
-                #     "custom_model": "action_mask_model_single",
-                #     "custom_model_config": {
-                #         "no_masking": False,
-                #     },
-                #     "fcnet_hiddens": [32, 32],
-                # },
             )
         )
 
@@ -81,11 +74,15 @@ def get_ppo_config(env_name, env_config=None):
         if env_config.get("training_execution_mode") == "DTE":
             policies = {f"agent_{i}": PolicySpec() for i in range(num_agents)}
             rl_module_specs = {pid: RLModuleSpec(model_config=model_config) for pid in policies}
-            policy_mapping_fn = lambda agent_id, *args, **kwargs: agent_id
+
+            def policy_mapping_fn(agent_id, *_args, **_kwargs):
+                return agent_id
         else:
             policies = {"shared_policy": PolicySpec()}
             rl_module_specs = {"shared_policy": RLModuleSpec(model_config=model_config)}
-            policy_mapping_fn = lambda *args, **kwargs: "shared_policy"
+
+            def policy_mapping_fn(*_args, **_kwargs):
+                return "shared_policy"
 
         config = (
             PPOConfig()  # multi agent config, CTDE or DTE
@@ -98,20 +95,8 @@ def get_ppo_config(env_name, env_config=None):
             .resources(num_gpus=1)
             .env_runners(num_env_runners=8, sample_timeout_s=300)
             .rl_module(
-                rl_module_spec=MultiRLModuleSpec(
-                    # All agents (0 and 1) use the same (single) RLModule.
-                    rl_module_specs=rl_module_specs
-                ),
+                rl_module_spec=MultiRLModuleSpec(rl_module_specs=rl_module_specs),
             )
-            # .rl_module(
-            #     model_config={
-            #         "fcnet_hiddens": [64, 64],
-            #         "use_lstm": True,
-            #         "lstm_cell_size": 64,
-            #         "lstm_use_prev_action": True,
-            #         "lstm_use_prev_reward": True,
-            #     }
-            # )
             .training(
                 train_batch_size_per_learner=4000,
                 minibatch_size=4000,
@@ -129,17 +114,6 @@ def get_ppo_config(env_name, env_config=None):
                 # entropy_coeff=0.01,
                 entropy_coeff=0.001,
                 # entropy_coeff=tune.choice([0, 0.001, 0.01]),
-                # model={
-                #     # "custom_model": "action_mask_model",
-                #     # "custom_model_config": {
-                #     #     "no_masking": False,
-                #     # },
-                #     "fcnet_hiddens": [64, 64],
-                #     "use_lstm": True,
-                #     "lstm_cell_size": 64,
-                #     "lstm_use_prev_action": True,
-                #     "lstm_use_prev_reward": True,
-                # },
             )
             .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
         )

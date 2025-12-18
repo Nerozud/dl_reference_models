@@ -728,7 +728,8 @@ def get_grid(env_name: str):
     try:
         return np.array(grids[env_name], dtype=np.uint8)
     except KeyError as exc:
-        raise ValueError(f"Unknown environment name: {env_name}") from exc
+        msg = f"Unknown environment name: {env_name}"
+        raise ValueError(msg) from exc
 
 
 def get_start_positions(env_name: str, num_agents: int):
@@ -744,8 +745,8 @@ def get_start_positions(env_name: str, num_agents: int):
 
     Raises:
         ValueError: If the environment name is unknown or if the number of agents exceeds available positions.
-    """
 
+    """
     start_positions = {
         "ReferenceModel-1-1": {
             0: (1, 1),
@@ -787,13 +788,15 @@ def get_start_positions(env_name: str, num_agents: int):
 
     # Check if environment name exists in start positions
     if env_name not in start_positions:
-        raise ValueError(f"Unknown environment name: {env_name}")
+        msg = f"Unknown environment name: {env_name}"
+        raise ValueError(msg)
 
     env_start_positions = start_positions[env_name]
 
     # Ensure the number of agents does not exceed available positions
     if num_agents > len(env_start_positions):
-        raise ValueError(f"Requested number of agents ({num_agents}) exceeds available positions in {env_name}")
+        msg = f"Requested number of agents ({num_agents}) exceeds available positions in {env_name}"
+        raise ValueError(msg)
 
     # Generate the dictionary with dynamic agent names
     return {f"agent_{i}": env_start_positions[i] for i in range(num_agents)}
@@ -812,8 +815,8 @@ def get_goal_positions(env_name: str, num_agents: int):
 
     Raises:
         ValueError: If the environment name is unknown or if the number of agents exceeds available goal positions.
-    """
 
+    """
     goal_positions = {
         "ReferenceModel-1-1": {
             0: (1, 8),
@@ -855,13 +858,15 @@ def get_goal_positions(env_name: str, num_agents: int):
 
     # Check if environment name exists in goal positions
     if env_name not in goal_positions:
-        raise ValueError(f"Unknown environment name: {env_name}")
+        msg = f"Unknown environment name: {env_name}"
+        raise ValueError(msg)
 
     env_goal_positions = goal_positions[env_name]
 
     # Ensure the number of agents does not exceed available goal positions
     if num_agents > len(env_goal_positions):
-        raise ValueError(f"Requested number of agents ({num_agents}) exceeds available goal positions in {env_name}")
+        msg = f"Requested number of agents ({num_agents}) exceeds available goal positions in {env_name}"
+        raise ValueError(msg)
 
     # Generate the dictionary with dynamic agent names
     return {f"agent_{i}": env_goal_positions[i] for i in range(num_agents)}

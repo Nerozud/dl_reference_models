@@ -1,15 +1,10 @@
 """Importance Weighted Actor-Learner Architecture (IMPALA) agent configuration."""
 
-from ray import tune
+# from ray import tune
 from ray.rllib.algorithms.impala import IMPALAConfig
-from ray.rllib.models import ModelCatalog
+from ray.rllib.core.rl_module.multi_rl_module import MultiRLModuleSpec
+from ray.rllib.core.rl_module.rl_module import RLModuleSpec
 from ray.rllib.policy.policy import PolicySpec
-
-from models.action_mask_model import TorchActionMaskModel
-from models.action_mask_model_single import TorchActionMaskModelSingle
-
-ModelCatalog.register_custom_model("action_mask_model", TorchActionMaskModel)
-ModelCatalog.register_custom_model("action_mask_model_single", TorchActionMaskModelSingle)
 
 
 def get_impala_config(env_name, env_config=None):
@@ -19,12 +14,24 @@ def get_impala_config(env_name, env_config=None):
     if env_config.get("training_execution_mode") == "CTE":
         config = (
             IMPALAConfig()  # single agent config, CTE
+            .api_stack(
+                enable_rl_module_and_learner=True,
+                enable_env_runner_and_connector_v2=True,
+            )
             .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .resources(num_gpus=1)
+            .learners(num_learners=0)
             .env_runners(
-                num_env_runners=10, num_envs_per_env_runner=2, sample_timeout_s=300
+                num_env_runners=4, num_envs_per_env_runner=2, sample_timeout_s=300
             )  # increase num_envs_per_env_runner if render is false
+            .rl_module(
+                rl_module_spec=RLModuleSpec(
+                    model_config={
+                        "fcnet_hiddens": [256, 256],
+                    }
+                )
+            )
             .training(
                 # train_batch_size=tune.choice([500, 1000, 4000]),
                 train_batch_size_per_learner=4000,
@@ -35,28 +42,49 @@ def get_impala_config(env_name, env_config=None):
                 vf_loss_coeff=0.3,
                 # entropy_coeff=tune.choice([0, 0.001, 0.01]),
                 entropy_coeff=0.001,
-                model={
-                    "custom_model": "action_mask_model_single",
-                    "custom_model_config": {
-                        "no_masking": False,
-                    },
-                    "fcnet_hiddens": [256, 256],
-                },
             )
         )
 
     else:
-        policies = {f"agent_{i}": PolicySpec() for i in range(num_agents)}
-        policies["shared_policy"] = PolicySpec()
+        model_config = {
+            "fcnet_hiddens": [64, 64],
+            "use_lstm": True,
+            "lstm_cell_size": 64,
+            "lstm_use_prev_action": True,
+            "lstm_use_prev_reward": True,
+            "max_seq_len": 32,
+        }
+
+        if env_config.get("training_execution_mode") == "DTE":
+            policies = {f"agent_{i}": PolicySpec() for i in range(num_agents)}
+            rl_module_specs = {pid: RLModuleSpec(model_config=model_config) for pid in policies}
+
+            def policy_mapping_fn(agent_id, *_args, **_kwargs):
+                return agent_id
+
+        else:
+            policies = {"shared_policy": PolicySpec()}
+            rl_module_specs = {"shared_policy": RLModuleSpec(model_config=model_config)}
+
+            def policy_mapping_fn(*_args, **_kwargs):
+                return "shared_policy"
 
         config = (
             IMPALAConfig()  # multi agent config, CTDE or DTE
+            .api_stack(
+                enable_rl_module_and_learner=True,
+                enable_env_runner_and_connector_v2=True,
+            )
             .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .resources(num_gpus=1)
+            .learners(num_learners=0)
             .env_runners(
-                num_env_runners=10, num_envs_per_env_runner=2, sample_timeout_s=300
+                num_env_runners=4, num_envs_per_env_runner=2, sample_timeout_s=300
             )  # increase num_envs_per_env_runner if render is false
+            .rl_module(
+                rl_module_spec=MultiRLModuleSpec(rl_module_specs=rl_module_specs),
+            )
             .training(
                 # train_batch_size=tune.choice([500, 1000, 4000]),
                 # train_batch_size=1000,
@@ -71,25 +99,8 @@ def get_impala_config(env_name, env_config=None):
                 # entropy_coeff=tune.choice([0, 0.001, 0.01]),
                 # entropy_coeff=0.001,
                 entropy_coeff=0,
-                model={
-                    # "custom_model": "action_mask_model",
-                    # "custom_model_config": {
-                    #     "no_masking": False,
-                    # },
-                    "fcnet_hiddens": [64, 64],
-                    "use_lstm": True,
-                    "lstm_cell_size": 64,
-                    "lstm_use_prev_action": True,
-                    "lstm_use_prev_reward": True,
-                    "max_seq_len": 32,
-                },
             )
-            .multi_agent(
-                policies=policies,
-                policy_mapping_fn=lambda agent_id, *args, **kwargs: (
-                    agent_id if env_config.get("training_execution_mode") == "DTE" else "shared_policy"
-                ),
-            )
+            .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
         )
 
     return config
