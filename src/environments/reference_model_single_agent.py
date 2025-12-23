@@ -1,24 +1,34 @@
 """
-This module contains the ReferenceModel class, which is a multi-agent environment.
+Describe the ReferenceModel class, which is a multi-agent environment.
 The environment is interpreted as single RL agent environment,
 where all agents are controlled by the same policy.
 
 Initialize the ReferenceModel environment.
-    Parameters:
+
+Parameters
+----------
         env_config (dict): Configuration options for the environment.
 
 Reset the environment to its initial state.
-    Parameters:
+
+Parameters
+----------
         seed (int): The random seed for the environment.
         options (dict): Additional options for resetting the environment.
-    Returns:
+
+Returns
+-------
         obs (dict): The initial observations for each agent.
         info (dict): Additional information about the reset.
 
 Take a step in the environment.
-    Parameters:
+
+Parameters
+----------
         action_dict (dict): The actions to be taken by each agent.
-    Returns:
+
+Returns
+-------
         obs (dict): The new observations for each agent.
         rewards (dict): The rewards obtained by each agent.
         terminated (dict): Whether each agent has terminated.
@@ -27,6 +37,7 @@ Take a step in the environment.
 
 Render the environment.
     None
+
 """
 
 import gymnasium as gym
@@ -146,6 +157,7 @@ class ReferenceModel(gym.Env):
             starts (dict): A dictionary where keys are agent identifiers (e.g., 'agent_0') and values are the starting positions.
             positions (dict): A copy of the starts dictionary representing the current positions of the agents.
             goals (dict): A dictionary where keys are agent identifiers (e.g., 'agent_0') and values are the goal positions.
+
         """
         self.starts = {}
         available_positions = np.argwhere(self.grid == 0)
@@ -254,8 +266,7 @@ class ReferenceModel(gym.Env):
 
         # If all agents have reached their goals, end the episode (not truncated)
         if all(reached_goal.values()):
-            for i in range(self.num_agents):
-                reward += 1
+            reward += self.num_agents
             terminated = True
             truncated = False
             # print(
@@ -318,13 +329,15 @@ class ReferenceModel(gym.Env):
         elif action == 4:  # left
             next_pos = np.array([pos[0], pos[1] - 1], dtype=np.int32)
         else:
-            raise ValueError("Invalid action")
+            msg = "Invalid action"
+            raise ValueError(msg)
 
         return next_pos
 
     def get_obs(self):
         """
         Get the observation for a given agent.
+
         Returns:
             numpy.ndarray: The observation array.
         Description:
@@ -339,8 +352,8 @@ class ReferenceModel(gym.Env):
                 - 4: agent 1 position
                 - 5: agent 1 goal
                 - ...
-        """
 
+        """
         obs = self.grid.copy()
 
         # can be optimized by not creating the obs array from scratch
@@ -360,10 +373,14 @@ class ReferenceModel(gym.Env):
     def get_action_mask(self, obs):
         """
         Get the action mask for a given agent.
-        Parameters:
+
+        Parameters
+        ----------
             agent_id (str): The ID of the agent.
             obs (numpy.ndarray): The observation array for the agent.
-        Returns:
+
+        Returns
+        -------
             numpy.ndarray: The action mask array.
         Description:
             This function calculates the action mask for a given agent based on its observation.
@@ -377,8 +394,8 @@ class ReferenceModel(gym.Env):
             The action mask is calculated based on the current observation of the agent.
             Action 0 is always possible.
             Movement actions (1-4) are only possible if the corresponding cell is empty or a goal.
-        """
 
+        """
         action_mask = np.zeros(
             self._action_mask_space.shape,
             dtype=self._action_mask_space.dtype,

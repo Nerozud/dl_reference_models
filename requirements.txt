@@ -1,8 +1,9 @@
-ray[rllib]==2.52.1
+ray[rllib]==2.53
 torch
 gymnasium
 numpy
 pandas
+pytz
 matplotlib
 imageio
 wandb
