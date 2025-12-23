@@ -13,6 +13,7 @@ import ray
 import torch
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from ray.rllib.algorithms.algorithm import Algorithm
+from ray.rllib.algorithms.dqn import DQNConfig
 from ray.rllib.algorithms.impala import ImpalaConfig
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.tune.registry import register_env
@@ -23,7 +24,7 @@ from src.agents.ppo import get_ppo_config
 from src.trainers.tuner import tune_with_callback
 
 ENV_NAME = "ReferenceModel-2-1"
-ALGO_NAME = "IMPALA"  # PPO, IMPALA, RANDOM
+ALGO_NAME = "DQN"  # PPO, IMPALA, DQN, RANDOM
 MODE = "train"  # train or test, test only works with CTDE for now
 
 ### Only relevant for MODE = test
@@ -77,12 +78,28 @@ def load_checkpoint_local(cp_path: str) -> Algorithm:
     if ALGO_NAME == "PPO":
         cfg = (
             PPOConfig()
-            .environment(CP_TRAINED_ON_ENV_NAME, env_config=env_setup)
-            .rollouts(
-                num_rollout_workers=0,
-                num_envs_per_worker=1,
-                create_env_on_local_worker=True,
+            .api_stack(
+                enable_rl_module_and_learner=True,
+                enable_env_runner_and_connector_v2=True,
             )
+            .environment(CP_TRAINED_ON_ENV_NAME, env_config=env_setup)
+            .env_runners(num_env_runners=0, num_envs_per_env_runner=1)
+            .evaluation(evaluation_num_workers=0)
+            .resources(num_gpus=1)
+            .framework("torch")
+        )
+    elif ALGO_NAME == "DQN":
+        if env_setup.get("training_execution_mode") == "CTE":
+            msg = "DQN does not support CTE in this project. Use CTDE/DTE or switch to PPO/IMPALA."
+            raise ValueError(msg)
+        cfg = (
+            DQNConfig()
+            .api_stack(
+                enable_rl_module_and_learner=True,
+                enable_env_runner_and_connector_v2=True,
+            )
+            .environment(CP_TRAINED_ON_ENV_NAME, env_config=env_setup)
+            .env_runners(num_env_runners=0, num_envs_per_env_runner=1)
             .evaluation(evaluation_num_workers=0)
             .resources(num_gpus=1)
             .framework("torch")
@@ -90,12 +107,12 @@ def load_checkpoint_local(cp_path: str) -> Algorithm:
     elif ALGO_NAME == "IMPALA":
         cfg = (
             ImpalaConfig()
-            .environment(CP_TRAINED_ON_ENV_NAME, env_config=env_setup)
-            .rollouts(
-                num_rollout_workers=0,
-                num_envs_per_worker=1,
-                create_env_on_local_worker=True,
+            .api_stack(
+                enable_rl_module_and_learner=True,
+                enable_env_runner_and_connector_v2=True,
             )
+            .environment(CP_TRAINED_ON_ENV_NAME, env_config=env_setup)
+            .env_runners(num_env_runners=0, num_envs_per_env_runner=1)
             .evaluation(evaluation_num_workers=0)
             .resources(num_gpus=1)
             .framework("torch")
@@ -352,7 +369,7 @@ if __name__ == "__main__":
     if MODE == "train":
         if ALGO_NAME == "PPO":
             config = get_ppo_config(ENV_NAME, env_config=env_setup)
-        elif ALGO_NAME == "DQN":  # not yet working
+        elif ALGO_NAME == "DQN":
             config = get_dqn_config(ENV_NAME, env_config=env_setup)
         elif ALGO_NAME == "IMPALA":
             config = get_impala_config(ENV_NAME, env_config=env_setup)

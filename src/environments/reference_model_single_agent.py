@@ -301,10 +301,14 @@ class ReferenceModel(gym.Env):
     def get_next_position(self, action, pos):
         """
         Get the next position based on the given action and current position.
-        Parameters:
+
+        Parameters
+        ----------
             action (int): The action to be taken.
             pos (tuple): The current position.
-        Returns:
+
+        Returns
+        -------
             numpy.ndarray: The next position.
         Description:
             This function calculates the next position based on given action and current position.
@@ -316,6 +320,7 @@ class ReferenceModel(gym.Env):
                 - 4: Move left
             The next position is calculated by adding or subtracting 1 to the corresponding
             coordinate of the current position.
+
         """
         pos = np.asarray(pos, dtype=np.int32)
         if action == 0:  # no-op
