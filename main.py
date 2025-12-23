@@ -24,7 +24,7 @@ from src.agents.ppo import get_ppo_config
 from src.trainers.tuner import tune_with_callback
 
 ENV_NAME = "ReferenceModel-2-1"
-ALGO_NAME = "DQN"  # PPO, IMPALA, DQN, RANDOM
+ALGO_NAME = "PPO"  # PPO, IMPALA, DQN, RANDOM
 MODE = "train"  # train or test, test only works with CTDE for now
 
 ### Only relevant for MODE = test

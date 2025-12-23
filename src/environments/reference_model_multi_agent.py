@@ -72,6 +72,8 @@ class ReferenceModel(MultiAgentEnv):
         self._num_agents = int(env_config.get("num_agents", 2))
         self.sensor_range = env_config.get("sensor_range", 1)
         self.deterministic = env_config.get("deterministic", False)
+        self.normalize_goal_delta = env_config.get("normalize_goal_delta", True)
+        self.include_goal_distance = env_config.get("include_goal_distance", False)
         self.possible_agents = [f"agent_{i}" for i in range(self._num_agents)]
         self.agents = self.possible_agents.copy()
         self.render_env = env_config.get("render_env", False)
@@ -113,17 +115,26 @@ class ReferenceModel(MultiAgentEnv):
             shape=(view_side, view_side),
             dtype=np.uint8,
         )
-        self._position_space = gym.spaces.Box(
-            low=0,
-            high=max(self.grid.shape),
-            shape=(2,),
-            dtype=np.uint8,
+        goal_delta_low = np.array(
+            [-(self.grid.shape[0] - 1), -(self.grid.shape[1] - 1)],
+            dtype=np.float32,
         )
-        self._goal_space = gym.spaces.Box(
-            low=0,
-            high=max(self.grid.shape),
+        goal_delta_high = np.array(
+            [self.grid.shape[0] - 1, self.grid.shape[1] - 1],
+            dtype=np.float32,
+        )
+        self._goal_delta_denominator = np.array(
+            [max(self.grid.shape[0] - 1, 1), max(self.grid.shape[1] - 1, 1)],
+            dtype=np.float32,
+        )
+        if self.normalize_goal_delta:
+            goal_delta_low = goal_delta_low / self._goal_delta_denominator
+            goal_delta_high = goal_delta_high / self._goal_delta_denominator
+        self._goal_delta_space = gym.spaces.Box(
+            low=goal_delta_low,
+            high=goal_delta_high,
             shape=(2,),
-            dtype=np.uint8,
+            dtype=np.float32,
         )
         self._action_mask_space = gym.spaces.MultiBinary(5)
 
@@ -131,33 +142,39 @@ class ReferenceModel(MultiAgentEnv):
         self._single_act_space = gym.spaces.Discrete(5)
 
         self._flat_local_obs_len = int(np.prod(self._local_obs_space.shape))
-        self._flat_position_len = int(np.prod(self._position_space.shape))
-        self._flat_goal_len = int(np.prod(self._goal_space.shape))
+        self._flat_goal_delta_len = int(np.prod(self._goal_delta_space.shape))
+        self._flat_goal_distance_len = 1 if self.include_goal_distance else 0
         self._flat_mask_len = int(np.prod(self._action_mask_space.shape))
-        total_obs_len = self._flat_local_obs_len + self._flat_position_len + self._flat_goal_len + self._flat_mask_len
+        total_obs_len = (
+            self._flat_local_obs_len + self._flat_goal_delta_len + self._flat_goal_distance_len + self._flat_mask_len
+        )
         low = np.concatenate(
             [
                 np.zeros(self._flat_local_obs_len, dtype=np.float32),
-                np.zeros(self._flat_position_len, dtype=np.float32),
-                np.zeros(self._flat_goal_len, dtype=np.float32),
+                self._goal_delta_space.low.astype(np.float32),
+                np.zeros(self._flat_goal_distance_len, dtype=np.float32),
                 np.zeros(self._flat_mask_len, dtype=np.float32),
             ]
         )
+        max_manhattan = float(np.abs(self._goal_delta_space.high).sum())
         high = np.concatenate(
             [
                 np.full(self._flat_local_obs_len, self._local_obs_space.high.max(), dtype=np.float32),
-                np.full(self._flat_position_len, self._position_space.high.max(), dtype=np.float32),
-                np.full(self._flat_goal_len, self._goal_space.high.max(), dtype=np.float32),
+                self._goal_delta_space.high.astype(np.float32),
+                np.full(self._flat_goal_distance_len, max_manhattan, dtype=np.float32),
                 np.ones(self._flat_mask_len, dtype=np.float32),
             ]
         )
         self._single_obs_space = gym.spaces.Box(low=low, high=high, dtype=np.float32)
         self._obs_slices = {
             "local_obs": slice(0, self._flat_local_obs_len),
-            "position": slice(self._flat_local_obs_len, self._flat_local_obs_len + self._flat_position_len),
-            "goal": slice(
-                self._flat_local_obs_len + self._flat_position_len,
-                self._flat_local_obs_len + self._flat_position_len + self._flat_goal_len,
+            "goal_delta": slice(
+                self._flat_local_obs_len,
+                self._flat_local_obs_len + self._flat_goal_delta_len,
+            ),
+            "goal_distance": slice(
+                self._flat_local_obs_len + self._flat_goal_delta_len,
+                self._flat_local_obs_len + self._flat_goal_delta_len + self._flat_goal_distance_len,
             ),
             "action_mask": slice(total_obs_len - self._flat_mask_len, total_obs_len),
         }
@@ -220,14 +237,18 @@ class ReferenceModel(MultiAgentEnv):
         if action_mask is None:
             action_mask = self.get_action_mask(local_obs)
 
-        position = np.asarray(self.positions[agent_id], dtype=np.float32)
-        goal = np.asarray(self.goals[agent_id], dtype=np.float32)
+        goal_delta = self._get_goal_delta(agent_id)
+        goal_distance = (
+            np.asarray([np.abs(goal_delta).sum()], dtype=np.float32)
+            if self.include_goal_distance
+            else np.array([], dtype=np.float32)
+        )
 
         return np.concatenate(
             [
                 local_obs.astype(np.float32).flatten(),
-                position,
-                goal,
+                goal_delta.astype(np.float32),
+                goal_distance,
                 action_mask.astype(np.float32),
             ]
         )
@@ -239,15 +260,23 @@ class ReferenceModel(MultiAgentEnv):
         Useful for debugging or logging without changing the observation space contract.
         """
         local_flat = flat_obs[self._obs_slices["local_obs"]]
-        position = flat_obs[self._obs_slices["position"]]
-        goal = flat_obs[self._obs_slices["goal"]]
+        goal_delta = flat_obs[self._obs_slices["goal_delta"]]
+        goal_distance = flat_obs[self._obs_slices["goal_distance"]]
         action_mask = flat_obs[self._obs_slices["action_mask"]]
         return {
             "observations": local_flat.reshape(self._local_obs_space.shape),
-            "position": position,
-            "goal": goal,
+            "goal_delta": goal_delta,
+            "goal_distance": goal_distance,
             "action_mask": action_mask,
         }
+
+    def _get_goal_delta(self, agent_id: str) -> np.ndarray:
+        position = np.asarray(self.positions[agent_id], dtype=np.float32)
+        goal = np.asarray(self.goals[agent_id], dtype=np.float32)
+        goal_delta = goal - position
+        if self.normalize_goal_delta:
+            goal_delta = goal_delta / self._goal_delta_denominator
+        return goal_delta
 
     def reset(self, *, seed=None, options=None):
         self.step_count = 0
@@ -267,12 +296,16 @@ class ReferenceModel(MultiAgentEnv):
             infos[agent_id] = {
                 "position": np.asarray(self.positions[agent_id]),
                 "goal": np.asarray(self.goals[agent_id]),
+                "goal_delta": self._get_goal_delta(agent_id),
                 "action_mask": action_mask,
                 "local_obs": local_obs,
             }
         if self.render_env:
             self.render()
 
+        # for agent_id in self.agents:
+        #     print(f"Agent {agent_id}: {infos[agent_id]['goal_delta']}")
+        #     print("obs goal delta:", obs[agent_id][self._obs_slices["goal_delta"]])
         return obs, infos
 
     def step(self, action_dict):
@@ -319,6 +352,7 @@ class ReferenceModel(MultiAgentEnv):
             info[agent_id] = {
                 "position": np.asarray(self.positions[agent_id]),
                 "goal": np.asarray(self.goals[agent_id]),
+                "goal_delta": self._get_goal_delta(agent_id),
                 "action_mask": action_mask,
                 "local_obs": local_obs,
             }
