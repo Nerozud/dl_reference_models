@@ -100,9 +100,7 @@ def get_ppo_config(env_name, env_config=None):
             .training(
                 train_batch_size_per_learner=4000,
                 minibatch_size=4000,
-                # num_sgd_iter=7,
-                num_sgd_iter=12,
-                # num_sgd_iter=tune.randint(5, 15),
+                num_epochs=12,
                 # clip_param=0.1,
                 clip_param=0.05,
                 # clip_param=tune.choice([0.05, 0.1, 0.2, 0.3]),

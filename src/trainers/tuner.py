@@ -3,9 +3,22 @@
 from pathlib import Path
 
 from ray import air, tune
-
-# from ray.tune.search.bayesopt import BayesOptSearch
 from ray.air.integrations.wandb import WandbLoggerCallback
+from ray.tune.schedulers.pb2 import PB2
+
+pb2_scheduler = PB2(
+    time_attr="time_total_s",
+    metric="env_runners/episode_return_mean",
+    mode="max",
+    perturbation_interval=1800,
+    hyperparam_bounds={
+        "lr": [1e-5, 1e-3],
+        "entropy_coeff": [0.0, 0.01],
+        "num_epochs": [1, 15],
+        "clip_param": [0.05, 0.3],
+        "gamma": [0.8, 0.999],
+    },
+)
 
 
 def tune_with_callback(config, algo_name, env_name):
@@ -25,7 +38,8 @@ def tune_with_callback(config, algo_name, env_name):
         algo_name,
         param_space=config,
         tune_config=tune.TuneConfig(
-            num_samples=1,
+            scheduler=pb2_scheduler,
+            num_samples=3,
             trial_dirname_creator=lambda trial: f"{algo_name}-{env_name}-{trial.trial_id}",
             trial_name_creator=lambda trial: f"{algo_name}-{config['env_config']['training_execution_mode']}-{trial.trial_id}",
             # time_budget_s=3600 * 4,
