@@ -12,6 +12,9 @@ def get_impala_config(env_name, env_config=None):
     num_agents = env_config.get("num_agents", 2)
 
     if env_config.get("training_execution_mode") == "CTE":
+        model_config = {
+            "fcnet_hiddens": [256, 256],
+        }
         config = (
             IMPALAConfig()  # single agent config, CTE
             .api_stack(
@@ -27,9 +30,7 @@ def get_impala_config(env_name, env_config=None):
             )  # increase num_envs_per_env_runner if render is false
             .rl_module(
                 rl_module_spec=RLModuleSpec(
-                    model_config={
-                        "fcnet_hiddens": [256, 256],
-                    }
+                    model_config=model_config,
                 )
             )
             .training(
@@ -44,6 +45,7 @@ def get_impala_config(env_name, env_config=None):
                 entropy_coeff=0.001,
             )
         )
+        config.model.update(model_config)
 
     else:
         model_config = {
@@ -102,5 +104,6 @@ def get_impala_config(env_name, env_config=None):
             )
             .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
         )
+        config.model.update(model_config)
 
     return config

@@ -22,6 +22,15 @@ def get_ppo_config(env_name, env_config=None):
     num_agents = env_config.get("num_agents", 2)
 
     if env_config.get("training_execution_mode") == "CTE":
+        model_config = {
+            "fcnet_hiddens": [64, 64],
+            "use_lstm": True,
+            "lstm_cell_size": 64,
+            "lstm_use_prev_action": True,
+            "lstm_use_prev_reward": True,
+            "max_seq_len": 32,
+            "vf_share_layers": True,
+        }
         config = (
             PPOConfig()  # single agent config, CTE
             .api_stack(
@@ -31,18 +40,10 @@ def get_ppo_config(env_name, env_config=None):
             .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .resources(num_gpus=1)
-            .env_runners(num_env_runners=8, sample_timeout_s=300)
+            .env_runners(num_env_runners=8, num_envs_per_env_runner=8, sample_timeout_s=300)
             .rl_module(
                 rl_module_spec=RLModuleSpec(
-                    model_config={
-                        "fcnet_hiddens": [64, 64],
-                        "use_lstm": True,
-                        "lstm_cell_size": 64,
-                        "lstm_use_prev_action": True,
-                        "lstm_use_prev_reward": True,
-                        "max_seq_len": 32,
-                        "vf_share_layers": True,
-                    }
+                    model_config=model_config,
                 )
             )
             .training(
@@ -60,6 +61,7 @@ def get_ppo_config(env_name, env_config=None):
                 # entropy_coeff=tune.choice([0, 0.001, 0.01]),
             )
         )
+        config.model.update(model_config)
 
     else:
         model_config = {
@@ -93,7 +95,7 @@ def get_ppo_config(env_name, env_config=None):
             .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .resources(num_gpus=1)
-            .env_runners(num_env_runners=8, sample_timeout_s=300)
+            .env_runners(num_env_runners=8, num_envs_per_env_runner=8, sample_timeout_s=300)
             .rl_module(
                 rl_module_spec=MultiRLModuleSpec(rl_module_specs=rl_module_specs),
             )
@@ -115,5 +117,6 @@ def get_ppo_config(env_name, env_config=None):
             )
             .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
         )
+        config.model.update(model_config)
 
     return config

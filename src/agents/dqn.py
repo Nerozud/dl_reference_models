@@ -61,5 +61,6 @@ def get_dqn_config(env_name, env_config=None):
                 policy_mapping_fn=policy_mapping_fn,
             )
         )
+        config.model.update(model_config)
 
     return config
