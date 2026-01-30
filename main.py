@@ -10,12 +10,21 @@ import numpy as np
 import pandas as pd
 import pytz
 import ray
-import torch
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from ray.rllib.algorithms.algorithm import Algorithm
-from ray.rllib.algorithms.dqn import DQNConfig
-from ray.rllib.algorithms.impala import ImpalaConfig
-from ray.rllib.algorithms.ppo import PPOConfig
+from ray.rllib.connectors.env_to_module import EnvToModulePipeline
+from ray.rllib.connectors.module_to_env import ModuleToEnvPipeline
+from ray.rllib.core import (
+    COMPONENT_ENV_RUNNER,
+    COMPONENT_ENV_TO_MODULE_CONNECTOR,
+    COMPONENT_LEARNER,
+    COMPONENT_LEARNER_GROUP,
+    COMPONENT_MODULE_TO_ENV_CONNECTOR,
+    COMPONENT_RL_MODULE,
+)
+from ray.rllib.core.columns import Columns
+from ray.rllib.core.rl_module.rl_module import RLModule
+from ray.rllib.env.multi_agent_episode import MultiAgentEpisode
 from ray.tune.registry import register_env
 
 from src.agents.dqn import get_dqn_config
@@ -25,7 +34,7 @@ from src.trainers.tuner import tune_with_callback
 
 ENV_NAME = "ReferenceModel-2-1"
 ALGO_NAME = "PPO"  # PPO, IMPALA, DQN, RANDOM
-MODE = "train"  # train or test, test only works with CTDE for now
+MODE = "test"  # train or test, test only works with CTDE for now
 
 ### Only relevant for MODE = test
 TEST_NUM_EPISODES = 50  # number of episodes to run when testing
@@ -33,11 +42,11 @@ SAVE_RESULTS = False  # save results to CSV and heatmap
 # CHECKPOINT_PATH = r"experiments\trained_models\PPO_2025-10-24_19-27-48\PPO-ReferenceModel-1-1-c2997_00000\checkpoint_000000"  # just for MODE = test
 # experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000
 CHECKPOINT_PATH = (
-    r"experiments\trained_models\IMPALA_2025-05-08_16-18-00\IMPALA-ReferenceModel-3-1-3f831_00000\checkpoint_000124"
+    r"experiments\trained_models\PPO_2026-01-21_11-19-05\PPO-ReferenceModel-2-1-9d514_00002\checkpoint_000000"
 )
 # experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000
 CHECKPOINT_RNN = True  # if the checkpoint model has RNN or LSTM layers
-CP_TRAINED_ON_ENV_NAME = "ReferenceModel-3-1"  # the environment the model was trained on
+CP_TRAINED_ON_ENV_NAME = "ReferenceModel-2-1"  # the environment the model was trained on
 
 SAVE_VIDEO = False  # record evaluation episodes as a GIF when testing
 VIDEO_EPISODES_TO_SAVE = 5  # number of episodes to include in the exported video
@@ -73,57 +82,11 @@ def env_creator(env_config=None):
 
 
 def load_checkpoint_local(cp_path: str) -> Algorithm:
-    """Build a *fresh* tiny-footprint algo and then restore the weights."""
-    # Select the appropriate config based on the algorithm name
-    if ALGO_NAME == "PPO":
-        cfg = (
-            PPOConfig()
-            .api_stack(
-                enable_rl_module_and_learner=True,
-                enable_env_runner_and_connector_v2=True,
-            )
-            .environment(CP_TRAINED_ON_ENV_NAME, env_config=env_setup)
-            .env_runners(num_env_runners=0, num_envs_per_env_runner=1)
-            .evaluation(evaluation_num_workers=0)
-            .resources(num_gpus=1)
-            .framework("torch")
-        )
-    elif ALGO_NAME == "DQN":
-        if env_setup.get("training_execution_mode") == "CTE":
-            msg = "DQN does not support CTE in this project. Use CTDE/DTE or switch to PPO/IMPALA."
-            raise ValueError(msg)
-        cfg = (
-            DQNConfig()
-            .api_stack(
-                enable_rl_module_and_learner=True,
-                enable_env_runner_and_connector_v2=True,
-            )
-            .environment(CP_TRAINED_ON_ENV_NAME, env_config=env_setup)
-            .env_runners(num_env_runners=0, num_envs_per_env_runner=1)
-            .evaluation(evaluation_num_workers=0)
-            .resources(num_gpus=1)
-            .framework("torch")
-        )
-    elif ALGO_NAME == "IMPALA":
-        cfg = (
-            ImpalaConfig()
-            .api_stack(
-                enable_rl_module_and_learner=True,
-                enable_env_runner_and_connector_v2=True,
-            )
-            .environment(CP_TRAINED_ON_ENV_NAME, env_config=env_setup)
-            .env_runners(num_env_runners=0, num_envs_per_env_runner=1)
-            .evaluation(evaluation_num_workers=0)
-            .resources(num_gpus=1)
-            .framework("torch")
-        )
-    else:
-        error_message = f"Algorithm {ALGO_NAME} not supported for checkpoint loading."
-        raise ValueError(error_message)
-
-    algo = cfg.build()  # allocates just the driver process
-    algo.restore(cp_path)  # ← only weights / optimizer state are loaded
-    return algo
+    """Restore an Algorithm from a checkpoint (new API stack)."""
+    cp_path = Path(cp_path)
+    if not cp_path.is_absolute():
+        cp_path = (Path(__file__).resolve().parent / cp_path).resolve()
+    return Algorithm.from_checkpoint(str(cp_path))
 
 
 def test_trained_model(num_episodes: int):
@@ -132,7 +95,6 @@ def test_trained_model(num_episodes: int):
     store the results in CSV format.
 
     Args:
-        cp_path (str): Path to the checkpoint file of the trained model.
         num_episodes (int, optional): Number of episodes to run for testing. Defaults to 100.
 
     Returns:
@@ -140,20 +102,34 @@ def test_trained_model(num_episodes: int):
 
     Description:
         The function performs the following steps:
-        1. Initializes the RLlib Algorithm from the provided checkpoint.
+        1. Restores the RLModule and connector pipelines from the checkpoint.
         2. Creates the environment using the `env_creator` function.
         3. Runs the specified number of episodes, collecting rewards and other metrics.
-        4. If using RNN checkpoints, manages the state for each agent.
+        4. Uses connector pipelines to manage stateful modules and prev-action/reward inputs.
         5. Records the total reward, timesteps, and CPU time for each episode.
         6. Collects per-agent rewards and positions.
         7. Stores the results in a pandas DataFrame and saves it as CSV in "experiments/results".
         8. Prints average reward and timesteps across all episodes.
 
     """
-    # Initialize the RLlib Algorithm from a checkpoint.
+    # Initialize RLModule + connector pipelines from the checkpoint (new API stack).
     if ALGO_NAME != "RANDOM":
         register_env(CP_TRAINED_ON_ENV_NAME, env_creator)
-        algo = load_checkpoint_local(CHECKPOINT_PATH)
+        cp_path = Path(CHECKPOINT_PATH)
+        if not cp_path.is_absolute():
+            cp_path = (Path(__file__).resolve().parent / cp_path).resolve()
+        if not cp_path.exists():
+            msg = f"Checkpoint path does not exist: {cp_path}"
+            raise FileNotFoundError(msg)
+        env_to_module = EnvToModulePipeline.from_checkpoint(
+            cp_path / COMPONENT_ENV_RUNNER / COMPONENT_ENV_TO_MODULE_CONNECTOR
+        )
+        module_to_env = ModuleToEnvPipeline.from_checkpoint(
+            cp_path / COMPONENT_ENV_RUNNER / COMPONENT_MODULE_TO_ENV_CONNECTOR
+        )
+        rl_module = RLModule.from_checkpoint(
+            cp_path / COMPONENT_LEARNER_GROUP / COMPONENT_LEARNER / COMPONENT_RL_MODULE
+        )
 
     record_videos = SAVE_VIDEO and env_setup.get("render_env", False)
     if SAVE_VIDEO and not record_videos:
@@ -161,6 +137,11 @@ def test_trained_model(num_episodes: int):
         raise ValueError(msg)
 
     env = env_creator(env_config=env_setup)
+
+    def policy_mapping_fn(agent_id, *_args, **_kwargs):
+        if env_setup.get("training_execution_mode") == "DTE":
+            return agent_id
+        return "shared_policy"
 
     total_reward = 0
     total_timesteps = 0
@@ -178,10 +159,16 @@ def test_trained_model(num_episodes: int):
 
     for episode in range(num_episodes):
         start_time = time.process_time()
-        obs = env.reset()[0]
-        done = {"__all__": False}
+        obs, infos = env.reset()
+        done = False
         episode_reward = 0
         steps = 0
+        ma_episode = MultiAgentEpisode(
+            observation_space=env.observation_spaces,
+            action_space=env.action_spaces,
+            agent_to_module_mapping_fn=policy_mapping_fn,
+        )
+        ma_episode.add_env_reset(observations=obs, infos=infos)
 
         should_record_episode = record_videos and len(recorded_episode_numbers) < VIDEO_EPISODES_TO_SAVE
         episode_frames = []
@@ -191,43 +178,44 @@ def test_trained_model(num_episodes: int):
             else:
                 env.render(mode="human")
 
-        if CHECKPOINT_RNN:
-            # Initialize the state for all agents; adjust the ANN size as needed.
-            state_list = {agent_id: [torch.zeros(64), torch.zeros(64)] for agent_id in obs}
-            initial_state_list = state_list.copy()
-            next_state_list = {}
-
-        actions = dict.fromkeys(obs, 0)
-        rewards = dict.fromkeys(obs, 0.0)
-
         # Track per-agent rewards
         agent_episode_rewards = dict.fromkeys(obs, 0.0)
         # Optionally, track trajectories if needed
         # agent_trajectories = {agent_id: [] for agent_id in obs}
 
-        while not done["__all__"]:
+        while not done:
             steps += 1
-            for agent_id, observation in obs.items():
-                if ALGO_NAME == "RANDOM":
-                    actions[agent_id] = env.action_space.sample()
-                elif CHECKPOINT_RNN:
-                    actions[agent_id], next_state_list[agent_id], _ = algo.compute_single_action(
-                        observation,
-                        state=state_list[agent_id],
-                        policy_id="shared_policy",
-                        prev_action=actions[agent_id],
-                        prev_reward=rewards[agent_id],
-                        explore=False,  # for deterministic actions
+            if ALGO_NAME == "RANDOM":
+                actions = {agent_id: env.action_space.sample() for agent_id in obs}
+                actions_for_env = actions
+                to_env = {}
+            else:
+                shared_data = {}
+                to_module = env_to_module(
+                    episodes=[ma_episode],
+                    rl_module=rl_module,
+                    explore=False,
+                    shared_data=shared_data,
+                )
+                if to_module:
+                    rl_module_out = rl_module.forward_inference(to_module)
+                    to_env = module_to_env(
+                        rl_module=rl_module,
+                        batch=rl_module_out,
+                        episodes=[ma_episode],
+                        explore=False,
+                        shared_data=shared_data,
                     )
                 else:
-                    actions[agent_id] = algo.compute_single_action(
-                        observation,
-                        policy_id="shared_policy",
-                        explore=False,  # for deterministic actions
-                    )
+                    to_env = {}
+                actions_list = to_env.pop(Columns.ACTIONS, [{}])
+                actions_for_env_list = to_env.pop(Columns.ACTIONS_FOR_ENV, actions_list)
+                actions = actions_list[0]
+                actions_for_env = actions_for_env_list[0]
 
             # Step the environment.
-            obs, rewards, done, _, _ = env.step(actions)
+            obs, rewards, terminateds, truncateds, infos = env.step(actions_for_env)
+            done = terminateds.get("__all__", False) or truncateds.get("__all__", False)
             episode_reward += sum(rewards.values())
 
             if env_setup.get("render_env", False):
@@ -236,6 +224,22 @@ def test_trained_model(num_episodes: int):
                 else:
                     env.render(mode="human")
 
+            extra_model_outputs = {}
+            for col, ma_dict_list in to_env.items():
+                ma_dict = ma_dict_list[0]
+                for agent_id, val in ma_dict.items():
+                    extra_model_outputs.setdefault(agent_id, {})[col] = val
+
+            ma_episode.add_env_step(
+                observations=obs,
+                actions=actions,
+                rewards=rewards,
+                infos=infos,
+                terminateds=terminateds,
+                truncateds=truncateds,
+                extra_model_outputs=extra_model_outputs,
+            )
+
             # Update per-agent rewards and record positions
             for agent_id in obs:
                 agent_episode_rewards[agent_id] += rewards[agent_id]
@@ -243,13 +247,6 @@ def test_trained_model(num_episodes: int):
                 pos_y, pos_x = env.positions[agent_id]
                 if 0 <= pos_y < grid_height and 0 <= pos_x < grid_width:
                     occupancy_grid[pos_y, pos_x] += 1
-
-            # Update states for all agents.
-            if CHECKPOINT_RNN:
-                state_list = next_state_list.copy()
-
-        if CHECKPOINT_RNN:
-            state_list = initial_state_list.copy()
 
         if should_record_episode and episode_frames:
             recorded_episode_numbers.append(episode + 1)

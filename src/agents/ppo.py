@@ -1,6 +1,8 @@
 """Proximal Policy Optimization (PPO) agent configuration."""
 
-# from ray import tune
+import random
+
+from ray import tune
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.core.rl_module.multi_rl_module import MultiRLModuleSpec
 from ray.rllib.core.rl_module.rl_module import RLModuleSpec
@@ -20,6 +22,7 @@ from ray.rllib.policy.policy import PolicySpec
 def get_ppo_config(env_name, env_config=None):
     """Get the PPO configuration."""
     num_agents = env_config.get("num_agents", 2)
+    batch_size = 4000
 
     if env_config.get("training_execution_mode") == "CTE":
         model_config = {
@@ -40,17 +43,16 @@ def get_ppo_config(env_name, env_config=None):
             .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .resources(num_gpus=1)
-            .env_runners(num_env_runners=8, num_envs_per_env_runner=8, sample_timeout_s=300)
+            .env_runners(num_env_runners=8, num_envs_per_env_runner=8, sample_timeout_s=600)
             .rl_module(
                 rl_module_spec=RLModuleSpec(
                     model_config=model_config,
                 )
             )
             .training(
-                train_batch_size_per_learner=4000,
-                minibatch_size=4000,
-                num_sgd_iter=10,
-                # num_sgd_iter=tune.randint(5, 15),
+                train_batch_size_per_learner=batch_size,
+                minibatch_size=tune.choice([batch_size, batch_size // 2]),
+                num_epochs=10,
                 clip_param=0.2,
                 # clip_param=tune.choice([0.05, 0.1, 0.2, 0.3]),
                 lr=0.0001,
@@ -71,6 +73,7 @@ def get_ppo_config(env_name, env_config=None):
             "lstm_use_prev_action": True,
             "lstm_use_prev_reward": True,
             "max_seq_len": 32,
+            "vf_share_layers": True,
         }
 
         if env_config.get("training_execution_mode") == "DTE":
@@ -95,25 +98,23 @@ def get_ppo_config(env_name, env_config=None):
             .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .resources(num_gpus=1)
-            .env_runners(num_env_runners=8, num_envs_per_env_runner=8, sample_timeout_s=300)
+            .env_runners(num_env_runners=8, num_envs_per_env_runner=8, sample_timeout_s=600)
             .rl_module(
                 rl_module_spec=MultiRLModuleSpec(rl_module_specs=rl_module_specs),
             )
             .training(
-                train_batch_size_per_learner=4000,
-                minibatch_size=4000,
+                train_batch_size_per_learner=batch_size,
+                minibatch_size=tune.choice([batch_size, batch_size // 2]),
                 num_epochs=12,
-                # clip_param=0.1,
                 clip_param=0.05,
                 # clip_param=tune.choice([0.05, 0.1, 0.2, 0.3]),
                 lr=0.001,
-                # lr=0.0005,
                 # lr=tune.choice([0.0001, 0.0003, 0.0005, 0.001]),
                 gamma=0.99,
                 lambda_=0.95,
-                # entropy_coeff=0.01,
                 entropy_coeff=0.001,
-                # entropy_coeff=tune.choice([0, 0.001, 0.01]),
+                vf_loss_coeff=0.5,
+                vf_share_layers=True,
             )
             .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
         )
