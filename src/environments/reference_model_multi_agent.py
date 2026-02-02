@@ -600,7 +600,18 @@ class ReferenceModel(MultiAgentEnv):
                 "green",
                 "purple",
                 "orange",
-            ]  # Add more colors if needed
+                "cyan",
+                "magenta",
+                "yellow",
+                "brown",
+                "pink",
+                "olive",
+                "teal",
+                "navy",
+                "gold",
+                "lime",
+                "gray",
+            ]
             for i, agent_id in enumerate(self.agents):
                 goal = self.goals[agent_id]
                 goal_patch = patches.Polygon(
@@ -684,9 +695,17 @@ class ReferenceModel(MultiAgentEnv):
             return True
 
         width, height = self.fig.canvas.get_width_height()
-        frame = np.frombuffer(self.fig.canvas.tostring_rgb(), dtype=np.uint8)
-        frame = frame.reshape((height, width, 3))
-        return frame.copy()
+
+        # Prefer RGBA buffer if available (backend-dependent).
+        if hasattr(self.fig.canvas, "buffer_rgba"):
+            frame = np.asarray(self.fig.canvas.buffer_rgba(), dtype=np.uint8)
+            frame = frame.reshape((height, width, 4))
+            return frame[:, :, :3].copy()
+
+        # Fallback for backends that only expose ARGB.
+        frame = np.frombuffer(self.fig.canvas.tostring_argb(), dtype=np.uint8)
+        frame = frame.reshape((height, width, 4))
+        return frame[:, :, 1:4].copy()
 
     def close(self):
         plt.close()
