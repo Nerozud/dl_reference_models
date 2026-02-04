@@ -251,7 +251,7 @@ class ReferenceModel(gym.Env):
                 reached_goal[f"agent_{i}"] = True
                 if not self.goal_reached_once[f"agent_{i}"]:
                     self.goal_reached_once[f"agent_{i}"] = True
-                    reward += 0.5
+                    reward += 0.1
 
         obs_grid = self.get_obs()
         action_mask = self.get_action_mask(obs_grid)

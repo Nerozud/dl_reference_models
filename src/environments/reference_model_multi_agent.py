@@ -361,7 +361,7 @@ class ReferenceModel(MultiAgentEnv):
                 reached_goal[agent_id] = True
                 if not self.goal_reached_once[agent_id]:
                     self.goal_reached_once[agent_id] = True
-                    rewards[agent_id] += 0.5
+                    rewards[agent_id] += 0.1
                 # print(
                 #     f"Agent {agent_id} reached its goal, because {self.positions[f'agent_{agent_id}']} == {self.goals[f'agent_{agent_id}']}"
                 # )
