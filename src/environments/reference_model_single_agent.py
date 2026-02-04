@@ -251,7 +251,7 @@ class ReferenceModel(gym.Env):
                 reached_goal[f"agent_{i}"] = True
                 if not self.goal_reached_once[f"agent_{i}"]:
                     self.goal_reached_once[f"agent_{i}"] = True
-                    reward += 0.1
+                    reward += 0.5
 
         obs_grid = self.get_obs()
         action_mask = self.get_action_mask(obs_grid)
@@ -280,10 +280,9 @@ class ReferenceModel(gym.Env):
         elif (
             self.step_count >= self.steps_per_episode
         ):  # If the step limit is reached, end the episode and mark it as truncated
-            # minus reward for not reaching the goal
+            # minus reward at truncation for every agent
             for i in range(self.num_agents):
-                if not np.array_equal(self.positions[f"agent_{i}"], self.goals[f"agent_{i}"]):
-                    reward -= 1
+                reward -= 1
             terminated = True
             truncated = True
         else:

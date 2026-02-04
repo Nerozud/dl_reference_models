@@ -34,7 +34,7 @@ from src.trainers.tuner import tune_with_callback
 
 ENV_NAME = "ReferenceModel-2-1"
 ALGO_NAME = "PPO"  # PPO, IMPALA, DQN, RANDOM
-MODE = "test"  # train or test, test only works with CTDE for now
+MODE = "train"  # train or test, test only works with CTDE for now
 
 ### Only relevant for MODE = test
 TEST_NUM_EPISODES = 5  # number of episodes to run when testing
@@ -56,11 +56,11 @@ env_setup = {
     "env_name": ENV_NAME,
     "seed": None,  # int or None, same seed creates same sequence of starts and goals
     "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
-    "num_agents": 16,
+    "num_agents": 4,
     "steps_per_episode": 100,  # consider increasing for larger grids
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE uses single agent env
-    "render_env": True,
+    "render_env": False,
 }
 
 # Import the correct environment based on the training execution mode

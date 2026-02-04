@@ -38,8 +38,8 @@ def tune_with_callback(config, algo_name, env_name):
         algo_name,
         param_space=config,
         tune_config=tune.TuneConfig(
-            scheduler=pb2_scheduler,
-            num_samples=3,
+            # scheduler=pb2_scheduler,
+            num_samples=1,
             trial_dirname_creator=lambda trial: f"{algo_name}-{env_name}-{trial.trial_id}",
             trial_name_creator=lambda trial: f"{algo_name}-{config['env_config']['training_execution_mode']}-{trial.trial_id}",
             # time_budget_s=3600 * 4,
@@ -50,7 +50,7 @@ def tune_with_callback(config, algo_name, env_name):
             # stop={"timesteps_total": 1e6 * 2},
             # stop={"env_runners/episode_reward_mean": 3, "timesteps_total": 1e6 / 2},
             stop={
-                "env_runners/episode_return_mean": 1.1 * config["env_config"]["num_agents"],
+                "env_runners/episode_return_mean": 1.5 * config["env_config"]["num_agents"],
                 # "time_total_s": 3600 * 18,
                 # "counters/num_env_steps_sampled": 14360000,
             },

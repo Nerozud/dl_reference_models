@@ -361,7 +361,7 @@ class ReferenceModel(MultiAgentEnv):
                 reached_goal[agent_id] = True
                 if not self.goal_reached_once[agent_id]:
                     self.goal_reached_once[agent_id] = True
-                    rewards[agent_id] += 0.1
+                    rewards[agent_id] += 0.5
                 # print(
                 #     f"Agent {agent_id} reached its goal, because {self.positions[f'agent_{agent_id}']} == {self.goals[f'agent_{agent_id}']}"
                 # )
@@ -398,10 +398,9 @@ class ReferenceModel(MultiAgentEnv):
         elif (
             self.step_count >= self.steps_per_episode
         ):  # If the step limit is reached, end the episode and mark it as truncated
-            # minus reward for not reaching the goal
+            # minus reward at truncation for every agent
             for aid in self.agents:
-                if not np.array_equal(self.positions[aid], self.goals[aid]):
-                    rewards[aid] -= 1
+                rewards[aid] -= 1
                 terminated[aid] = True
                 truncated[aid] = True
             terminated["__all__"] = True

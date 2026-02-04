@@ -5,6 +5,7 @@ from ray.rllib.core.rl_module.multi_rl_module import MultiRLModuleSpec
 from ray.rllib.core.rl_module.rl_module import RLModuleSpec
 from ray.rllib.policy.policy import PolicySpec
 
+from src.trainers.callbacks import SuccessRateCallbacks
 
 def get_dqn_config(env_name, env_config=None):
     """Get the DQN configuration."""
@@ -41,6 +42,7 @@ def get_dqn_config(env_name, env_config=None):
         .framework("torch")
         .resources(num_gpus=1)
         .env_runners(num_env_runners=8, sample_timeout_s=300)  # increase num_envs_per_env_runner if render is false
+        .callbacks(callbacks_class=SuccessRateCallbacks)
         .rl_module(
             rl_module_spec=MultiRLModuleSpec(rl_module_specs=rl_module_specs),
         )
