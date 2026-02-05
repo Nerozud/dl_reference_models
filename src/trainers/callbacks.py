@@ -1,5 +1,8 @@
 """RLlib callbacks for custom metrics."""
 
+import contextlib
+from typing import ClassVar
+
 from ray.rllib.callbacks.callbacks import RLlibCallback
 
 
@@ -99,10 +102,8 @@ def _sum_metric(infos, keys):
     for info in infos:
         for key in keys:
             if key in info and info[key] is not None:
-                try:
+                with contextlib.suppress(TypeError, ValueError):
                     total += float(info[key])
-                except (TypeError, ValueError):
-                    pass
                 break
     return total
 
@@ -139,10 +140,6 @@ class EpisodeMetricsCallback(RLlibCallback):
         self,
         *,
         episode,
-        env_runner,
-        metrics_logger,
-        env,
-        env_index,
         **_kwargs,
     ) -> None:
         if not hasattr(episode, "custom_data") or episode.custom_data is None:
@@ -154,10 +151,6 @@ class EpisodeMetricsCallback(RLlibCallback):
         self,
         *,
         episode,
-        env_runner,
-        metrics_logger,
-        env,
-        env_index,
         **_kwargs,
     ) -> None:
         if not hasattr(episode, "custom_data") or episode.custom_data is None:
@@ -184,14 +177,14 @@ class EpisodeMetricsCallback(RLlibCallback):
         blocking_total = None
         if env_unwrapped is not None:
             if hasattr(env_unwrapped, "goal_reached_once"):
-                values = getattr(env_unwrapped, "goal_reached_once")
+                values = env_unwrapped.goal_reached_once
                 if isinstance(values, dict):
                     goals_total = float(sum(1 for v in values.values() if v))
                 elif isinstance(values, (list, tuple, set)):
                     goals_total = float(sum(1 for v in values if v))
             if hasattr(env_unwrapped, "_episode_blocking_count"):
                 try:
-                    blocking_total = float(getattr(env_unwrapped, "_episode_blocking_count"))
+                    blocking_total = float(env_unwrapped._episode_blocking_count)
                 except (TypeError, ValueError):
                     blocking_total = None
 
@@ -204,11 +197,10 @@ class EpisodeMetricsCallback(RLlibCallback):
         metrics_logger.log_value("blocking_count", blocking_value, reduce="mean", window=100)
 
 
-
 class ReferenceModelCallbacks(RLlibCallback):
     """Composite callbacks for ReferenceModel metrics."""
 
-    callback_classes = [SuccessRateCallback, EpisodeMetricsCallback]
+    callback_classes: ClassVar[list[type[RLlibCallback]]] = [SuccessRateCallback, EpisodeMetricsCallback]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

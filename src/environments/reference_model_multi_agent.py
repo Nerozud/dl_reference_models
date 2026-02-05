@@ -382,8 +382,10 @@ class ReferenceModel(MultiAgentEnv):
         blocking_flags = dict.fromkeys(self.agents, 0.0)
         # Intent-based local blocking penalty
         for blocker_id in self.agents:
+            # Only consider agents that have reached their goal
             if not self.goal_reached_once[blocker_id]:
                 continue
+            # Only consider agents that did not move
             if not np.array_equal(self.positions[blocker_id], prev_positions[blocker_id]):
                 continue
             for other_id in self.agents:
@@ -462,7 +464,6 @@ class ReferenceModel(MultiAgentEnv):
 
         # print("Stepping env with number of obs:", len(obs))
         return obs, rewards, terminated, truncated, info
-
 
     def get_next_position(self, action: int, pos):
         """
