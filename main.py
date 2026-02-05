@@ -59,6 +59,8 @@ env_setup = {
     "num_agents": 4,
     "steps_per_episode": 100,  # consider increasing for larger grids
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
+    "blocking_penalty": 0,  # penalty for each step where agent blocks another agent
+    "move_after_goal_penalty": 0,  # penalty for each step after reaching goal
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE uses single agent env
     "render_env": False,
 }

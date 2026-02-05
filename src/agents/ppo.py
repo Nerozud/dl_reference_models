@@ -1,7 +1,5 @@
 """Proximal Policy Optimization (PPO) agent configuration."""
 
-import random
-
 from ray import tune
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.core.rl_module.multi_rl_module import MultiRLModuleSpec
@@ -10,7 +8,7 @@ from ray.rllib.core.rl_module.rl_module import RLModuleSpec
 # from ray.rllib.models import ModelCatalog
 from ray.rllib.policy.policy import PolicySpec
 
-from src.trainers.callbacks import SuccessRateCallbacks
+from src.trainers.callbacks import ReferenceModelCallbacks
 
 # from models.action_mask_model import TorchActionMaskModel
 # from models.action_mask_model_single import TorchActionMaskModelSingle
@@ -45,8 +43,8 @@ def get_ppo_config(env_name, env_config=None):
             .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .resources(num_gpus=1)
-            .env_runners(num_env_runners=8, num_envs_per_env_runner=8, sample_timeout_s=600)
-            .callbacks(callbacks_class=SuccessRateCallbacks)
+            .env_runners(num_env_runners=8, num_envs_per_env_runner=4, sample_timeout_s=600)
+            .callbacks(callbacks_class=ReferenceModelCallbacks)
             .rl_module(
                 rl_module_spec=RLModuleSpec(
                     model_config=model_config,
@@ -101,8 +99,8 @@ def get_ppo_config(env_name, env_config=None):
             .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
             .resources(num_gpus=1)
-            .env_runners(num_env_runners=8, num_envs_per_env_runner=8, sample_timeout_s=600)
-            .callbacks(callbacks_class=SuccessRateCallbacks)
+            .env_runners(num_env_runners=8, num_envs_per_env_runner=4, sample_timeout_s=600)
+            .callbacks(callbacks_class=ReferenceModelCallbacks)
             .rl_module(
                 rl_module_spec=MultiRLModuleSpec(rl_module_specs=rl_module_specs),
             )

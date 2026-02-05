@@ -78,6 +78,9 @@ class ReferenceModel(MultiAgentEnv):
         self.agents = self.possible_agents.copy()
         self.render_env = env_config.get("render_env", False)
         self.goal_reached_once = dict.fromkeys(self.agents, False)
+        self.blocking_penalty = env_config.get("blocking_penalty", -0.2)
+        self.move_after_goal_penalty = env_config.get("move_after_goal_penalty", -0.05)
+        self._episode_blocking_count = 0.0
 
         # Initialize a random number generator with the provided seed
         self.seed = env_config.get("seed", None)
@@ -280,6 +283,7 @@ class ReferenceModel(MultiAgentEnv):
 
     def reset(self, *, seed=None, options=None):
         self.step_count = 0
+        self._episode_blocking_count = 0.0
         infos = {aid: {} for aid in self.agents}
         obs = {}
         self.goal_reached_once = dict.fromkeys(self.agents, False)
@@ -316,6 +320,9 @@ class ReferenceModel(MultiAgentEnv):
         terminated = {}
         truncated = {}
         reached_goal = dict.fromkeys(self.agents, False)
+        intended_next = {}
+        prev_positions = {aid: np.array(self.positions[aid]) for aid in self.agents}
+        goal_reached_step_flags = dict.fromkeys(self.agents, 0.0)
 
         if not action_dict or any(aid not in action_dict for aid in self.agents):
             print("action_dict:", action_dict)
@@ -329,6 +336,7 @@ class ReferenceModel(MultiAgentEnv):
 
             pos = self.positions[agent_id]
             next_pos = self.get_next_position(action, pos)
+            intended_next[agent_id] = np.array(next_pos)
 
             # Check if the next position is valid (action mask should prevent invalid moves)
             if (
@@ -362,6 +370,7 @@ class ReferenceModel(MultiAgentEnv):
                 if not self.goal_reached_once[agent_id]:
                     self.goal_reached_once[agent_id] = True
                     rewards[agent_id] += 0.5
+                    goal_reached_step_flags[agent_id] = 1.0
                 # print(
                 #     f"Agent {agent_id} reached its goal, because {self.positions[f'agent_{agent_id}']} == {self.goals[f'agent_{agent_id}']}"
                 # )
@@ -369,6 +378,44 @@ class ReferenceModel(MultiAgentEnv):
             # print(
             #     f"Agent {agent_id} did not reach its goal, because {self.positions[f'agent_{agent_id}']} != {self.goals[f'agent_{agent_id}']}"
             # )
+
+        blocking_flags = dict.fromkeys(self.agents, 0.0)
+        # Intent-based local blocking penalty
+        for blocker_id in self.agents:
+            if not self.goal_reached_once[blocker_id]:
+                continue
+            if not np.array_equal(self.positions[blocker_id], prev_positions[blocker_id]):
+                continue
+            for other_id in self.agents:
+                if other_id == blocker_id or self.goal_reached_once[other_id]:
+                    continue
+                if np.array_equal(intended_next.get(other_id), self.positions[blocker_id]):
+                    rewards[blocker_id] += self.blocking_penalty
+                    blocking_flags[blocker_id] = 1.0
+                    break
+        self._episode_blocking_count += float(sum(blocking_flags.values()))
+
+        # Tiny penalty for moving after reaching the goal
+        for agent_id in self.agents:
+            if not self.goal_reached_once[agent_id]:
+                continue
+            if not np.array_equal(self.positions[agent_id], prev_positions[agent_id]):
+                rewards[agent_id] += self.move_after_goal_penalty
+
+        for agent_id in self.agents:
+            info[agent_id]["blocking"] = blocking_flags[agent_id]
+            info[agent_id]["goal_reached_step"] = goal_reached_step_flags[agent_id]
+        goals_reached_total = float(sum(1 for reached in self.goal_reached_once.values() if reached))
+        blocking_count_total = float(self._episode_blocking_count)
+        for agent_id in self.agents:
+            info[agent_id]["goals_reached_total"] = goals_reached_total
+            info[agent_id]["blocking_count_total"] = blocking_count_total
+        info["__all__"] = {
+            "goals_reached_step": float(sum(goal_reached_step_flags.values())),
+            "goals_reached_total": goals_reached_total,
+            "blocking_count_step": float(sum(blocking_flags.values())),
+            "blocking_count_total": blocking_count_total,
+        }
 
         # Collision penalty (shouldn't happen, but keep it)
         for i, a in enumerate(self.agents):
@@ -398,9 +445,10 @@ class ReferenceModel(MultiAgentEnv):
         elif (
             self.step_count >= self.steps_per_episode
         ):  # If the step limit is reached, end the episode and mark it as truncated
-            # minus reward at truncation for every agent
+            # minus reward at truncation for agents not on their goal
             for aid in self.agents:
-                rewards[aid] -= 1
+                if not reached_goal[aid]:
+                    rewards[aid] -= 1
                 terminated[aid] = True
                 truncated[aid] = True
             terminated["__all__"] = True
@@ -414,6 +462,7 @@ class ReferenceModel(MultiAgentEnv):
 
         # print("Stepping env with number of obs:", len(obs))
         return obs, rewards, terminated, truncated, info
+
 
     def get_next_position(self, action: int, pos):
         """

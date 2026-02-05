@@ -5,7 +5,6 @@ from pathlib import Path
 from ray import air, tune
 from ray.air.integrations.wandb import WandbLoggerCallback
 from ray.tune.schedulers.pb2 import PB2
-
 pb2_scheduler = PB2(
     time_attr="time_total_s",
     metric="env_runners/episode_return_mean",

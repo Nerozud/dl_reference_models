@@ -89,6 +89,9 @@ class ReferenceModel(gym.Env):
         self._agent_ids = {f"agent_{i}" for i in range(self.num_agents)}
         self.render_env = env_config.get("render_env", False)
         self.goal_reached_once = {f"agent_{i}": False for i in range(self.num_agents)}
+        self.blocking_penalty = env_config.get("blocking_penalty", -0.2)
+        self.move_after_goal_penalty = env_config.get("move_after_goal_penalty", -0.05)
+        self._episode_blocking_count = 0.0
 
         # Initialize a random number generator with the provided seed
         self.seed = env_config.get("seed", None)
@@ -199,6 +202,7 @@ class ReferenceModel(gym.Env):
 
     def reset(self, *, seed=None, options=None):
         self.step_count = 0
+        self._episode_blocking_count = 0.0
         info = {}
         obs = {}
         self.goal_reached_once = {f"agent_{i}": False for i in range(self.num_agents)}
@@ -225,11 +229,16 @@ class ReferenceModel(gym.Env):
         truncated = {}
         reached_goal = {}
         reward = 0
+        intended_next = {}
+        prev_positions = {f"agent_{i}": np.array(self.positions[f"agent_{i}"]) for i in range(self.num_agents)}
+        blocking_count_step = 0.0
+        goals_reached_step = 0.0
 
         for i in range(self.num_agents):
             reached_goal[f"agent_{i}"] = False
             pos = self.positions[f"agent_{i}"]
             next_pos = self.get_next_position(action[i], pos)
+            intended_next[f"agent_{i}"] = np.array(next_pos)
 
             # Check if the next position is valid (action mask should prevent invalid moves)
             if (
@@ -252,6 +261,7 @@ class ReferenceModel(gym.Env):
                 if not self.goal_reached_once[f"agent_{i}"]:
                     self.goal_reached_once[f"agent_{i}"] = True
                     reward += 0.5
+                    goals_reached_step += 1.0
 
         obs_grid = self.get_obs()
         action_mask = self.get_action_mask(obs_grid)
@@ -263,6 +273,31 @@ class ReferenceModel(gym.Env):
                 if np.array_equal(self.positions[f"agent_{i}"], self.positions[f"agent_{j}"]):
                     reward -= 1
                     print(f"Agents {i} and {j} are on the same position {self.positions[f'agent_{i}']}")
+
+        # Intent-based local blocking penalty
+        for blocker_idx in range(self.num_agents):
+            blocker_id = f"agent_{blocker_idx}"
+            if not self.goal_reached_once[blocker_id]:
+                continue
+            if not np.array_equal(self.positions[blocker_id], prev_positions[blocker_id]):
+                continue
+            for other_idx in range(self.num_agents):
+                other_id = f"agent_{other_idx}"
+                if other_id == blocker_id or self.goal_reached_once[other_id]:
+                    continue
+                if np.array_equal(intended_next.get(other_id), self.positions[blocker_id]):
+                    reward += self.blocking_penalty
+                    blocking_count_step += 1.0
+                    break
+        self._episode_blocking_count += float(blocking_count_step)
+
+        # Tiny penalty for moving after reaching the goal
+        for i in range(self.num_agents):
+            agent_id = f"agent_{i}"
+            if not self.goal_reached_once[agent_id]:
+                continue
+            if not np.array_equal(self.positions[agent_id], prev_positions[agent_id]):
+                reward += self.move_after_goal_penalty
 
         # If all agents have reached their goals, end the episode (not truncated)
         if all(reached_goal.values()):
@@ -280,9 +315,10 @@ class ReferenceModel(gym.Env):
         elif (
             self.step_count >= self.steps_per_episode
         ):  # If the step limit is reached, end the episode and mark it as truncated
-            # minus reward at truncation for every agent
+            # minus reward at truncation for agents not on their goal
             for i in range(self.num_agents):
-                reward -= 1
+                if not reached_goal[f"agent_{i}"]:
+                    reward -= 1
             terminated = True
             truncated = True
         else:
@@ -294,8 +330,13 @@ class ReferenceModel(gym.Env):
 
         # print("Stepping env with number of obs:", len(obs))
         info["action_mask"] = action_mask
+        info["blocking_count_step"] = blocking_count_step
+        info["goals_reached_step"] = goals_reached_step
+        info["goals_reached_total"] = float(sum(1 for reached in self.goal_reached_once.values() if reached))
+        info["blocking_count_total"] = float(self._episode_blocking_count)
 
         return obs, reward, terminated, truncated, info
+
 
     def get_next_position(self, action, pos):
         """
