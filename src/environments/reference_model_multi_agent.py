@@ -1,24 +1,4 @@
-"""
-Module containing the ReferenceModel class, which is a multi-agent environment.
-    Initialize the ReferenceModel environment.
-        env_config (dict): Configuration options for the environment.
-        None
-    Reset the environment to its initial state.
-        seed (int): The random seed for the environment.
-        options (dict): Additional options for resetting the environment.
-        obs (dict): The initial observations for each agent.
-        info (dict): Additional information about the reset.
-    Take a step in the environment.
-        action_dict (dict): The actions to be taken by each agent.
-        obs (dict): The new observations for each agent.
-        rewards (dict): The rewards obtained by each agent.
-        terminated (dict): Whether each agent has terminated.
-        truncated (dict): Whether each agent's trajectory was truncated.
-        info (dict): Additional information about the step.
-        obs (numpy.ndarray): The observation array.
-    Render the environment.
-        None
-"""
+"""Multi-agent reference grid environment."""
 
 import logging
 
@@ -36,33 +16,18 @@ from src.environments.actions import DOWN, LEFT, NO_OP, RIGHT, UP
 
 class ReferenceModel(MultiAgentEnv):
     """
-    Reference Model Multi-Agent Environment.
-    This is a simple environment with a grid where agents need to reach their respective goals.
-    The environment has the following properties:
-    - The grid is a 2D numpy array where each cell can be an empty cell (0) or an obstacle (1).
-    - Agents can move in four directions: up, right, down, and left.
-    - The observation space is a 3x3 grid centered around the agent,
-      where each cell can have one of the following values:
-        - 0: Empty cell
-        - 1: Obstacle cell
-        - 2: Cell occupied by another agent
-        - 3: Cell occupied by current agent's goal but not occupied by another agent
-        - 4: Cell occupied by another agent's goal but not occupied by another agent
-    - The action space consists of the following actions:
-        - 0: No-op
-        - 1: Move up
-        - 2: Move right
-        - 3: Move down
-        - 4: Move left
-    - The environment is episodic and terminates after a fixed number of steps.
-    - Each agent receives a reward of
-        -1 for being on the same position as another agent
-        -1 for not reaching its goal
-        +0.5 for reaching its goal for the first time
-        1 for reaching its goal
-        0 otherwise.
-    - The episode terminates after a fixed number of steps or when all agents reach their goals.
+    Multi-agent grid world with flat per-agent observations.
+
+    Flat observation layout:
+    `local_obs` (flattened) + `goal_delta` + optional `goal_distance` + `action_mask`.
     """
+
+    EMPTY_CELL = 0
+    OBSTACLE_CELL = 1
+    OTHER_AGENT_CELL = 2
+    OWN_GOAL_CELL = 3
+    OTHER_GOAL_CELL = 4
+    TRAVERSABLE_LOCAL_VALUES = (EMPTY_CELL, OWN_GOAL_CELL, OTHER_GOAL_CELL)
 
     def __init__(self, env_config):
         super().__init__()
@@ -114,7 +79,7 @@ class ReferenceModel(MultiAgentEnv):
         view_side = self.sensor_range * 2 + 1
         self._local_obs_space = gym.spaces.Box(
             low=0,
-            high=4,
+            high=self.OTHER_GOAL_CELL,
             shape=(view_side, view_side),
             dtype=np.uint8,
         )
@@ -139,48 +104,11 @@ class ReferenceModel(MultiAgentEnv):
             shape=(2,),
             dtype=np.float32,
         )
-        self._action_mask_space = gym.spaces.MultiBinary(5)
-
         # Assuming all agents have the same action space
         self._single_act_space = gym.spaces.Discrete(5)
+        self._action_mask_space = gym.spaces.MultiBinary(self._single_act_space.n)
 
-        self._flat_local_obs_len = int(np.prod(self._local_obs_space.shape))
-        self._flat_goal_delta_len = int(np.prod(self._goal_delta_space.shape))
-        self._flat_goal_distance_len = 1 if self.include_goal_distance else 0
-        self._flat_mask_len = int(np.prod(self._action_mask_space.shape))
-        total_obs_len = (
-            self._flat_local_obs_len + self._flat_goal_delta_len + self._flat_goal_distance_len + self._flat_mask_len
-        )
-        low = np.concatenate(
-            [
-                np.zeros(self._flat_local_obs_len, dtype=np.float32),
-                self._goal_delta_space.low.astype(np.float32),
-                np.zeros(self._flat_goal_distance_len, dtype=np.float32),
-                np.zeros(self._flat_mask_len, dtype=np.float32),
-            ]
-        )
-        max_manhattan = float(np.abs(self._goal_delta_space.high).sum())
-        high = np.concatenate(
-            [
-                np.full(self._flat_local_obs_len, self._local_obs_space.high.max(), dtype=np.float32),
-                self._goal_delta_space.high.astype(np.float32),
-                np.full(self._flat_goal_distance_len, max_manhattan, dtype=np.float32),
-                np.ones(self._flat_mask_len, dtype=np.float32),
-            ]
-        )
-        self._single_obs_space = gym.spaces.Box(low=low, high=high, dtype=np.float32)
-        self._obs_slices = {
-            "local_obs": slice(0, self._flat_local_obs_len),
-            "goal_delta": slice(
-                self._flat_local_obs_len,
-                self._flat_local_obs_len + self._flat_goal_delta_len,
-            ),
-            "goal_distance": slice(
-                self._flat_local_obs_len + self._flat_goal_delta_len,
-                self._flat_local_obs_len + self._flat_goal_delta_len + self._flat_goal_distance_len,
-            ),
-            "action_mask": slice(total_obs_len - self._flat_mask_len, total_obs_len),
-        }
+        self._single_obs_space, self._obs_slices = self._build_obs_layout()
 
         self.observation_spaces = dict.fromkeys(self.possible_agents, self._single_obs_space)
         self.action_spaces = dict.fromkeys(self.possible_agents, self._single_act_space)
@@ -196,18 +124,52 @@ class ReferenceModel(MultiAgentEnv):
             self.fig = None
             self.ax = None
 
+    def _build_obs_layout(self):
+        """Build flat observation space and component slices."""
+        component_order = ["local_obs", "goal_delta"]
+        component_spaces = {
+            "local_obs": self._local_obs_space,
+            "goal_delta": self._goal_delta_space,
+        }
+        if self.include_goal_distance:
+            component_order.append("goal_distance")
+            max_manhattan = float(np.abs(self._goal_delta_space.high).sum())
+            component_spaces["goal_distance"] = gym.spaces.Box(
+                low=np.zeros(1, dtype=np.float32),
+                high=np.asarray([max_manhattan], dtype=np.float32),
+                dtype=np.float32,
+            )
+        component_order.append("action_mask")
+        component_spaces["action_mask"] = self._action_mask_space
+
+        low_parts = []
+        high_parts = []
+        obs_slices = {}
+        start = 0
+        for name in component_order:
+            space = component_spaces[name]
+            if isinstance(space, gym.spaces.MultiBinary):
+                size = int(np.prod(space.shape))
+                low = np.zeros(size, dtype=np.float32)
+                high = np.ones(size, dtype=np.float32)
+            else:
+                low = space.low.astype(np.float32).reshape(-1)
+                high = space.high.astype(np.float32).reshape(-1)
+            end = start + low.size
+            obs_slices[name] = slice(start, end)
+            low_parts.append(low)
+            high_parts.append(high)
+            start = end
+
+        obs_space = gym.spaces.Box(
+            low=np.concatenate(low_parts),
+            high=np.concatenate(high_parts),
+            dtype=np.float32,
+        )
+        return obs_space, obs_slices
+
     def generate_starts_goals(self):
-        """
-        Generates random starting positions and goal positions for each agent.
-
-        The function ensures that each agent has a unique starting position and goal position.
-
-        Attributes:
-            starts (dict): A dictionary where keys are agent identifiers (e.g., 'agent_0') and values are the starting positions.
-            positions (dict): A copy of the starts dictionary representing the current positions of the agents.
-            goals (dict): A dictionary where keys are agent identifiers (e.g., 'agent_0') and values are the goal positions.
-
-        """
+        """Generate unique random start and goal positions for all agents."""
         self.starts = {}
         available_positions = np.argwhere(self.grid == 0)
         for agent_id in self.agents:
@@ -234,44 +196,26 @@ class ReferenceModel(MultiAgentEnv):
                     break
 
     def _flatten_observation(self, agent_id: str, local_obs=None, action_mask=None):
-        """Pack the structured observation parts into a single flat Box."""
+        """Pack ordered observation components into one flat float32 vector."""
         if local_obs is None:
             local_obs = self.get_obs(agent_id)
         if action_mask is None:
             action_mask = self.get_action_mask(local_obs)
 
         goal_delta = self._get_goal_delta(agent_id)
-        goal_distance = (
-            np.asarray([np.abs(goal_delta).sum()], dtype=np.float32)
-            if self.include_goal_distance
-            else np.array([], dtype=np.float32)
-        )
+        parts = [
+            local_obs.astype(np.float32).reshape(-1),
+            goal_delta.astype(np.float32).reshape(-1),
+        ]
+        if self.include_goal_distance:
+            parts.append(np.asarray([np.abs(goal_delta).sum()], dtype=np.float32))
+        parts.append(action_mask.astype(np.float32).reshape(-1))
 
-        return np.concatenate(
-            [
-                local_obs.astype(np.float32).flatten(),
-                goal_delta.astype(np.float32),
-                goal_distance,
-                action_mask.astype(np.float32),
-            ]
-        )
-
-    def split_flat_observation(self, flat_obs: np.ndarray):
-        """
-        Helper to recover the structured components from a flat observation.
-
-        Useful for debugging or logging without changing the observation space contract.
-        """
-        local_flat = flat_obs[self._obs_slices["local_obs"]]
-        goal_delta = flat_obs[self._obs_slices["goal_delta"]]
-        goal_distance = flat_obs[self._obs_slices["goal_distance"]]
-        action_mask = flat_obs[self._obs_slices["action_mask"]]
-        return {
-            "observations": local_flat.reshape(self._local_obs_space.shape),
-            "goal_delta": goal_delta,
-            "goal_distance": goal_distance,
-            "action_mask": action_mask,
-        }
+        flat_obs = np.concatenate(parts).astype(np.float32)
+        if flat_obs.shape != self._single_obs_space.shape:
+            msg = f"Flattened observation has shape {flat_obs.shape}, expected {self._single_obs_space.shape}."
+            raise ValueError(msg)
+        return flat_obs
 
     def _get_goal_delta(self, agent_id: str) -> np.ndarray:
         position = np.asarray(self.positions[agent_id], dtype=np.float32)
@@ -307,9 +251,6 @@ class ReferenceModel(MultiAgentEnv):
         if self.render_env:
             self.render()
 
-        # for agent_id in self.agents:
-        #     print(f"Agent {agent_id}: {infos[agent_id]['goal_delta']}")
-        #     print("obs goal delta:", obs[agent_id][self._obs_slices["goal_delta"]])
         return obs, infos
 
     def step(self, action_dict):
@@ -466,28 +407,7 @@ class ReferenceModel(MultiAgentEnv):
         return obs, rewards, terminated, truncated, info
 
     def get_next_position(self, action: int, pos):
-        """
-        Get the next position based on the given action and current position.
-
-        Args:
-            action (int): The action to be taken.
-            pos (tuple): The current position.
-
-        Returns:
-            numpy.ndarray: The next position.
-
-        Description:
-            This function calculates the next position based on given action and current position.
-            The possible actions are:
-                - 0: No-op
-                - 1: Move up
-                - 2: Move right
-                - 3: Move down
-                - 4: Move left
-            The next position is calculated by adding or subtracting 1 to the corresponding
-            coordinate of the current position.
-
-        """
+        """Return next grid position for action [no-op, up, right, down, left]."""
         if action == NO_OP:  # no-op
             next_pos = np.array([pos[0], pos[1]])
         elif action == UP:  # up
@@ -505,28 +425,7 @@ class ReferenceModel(MultiAgentEnv):
         return next_pos
 
     def get_obs(self, agent_id: str):
-        """
-        Get the observation for a given agent.
-
-        Args:
-            agent_id (str): The ID of the agent.
-
-        Returns:
-            numpy.ndarray: The observation array.
-
-        Description:
-            This function calculates the observation array for a given agent based on its position.
-            The observation array is a 2D np array with the same shape as the env's obs space.
-            Each element in the array represents the state of a cell in the grid.
-            The possible values for each cell are:
-                - 0: Empty cell
-                - 1: Obstacle cell
-                - 2: Cell occupied by another agent
-                - 3: Cell occupied by current agent's goal but not occupied by another agent
-                - 4: Cell occupied by another agent's goal but not occupied by another agent
-            If a cell is outside the grid boundaries, it is considered an obstacle cell.
-
-        """
+        """Return local observation grid for one agent using encoded cell constants."""
         pos = self.positions[agent_id]
         obs = np.zeros(
             self._local_obs_space.shape,
@@ -542,59 +441,37 @@ class ReferenceModel(MultiAgentEnv):
                 # Check if the position is within the grid boundaries
                 if 0 <= x < self.grid.shape[0] and 0 <= y < self.grid.shape[1]:
                     # Default to empty cell
-                    obs[i, j] = 0
+                    obs[i, j] = self.EMPTY_CELL
 
                     # Check if the cell is an obstacle
-                    if self.grid[x, y] == 1:
-                        obs[i, j] = 1
+                    if self.grid[x, y] == self.OBSTACLE_CELL:
+                        obs[i, j] = self.OBSTACLE_CELL
                     elif any(
                         np.array_equal(self.positions[agent], (x, y)) for agent in self.positions if agent != agent_id
                     ):
-                        obs[i, j] = 2
+                        obs[i, j] = self.OTHER_AGENT_CELL
                     # Check if this is current agent's goal and not occupied by another agent
                     elif np.array_equal(self.goals[agent_id], (x, y)):
-                        obs[i, j] = 3
+                        obs[i, j] = self.OWN_GOAL_CELL
                     # Check if this is another agent's goal and not occupied by another agent
                     elif any(
                         np.array_equal(self.goals[agent], (x, y)) for agent in self.positions if agent != agent_id
                     ):
-                        obs[i, j] = 4
+                        obs[i, j] = self.OTHER_GOAL_CELL
                 else:
                     # If the cell is outside the grid, treat it as an obstacle
-                    obs[i, j] = 1
+                    obs[i, j] = self.OBSTACLE_CELL
 
         return obs
 
     def get_action_mask(self, obs):
-        """
-        Get the action mask for a given agent.
-
-        Args:
-            obs (numpy.ndarray): The observation array for the agent.
-
-        Returns:
-            numpy.ndarray: The action mask array.
-
-        Description:
-            This function calculates the action mask for a given agent based on its observation.
-            The action mask is a binary array indicating which actions are valid for the agent.
-            The possible actions are:
-                - 0: No-op
-                - 1: Move up
-                - 2: Move right
-                - 3: Move down
-                - 4: Move left
-            The action mask is calculated based on the current observation of the agent.
-            Action 0 is always possible.
-            Movement actions (1-4) are only possible if the corresponding cell in the observation is empty or a goal.
-
-        """
+        """Return binary mask for valid local actions in [no-op, up, right, down, left]."""
         action_mask = np.zeros(
             self._action_mask_space.shape,
             dtype=self._action_mask_space.dtype,
         )
 
-        action_mask[0] = 1  # No-op action is always possible
+        action_mask[NO_OP] = 1  # No-op action is always possible
 
         pos = [
             self.sensor_range,
@@ -602,17 +479,17 @@ class ReferenceModel(MultiAgentEnv):
         ]
         x, y = pos
 
-        if x > 0 and (obs[x - 1, y] == 0 or obs[x - 1, y] == 3 or obs[x - 1, y] == 4):
-            action_mask[1] = 1  # Move up
+        if x > 0 and obs[x - 1, y] in self.TRAVERSABLE_LOCAL_VALUES:
+            action_mask[UP] = 1  # Move up
 
-        if y < obs.shape[1] - 1 and (obs[x, y + 1] == 0 or obs[x, y + 1] == 3 or obs[x, y + 1] == 4):
-            action_mask[2] = 1  # Move right
+        if y < obs.shape[1] - 1 and obs[x, y + 1] in self.TRAVERSABLE_LOCAL_VALUES:
+            action_mask[RIGHT] = 1  # Move right
 
-        if x < obs.shape[0] - 1 and (obs[x + 1, y] == 0 or obs[x + 1, y] == 3 or obs[x + 1, y] == 4):
-            action_mask[3] = 1  # Move down
+        if x < obs.shape[0] - 1 and obs[x + 1, y] in self.TRAVERSABLE_LOCAL_VALUES:
+            action_mask[DOWN] = 1  # Move down
 
-        if y > 0 and (obs[x, y - 1] == 0 or obs[x, y - 1] == 3 or obs[x, y - 1] == 4):
-            action_mask[4] = 1  # Move left
+        if y > 0 and obs[x, y - 1] in self.TRAVERSABLE_LOCAL_VALUES:
+            action_mask[LEFT] = 1  # Move left
 
         return action_mask
 
