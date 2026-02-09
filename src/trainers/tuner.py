@@ -5,6 +5,7 @@ from pathlib import Path
 from ray import air, tune
 from ray.air.integrations.wandb import WandbLoggerCallback
 from ray.tune.schedulers.pb2 import PB2
+
 pb2_scheduler = PB2(
     time_attr="time_total_s",
     metric="env_runners/episode_return_mean",
@@ -40,7 +41,9 @@ def tune_with_callback(config, algo_name, env_name):
             # scheduler=pb2_scheduler,
             num_samples=1,
             trial_dirname_creator=lambda trial: f"{algo_name}-{env_name}-{trial.trial_id}",
-            trial_name_creator=lambda trial: f"{algo_name}-{config['env_config']['training_execution_mode']}-{trial.trial_id}",
+            trial_name_creator=lambda trial: (
+                f"{algo_name}-{config['env_config']['training_execution_mode']}-{trial.trial_id}"
+            ),
             # time_budget_s=3600 * 4,
         ),
         run_config=air.RunConfig(

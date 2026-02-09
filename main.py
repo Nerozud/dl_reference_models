@@ -59,7 +59,7 @@ env_setup = {
     "num_agents": 4,
     "steps_per_episode": 100,  # consider increasing for larger grids
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
-    "blocking_penalty": -0.1,  # penalty for each step where agent blocks another agent
+    "blocking_penalty": -0.1,  # penalty for each step where agent blocks another agent after reaching its goal
     "move_after_goal_penalty": 0,  # penalty for each step after reaching goal
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE uses single agent env
     "render_env": False,
@@ -70,7 +70,6 @@ if env_setup["training_execution_mode"] == "CTE":
     from src.environments.reference_model_single_agent import ReferenceModel
 elif env_setup["training_execution_mode"] == "CTDE" or env_setup["training_execution_mode"] == "DTE":
     from src.environments.reference_model_multi_agent import ReferenceModel
-
 else:
     msg = f"Training execution mode {env_setup['training_execution_mode']} not supported."
     raise ValueError(msg)
