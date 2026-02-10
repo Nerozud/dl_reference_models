@@ -1,5 +1,4 @@
 """Multi-agent reference grid environment."""
-
 import logging
 
 logger = logging.getLogger(__name__)
@@ -47,8 +46,20 @@ class ReferenceModel(MultiAgentEnv):
         if self.info_mode not in {"lite", "full"}:
             msg = f"Unsupported info_mode '{self.info_mode}'. Expected 'lite' or 'full'."
             raise ValueError(msg)
+        self.deadlock_window_steps = max(1, int(env_config.get("deadlock_window_steps", 8)))
+        self.livelock_window_steps = max(1, int(env_config.get("livelock_window_steps", 16)))
+        self.lock_nearby_manhattan = max(1, int(env_config.get("lock_nearby_manhattan", 2)))
+        self.lock_progress_epsilon = float(env_config.get("lock_progress_epsilon", 1))
+        self.lock_min_neighbors = max(1, int(env_config.get("lock_min_neighbors", 1)))
+        self.enable_lock_metrics = bool(env_config.get("enable_lock_metrics", True))
         self.goal_reached_once = dict.fromkeys(self.agents, False)
         self._episode_blocking_count = 0.0
+        self._episode_deadlock_events = 0.0
+        self._episode_livelock_events = 0.0
+        self._episode_deadlock_steps = 0.0
+        self._episode_livelock_steps = 0.0
+        self._deadlock_state_prev = False
+        self._livelock_state_prev = False
         self._agent_index = {agent_id: idx for idx, agent_id in enumerate(self.agents)}
         self._coord_dtype = np.int16
 
@@ -74,6 +85,13 @@ class ReferenceModel(MultiAgentEnv):
         self._scratch_reached_goal = np.zeros(self._num_agents, dtype=np.bool_)
         self._scratch_goal_reached_step_flags = np.zeros(self._num_agents, dtype=np.float32)
         self._scratch_blocking_flags = np.zeros(self._num_agents, dtype=np.float32)
+        self._scratch_actions = np.zeros(self._num_agents, dtype=np.int8)
+        self._scratch_moved_flags = np.zeros(self._num_agents, dtype=np.bool_)
+        self._scratch_failed_move_flags = np.zeros(self._num_agents, dtype=np.bool_)
+        self._scratch_goal_progress_flags = np.zeros(self._num_agents, dtype=np.bool_)
+        self._scratch_prev_on_goal = np.zeros(self._num_agents, dtype=np.bool_)
+        self._scratch_current_on_goal = np.zeros(self._num_agents, dtype=np.bool_)
+        self._scratch_distance_to_goal = np.zeros(self._num_agents, dtype=np.int16)
         self._occupancy_owner = np.full(self.grid.shape, self.UNASSIGNED_OWNER, dtype=np.int16)
         self._goal_owner = np.full(self.grid.shape, self.UNASSIGNED_OWNER, dtype=np.int16)
         self._action_deltas = np.array(
@@ -86,6 +104,13 @@ class ReferenceModel(MultiAgentEnv):
             ],
             dtype=self._coord_dtype,
         )
+        self._lock_history_size = max(self.deadlock_window_steps, self.livelock_window_steps)
+        self._lock_hist_goal_progress = np.zeros((self._lock_history_size, self._num_agents), dtype=np.uint8)
+        self._lock_hist_moved = np.zeros((self._lock_history_size, self._num_agents), dtype=np.uint8)
+        self._lock_hist_failed_move = np.zeros((self._lock_history_size, self._num_agents), dtype=np.uint8)
+        self._lock_hist_distance = np.zeros((self._lock_history_size, self._num_agents), dtype=np.int16)
+        self._lock_hist_count = 0
+        self._lock_hist_head = 0
 
         self._bind_public_state_views()
 
@@ -265,9 +290,90 @@ class ReferenceModel(MultiAgentEnv):
             "local_obs": local_obs,
         }
 
+    def _reset_lock_tracking(self):
+        self._lock_hist_goal_progress.fill(0)
+        self._lock_hist_moved.fill(0)
+        self._lock_hist_failed_move.fill(0)
+        self._lock_hist_distance.fill(0)
+        self._lock_hist_count = 0
+        self._lock_hist_head = 0
+        self._episode_deadlock_events = 0.0
+        self._episode_livelock_events = 0.0
+        self._episode_deadlock_steps = 0.0
+        self._episode_livelock_steps = 0.0
+        self._deadlock_state_prev = False
+        self._livelock_state_prev = False
+
+    def _append_lock_history_step(
+        self,
+        goal_progress_flags: np.ndarray,
+        moved_flags: np.ndarray,
+        failed_move_flags: np.ndarray,
+        distance_to_goal: np.ndarray,
+    ) -> None:
+        row = self._lock_hist_head
+        self._lock_hist_goal_progress[row, :] = goal_progress_flags.astype(np.uint8, copy=False)
+        self._lock_hist_moved[row, :] = moved_flags.astype(np.uint8, copy=False)
+        self._lock_hist_failed_move[row, :] = failed_move_flags.astype(np.uint8, copy=False)
+        self._lock_hist_distance[row, :] = distance_to_goal.astype(np.int16, copy=False)
+        self._lock_hist_head = (self._lock_hist_head + 1) % self._lock_history_size
+        self._lock_hist_count = min(self._lock_hist_count + 1, self._lock_history_size)
+
+    def _get_focal_participants(self, current_off_goal: np.ndarray) -> list[np.ndarray]:
+        participants = []
+        for focal_idx in np.flatnonzero(current_off_goal):
+            focal_pos = self._positions_arr[focal_idx]
+            dists = np.abs(self._positions_arr - focal_pos).sum(axis=1)
+            neighbor_indices = np.flatnonzero((dists <= self.lock_nearby_manhattan) & (dists > 0))
+            if neighbor_indices.size < self.lock_min_neighbors:
+                continue
+            participants.append(np.concatenate(([focal_idx], neighbor_indices)))
+        return participants
+
+    def _detect_lock_step(self, current_off_goal: np.ndarray) -> tuple[bool, bool]:
+        if not bool(np.any(current_off_goal)):
+            return False, False
+
+        participant_sets = self._get_focal_participants(current_off_goal)
+        if not participant_sets:
+            return False, False
+
+        if self._lock_hist_count >= self.deadlock_window_steps:
+            idxs = (self._lock_hist_head - np.arange(self.deadlock_window_steps, 0, -1, dtype=np.int32)) % (
+                self._lock_history_size
+            )
+            goal_progress_window = self._lock_hist_goal_progress[idxs]
+            moved_window = self._lock_hist_moved[idxs]
+            failed_move_window = self._lock_hist_failed_move[idxs]
+            for participants in participant_sets:
+                goal_progress_sum = float(goal_progress_window[:, participants].sum())
+                moved_sum = float(moved_window[:, participants].sum())
+                failed_move_sum = float(failed_move_window[:, participants].sum())
+                if goal_progress_sum <= 0.0 and moved_sum <= 0.0 and failed_move_sum > 0.0:
+                    return True, False
+
+        if self._lock_hist_count >= self.livelock_window_steps:
+            idxs = (self._lock_hist_head - np.arange(self.livelock_window_steps, 0, -1, dtype=np.int32)) % (
+                self._lock_history_size
+            )
+            goal_progress_window = self._lock_hist_goal_progress[idxs]
+            moved_window = self._lock_hist_moved[idxs]
+            distance_window = self._lock_hist_distance[idxs]
+            for participants in participant_sets:
+                goal_progress_sum = float(goal_progress_window[:, participants].sum())
+                moved_sum = float(moved_window[:, participants].sum())
+                distance_start = float(distance_window[0, participants].sum())
+                distance_end = float(distance_window[-1, participants].sum())
+                distance_reduction = distance_start - distance_end
+                if goal_progress_sum <= 0.0 and moved_sum > 0.0 and distance_reduction <= self.lock_progress_epsilon:
+                    return False, True
+
+        return False, False
+
     def reset(self, *, seed=None, options=None):
         self.step_count = 0
         self._episode_blocking_count = 0.0
+        self._reset_lock_tracking()
         infos = {aid: {} for aid in self.agents}
         obs = {}
         self._reached_arr[:] = False
@@ -305,6 +411,14 @@ class ReferenceModel(MultiAgentEnv):
         goal_reached_step_flags.fill(0.0)
         blocking_flags = self._scratch_blocking_flags
         blocking_flags.fill(0.0)
+        actions_taken = self._scratch_actions
+        actions_taken.fill(NO_OP)
+        moved_flags = self._scratch_moved_flags
+        failed_move_flags = self._scratch_failed_move_flags
+        goal_progress_flags = self._scratch_goal_progress_flags
+        prev_on_goal = self._scratch_prev_on_goal
+        current_on_goal = self._scratch_current_on_goal
+        distance_to_goal = self._scratch_distance_to_goal
 
         if not action_dict or any(aid not in action_dict for aid in self.agents):
             action_dict = dict.fromkeys(self.agents, NO_OP)
@@ -315,6 +429,7 @@ class ReferenceModel(MultiAgentEnv):
             if action < NO_OP or action > LEFT:
                 msg = f"Invalid action {action} for {agent_id}"
                 raise ValueError(msg)
+            actions_taken[agent_idx] = action
 
             pos_y = int(self._positions_arr[agent_idx, 0])
             pos_x = int(self._positions_arr[agent_idx, 1])
@@ -353,6 +468,31 @@ class ReferenceModel(MultiAgentEnv):
                 rewards[agent_id] += 0.5
                 goal_reached_step_flags[agent_idx] = 1.0
 
+        deadlock_step = False
+        livelock_step = False
+        deadlock_event_step = 0.0
+        livelock_event_step = 0.0
+        if self.enable_lock_metrics:
+            moved_flags[:] = np.any(self._positions_arr != prev_positions, axis=1)
+            failed_move_flags[:] = (actions_taken != NO_OP) & (~moved_flags)
+            prev_on_goal[:] = np.all(prev_positions == self._goals_arr, axis=1)
+            current_on_goal[:] = np.all(self._positions_arr == self._goals_arr, axis=1)
+            goal_progress_flags[:] = (~prev_on_goal) & current_on_goal
+            distance_to_goal[:] = np.abs(self._goals_arr - self._positions_arr).sum(axis=1)
+            self._append_lock_history_step(goal_progress_flags, moved_flags, failed_move_flags, distance_to_goal)
+            current_off_goal = ~current_on_goal
+            deadlock_step, livelock_step = self._detect_lock_step(current_off_goal)
+            if deadlock_step:
+                livelock_step = False
+            deadlock_event_step = float(deadlock_step and not self._deadlock_state_prev)
+            livelock_event_step = float(livelock_step and not self._livelock_state_prev)
+            self._deadlock_state_prev = bool(deadlock_step)
+            self._livelock_state_prev = bool(livelock_step)
+            self._episode_deadlock_steps += float(deadlock_step)
+            self._episode_livelock_steps += float(livelock_step)
+            self._episode_deadlock_events += deadlock_event_step
+            self._episode_livelock_events += livelock_event_step
+
         # Track intent-based local blocking events.
         for blocker_idx, blocker_id in enumerate(self.agents):
             if not self._reached_arr[blocker_idx]:
@@ -384,6 +524,14 @@ class ReferenceModel(MultiAgentEnv):
             "goals_reached_total": goals_reached_total,
             "blocking_count_step": float(blocking_flags.sum()),
             "blocking_count_total": blocking_count_total,
+            "deadlock_step": float(deadlock_step),
+            "livelock_step": float(livelock_step),
+            "deadlock_event_step": deadlock_event_step,
+            "livelock_event_step": livelock_event_step,
+            "deadlock_events_total": float(self._episode_deadlock_events),
+            "livelock_events_total": float(self._episode_livelock_events),
+            "deadlock_steps_total": float(self._episode_deadlock_steps),
+            "livelock_steps_total": float(self._episode_livelock_steps),
         }
 
         # Collision penalty (shouldn't happen, but keep it)

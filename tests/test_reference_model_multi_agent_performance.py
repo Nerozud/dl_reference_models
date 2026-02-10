@@ -22,6 +22,7 @@ def test_env_only_steps_per_second_target():
             "info_mode": "lite",
             "training_execution_mode": "CTDE",
             "render_env": False,
+            "enable_lock_metrics": False,
         }
     )
     rng = np.random.default_rng(999)

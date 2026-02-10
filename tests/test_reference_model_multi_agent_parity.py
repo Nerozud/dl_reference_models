@@ -23,6 +23,17 @@ EXPECTED_DETERMINISTIC_SUMMARY = [
     {"episode": 2, "steps": 100, "reward_sum": -4.0},
 ]
 
+LOCK_INFO_KEYS = {
+    "deadlock_step",
+    "livelock_step",
+    "deadlock_event_step",
+    "livelock_event_step",
+    "deadlock_events_total",
+    "livelock_events_total",
+    "deadlock_steps_total",
+    "livelock_steps_total",
+}
+
 
 def _update_with_array(hasher, arr) -> None:
     np_arr = np.asarray(arr)
@@ -56,6 +67,21 @@ def _update_with_value(hasher, value) -> None:
     hasher.update(str(value).encode())
 
 
+def _strip_lock_metrics(value):
+    if isinstance(value, dict):
+        cleaned = {}
+        for key, val in value.items():
+            if key in LOCK_INFO_KEYS:
+                continue
+            cleaned[key] = _strip_lock_metrics(val)
+        return cleaned
+    if isinstance(value, list):
+        return [_strip_lock_metrics(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(_strip_lock_metrics(item) for item in value)
+    return value
+
+
 def _build_env_config(deterministic: bool) -> dict:
     return {
         "env_name": "ReferenceModel-2-1",
@@ -82,7 +108,7 @@ def _compute_trace_digest(deterministic: bool) -> tuple[str, list[dict]]:
         for agent_id in sorted(obs):
             hasher.update(agent_id.encode())
             _update_with_array(hasher, obs[agent_id])
-        _update_with_value(hasher, infos)
+        _update_with_value(hasher, _strip_lock_metrics(infos))
 
         episode_reward_sum = 0.0
         for step_idx in range(140):
@@ -98,7 +124,7 @@ def _compute_trace_digest(deterministic: bool) -> tuple[str, list[dict]]:
             _update_with_value(hasher, rewards)
             _update_with_value(hasher, terminated)
             _update_with_value(hasher, truncated)
-            _update_with_value(hasher, infos)
+            _update_with_value(hasher, _strip_lock_metrics(infos))
 
             done = terminated.get("__all__", False) or truncated.get("__all__", False)
             if done:

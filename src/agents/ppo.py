@@ -22,7 +22,7 @@ from src.trainers.callbacks import ReferenceModelCallbacks
 def get_ppo_config(env_name, env_config=None):
     """Get the PPO configuration."""
     num_agents = env_config.get("num_agents", 2)
-    batch_size = 4000
+    batch_size = 8000
 
     if env_config.get("training_execution_mode") == "CTE":
         model_config = {

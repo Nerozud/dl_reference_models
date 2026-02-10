@@ -146,6 +146,10 @@ class EpisodeMetricsCallback(RLlibCallback):
             episode.custom_data = {}
         episode.custom_data["goals_reached"] = 0.0
         episode.custom_data["blocking_count"] = 0.0
+        episode.custom_data["deadlock_count"] = 0.0
+        episode.custom_data["livelock_count"] = 0.0
+        episode.custom_data["deadlock_steps"] = 0.0
+        episode.custom_data["livelock_steps"] = 0.0
 
     def on_episode_step(
         self,
@@ -154,7 +158,14 @@ class EpisodeMetricsCallback(RLlibCallback):
         **_kwargs,
     ) -> None:
         if not hasattr(episode, "custom_data") or episode.custom_data is None:
-            episode.custom_data = {"goals_reached": 0.0, "blocking_count": 0.0}
+            episode.custom_data = {
+                "goals_reached": 0.0,
+                "blocking_count": 0.0,
+                "deadlock_count": 0.0,
+                "livelock_count": 0.0,
+                "deadlock_steps": 0.0,
+                "livelock_steps": 0.0,
+            }
         infos = _iter_infos(episode)
         global_info = next(
             (
@@ -169,10 +180,22 @@ class EpisodeMetricsCallback(RLlibCallback):
                 episode.custom_data["goals_reached"] += float(global_info.get("goals_reached_step", 0.0))
             with contextlib.suppress(TypeError, ValueError):
                 episode.custom_data["blocking_count"] += float(global_info.get("blocking_count_step", 0.0))
+            with contextlib.suppress(TypeError, ValueError):
+                episode.custom_data["deadlock_count"] += float(global_info.get("deadlock_event_step", 0.0))
+            with contextlib.suppress(TypeError, ValueError):
+                episode.custom_data["livelock_count"] += float(global_info.get("livelock_event_step", 0.0))
+            with contextlib.suppress(TypeError, ValueError):
+                episode.custom_data["deadlock_steps"] += float(global_info.get("deadlock_step", 0.0))
+            with contextlib.suppress(TypeError, ValueError):
+                episode.custom_data["livelock_steps"] += float(global_info.get("livelock_step", 0.0))
             return
 
         episode.custom_data["goals_reached"] += _sum_metric(infos, ["goal_reached_step", "goals_reached_step"])
         episode.custom_data["blocking_count"] += _sum_metric(infos, ["blocking", "blocking_count_step"])
+        episode.custom_data["deadlock_count"] += _sum_metric(infos, ["deadlock_event_step"])
+        episode.custom_data["livelock_count"] += _sum_metric(infos, ["livelock_event_step"])
+        episode.custom_data["deadlock_steps"] += _sum_metric(infos, ["deadlock_step"])
+        episode.custom_data["livelock_steps"] += _sum_metric(infos, ["livelock_step"])
 
     def on_episode_end(
         self,
@@ -185,11 +208,22 @@ class EpisodeMetricsCallback(RLlibCallback):
         **_kwargs,
     ) -> None:
         if not hasattr(episode, "custom_data") or episode.custom_data is None:
-            episode.custom_data = {"goals_reached": 0.0, "blocking_count": 0.0}
+            episode.custom_data = {
+                "goals_reached": 0.0,
+                "blocking_count": 0.0,
+                "deadlock_count": 0.0,
+                "livelock_count": 0.0,
+                "deadlock_steps": 0.0,
+                "livelock_steps": 0.0,
+            }
 
         env_unwrapped = _resolve_env(env, env_runner, env_index)
         goals_total = None
         blocking_total = None
+        deadlock_count_total = None
+        livelock_count_total = None
+        deadlock_steps_total = None
+        livelock_steps_total = None
         if env_unwrapped is not None:
             if hasattr(env_unwrapped, "goal_reached_once"):
                 values = env_unwrapped.goal_reached_once
@@ -202,14 +236,50 @@ class EpisodeMetricsCallback(RLlibCallback):
                     blocking_total = float(env_unwrapped._episode_blocking_count)
                 except (TypeError, ValueError):
                     blocking_total = None
+            if hasattr(env_unwrapped, "_episode_deadlock_events"):
+                try:
+                    deadlock_count_total = float(env_unwrapped._episode_deadlock_events)
+                except (TypeError, ValueError):
+                    deadlock_count_total = None
+            if hasattr(env_unwrapped, "_episode_livelock_events"):
+                try:
+                    livelock_count_total = float(env_unwrapped._episode_livelock_events)
+                except (TypeError, ValueError):
+                    livelock_count_total = None
+            if hasattr(env_unwrapped, "_episode_deadlock_steps"):
+                try:
+                    deadlock_steps_total = float(env_unwrapped._episode_deadlock_steps)
+                except (TypeError, ValueError):
+                    deadlock_steps_total = None
+            if hasattr(env_unwrapped, "_episode_livelock_steps"):
+                try:
+                    livelock_steps_total = float(env_unwrapped._episode_livelock_steps)
+                except (TypeError, ValueError):
+                    livelock_steps_total = None
 
         goals_value = goals_total if goals_total is not None else float(episode.custom_data.get("goals_reached", 0.0))
         blocking_value = (
             blocking_total if blocking_total is not None else float(episode.custom_data.get("blocking_count", 0.0))
         )
+        deadlock_value = (
+            deadlock_count_total if deadlock_count_total is not None else float(episode.custom_data.get("deadlock_count", 0.0))
+        )
+        livelock_value = (
+            livelock_count_total if livelock_count_total is not None else float(episode.custom_data.get("livelock_count", 0.0))
+        )
+        deadlock_steps_value = (
+            deadlock_steps_total if deadlock_steps_total is not None else float(episode.custom_data.get("deadlock_steps", 0.0))
+        )
+        livelock_steps_value = (
+            livelock_steps_total if livelock_steps_total is not None else float(episode.custom_data.get("livelock_steps", 0.0))
+        )
 
         metrics_logger.log_value("goals_reached", goals_value, reduce="mean", window=100)
         metrics_logger.log_value("blocking_count", blocking_value, reduce="mean", window=100)
+        metrics_logger.log_value("deadlock_count", deadlock_value, reduce="mean", window=100)
+        metrics_logger.log_value("livelock_count", livelock_value, reduce="mean", window=100)
+        metrics_logger.log_value("deadlock_steps", deadlock_steps_value, reduce="mean", window=100)
+        metrics_logger.log_value("livelock_steps", livelock_steps_value, reduce="mean", window=100)
 
 
 class ReferenceModelCallbacks(RLlibCallback):

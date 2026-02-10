@@ -56,8 +56,8 @@ env_setup = {
     "env_name": ENV_NAME,
     "seed": None,  # int or None, same seed creates same sequence of starts and goals
     "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
-    "num_agents": 4,
-    "steps_per_episode": 100,  # consider increasing for larger grids
+    "num_agents": 16,
+    "steps_per_episode": 200,  # consider increasing for larger grids
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
     "info_mode": "lite",  # "lite" for training throughput, "full" for debugging/evaluation payloads
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE uses single agent env
