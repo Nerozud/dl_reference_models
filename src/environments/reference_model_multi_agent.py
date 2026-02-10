@@ -28,6 +28,7 @@ class ReferenceModel(MultiAgentEnv):
     OWN_GOAL_CELL = 3
     OTHER_GOAL_CELL = 4
     TRAVERSABLE_LOCAL_VALUES = (EMPTY_CELL, OWN_GOAL_CELL, OTHER_GOAL_CELL)
+    UNASSIGNED_OWNER = -1
 
     def __init__(self, env_config):
         super().__init__()
@@ -42,10 +43,14 @@ class ReferenceModel(MultiAgentEnv):
         self.possible_agents = [f"agent_{i}" for i in range(self._num_agents)]
         self.agents = self.possible_agents.copy()
         self.render_env = env_config.get("render_env", False)
+        self.info_mode = str(env_config.get("info_mode", "lite")).lower()
+        if self.info_mode not in {"lite", "full"}:
+            msg = f"Unsupported info_mode '{self.info_mode}'. Expected 'lite' or 'full'."
+            raise ValueError(msg)
         self.goal_reached_once = dict.fromkeys(self.agents, False)
-        self.blocking_penalty = env_config.get("blocking_penalty", -0.2)
-        self.move_after_goal_penalty = env_config.get("move_after_goal_penalty", -0.05)
         self._episode_blocking_count = 0.0
+        self._agent_index = {agent_id: idx for idx, agent_id in enumerate(self.agents)}
+        self._coord_dtype = np.int16
 
         # Initialize a random number generator with the provided seed
         self.seed = env_config.get("seed", None)
@@ -59,28 +64,49 @@ class ReferenceModel(MultiAgentEnv):
         # coords are [y-1, x-1] from upper left, so [0, 4] is the aisle
         self.grid = get_grid.get_grid(env_config["env_name"])
 
-        # TODO: Make env name fix and make env as list of envs to give as env_config
-        # random_env_name = np.random.choice(
-        #     ["ReferenceModel-1-2", "ReferenceModel-1-3", "ReferenceModel-1-4", "ReferenceModel-3-1"]
-        # )
-        # random_env_name = np.random.choice(
-        #     ["ReferenceModel-2-1", "ReferenceModel-3-1"]
-        # )
-        # self.grid = get_grid.get_grid(random_env_name)
+        self._free_positions = np.argwhere(self.grid == self.EMPTY_CELL).astype(self._coord_dtype, copy=False)
+        self._starts_arr = np.zeros((self._num_agents, 2), dtype=self._coord_dtype)
+        self._positions_arr = np.zeros((self._num_agents, 2), dtype=self._coord_dtype)
+        self._goals_arr = np.zeros((self._num_agents, 2), dtype=self._coord_dtype)
+        self._reached_arr = np.zeros(self._num_agents, dtype=np.bool_)
+        self._scratch_prev_positions = np.empty_like(self._positions_arr)
+        self._scratch_intended_next = np.empty_like(self._positions_arr)
+        self._scratch_reached_goal = np.zeros(self._num_agents, dtype=np.bool_)
+        self._scratch_goal_reached_step_flags = np.zeros(self._num_agents, dtype=np.float32)
+        self._scratch_blocking_flags = np.zeros(self._num_agents, dtype=np.float32)
+        self._occupancy_owner = np.full(self.grid.shape, self.UNASSIGNED_OWNER, dtype=np.int16)
+        self._goal_owner = np.full(self.grid.shape, self.UNASSIGNED_OWNER, dtype=np.int16)
+        self._action_deltas = np.array(
+            [
+                [0, 0],  # no-op
+                [-1, 0],  # up
+                [0, 1],  # right
+                [1, 0],  # down
+                [0, -1],  # left
+            ],
+            dtype=self._coord_dtype,
+        )
+
+        self._bind_public_state_views()
 
         if self.deterministic:
-            self.starts = get_grid.get_start_positions(env_config["env_name"], self._num_agents)
-            self.positions = self.starts.copy()
-            self.goals = get_grid.get_goal_positions(env_config["env_name"], self._num_agents)
+            starts = get_grid.get_start_positions(env_config["env_name"], self._num_agents)
+            goals = get_grid.get_goal_positions(env_config["env_name"], self._num_agents)
+            for agent_id, idx in self._agent_index.items():
+                self._starts_arr[idx] = np.asarray(starts[agent_id], dtype=self._coord_dtype)
+                self._goals_arr[idx] = np.asarray(goals[agent_id], dtype=self._coord_dtype)
+            np.copyto(self._positions_arr, self._starts_arr)
+            self._rebuild_goal_owner()
+            self._rebuild_occupancy_owner()
         else:
             self.generate_starts_goals()
 
         # POMPD, small grid around the agent
-        view_side = self.sensor_range * 2 + 1
+        self._view_side = self.sensor_range * 2 + 1
         self._local_obs_space = gym.spaces.Box(
             low=0,
             high=self.OTHER_GOAL_CELL,
-            shape=(view_side, view_side),
+            shape=(self._view_side, self._view_side),
             dtype=np.uint8,
         )
         goal_delta_low = np.array(
@@ -109,6 +135,7 @@ class ReferenceModel(MultiAgentEnv):
         self._action_mask_space = gym.spaces.MultiBinary(self._single_act_space.n)
 
         self._single_obs_space, self._obs_slices = self._build_obs_layout()
+        self._single_obs_len = int(np.prod(self._single_obs_space.shape))
 
         self.observation_spaces = dict.fromkeys(self.possible_agents, self._single_obs_space)
         self.action_spaces = dict.fromkeys(self.possible_agents, self._single_act_space)
@@ -123,6 +150,26 @@ class ReferenceModel(MultiAgentEnv):
             self.sensor_patches = {}
             self.fig = None
             self.ax = None
+
+    def _bind_public_state_views(self):
+        """Expose dict-based state views for compatibility with existing callers."""
+        self.starts = {agent_id: self._starts_arr[idx] for agent_id, idx in self._agent_index.items()}
+        self.positions = {agent_id: self._positions_arr[idx] for agent_id, idx in self._agent_index.items()}
+        self.goals = {agent_id: self._goals_arr[idx] for agent_id, idx in self._agent_index.items()}
+
+    def _rebuild_occupancy_owner(self):
+        """Rebuild map from grid cell to occupying agent index."""
+        self._occupancy_owner.fill(self.UNASSIGNED_OWNER)
+        for idx in range(self._num_agents):
+            x, y = self._positions_arr[idx]
+            self._occupancy_owner[x, y] = idx
+
+    def _rebuild_goal_owner(self):
+        """Rebuild map from grid cell to goal owner agent index."""
+        self._goal_owner.fill(self.UNASSIGNED_OWNER)
+        for idx in range(self._num_agents):
+            x, y = self._goals_arr[idx]
+            self._goal_owner[x, y] = idx
 
     def _build_obs_layout(self):
         """Build flat observation space and component slices."""
@@ -170,30 +217,20 @@ class ReferenceModel(MultiAgentEnv):
 
     def generate_starts_goals(self):
         """Generate unique random start and goal positions for all agents."""
-        self.starts = {}
-        available_positions = np.argwhere(self.grid == 0)
-        for agent_id in self.agents:
-            while True:
-                idx = self.rng.choice(len(available_positions))
-                # print("idx", idx, "from", len(available_positions))
-                start_pos = available_positions[idx]
-                # Ensure that the starting position is unique
-                if not any(np.array_equal(start_pos, pos) for pos in self.starts.values()):
-                    self.starts[agent_id] = start_pos
-                    break
-        # print("starts", self.starts)
-        self.positions = self.starts.copy()
-        self.goals = {}
-        for agent_id in self.agents:
-            while True:
-                idx = self.rng.choice(len(available_positions))
-                goal_pos = available_positions[idx]
-                # Ensure that the goal position is unique and not the same as any start position
-                if not any(np.array_equal(goal_pos, pos) for pos in self.goals.values()) and not any(
-                    np.array_equal(goal_pos, pos) for pos in self.starts.values()
-                ):
-                    self.goals[agent_id] = goal_pos
-                    break
+        required_positions = self._num_agents * 2
+        if self._free_positions.shape[0] < required_positions:
+            msg = (
+                f"Environment has only {self._free_positions.shape[0]} free cells, "
+                f"but {required_positions} are required for starts and goals."
+            )
+            raise ValueError(msg)
+
+        sampled_indices = self.rng.choice(self._free_positions.shape[0], size=required_positions, replace=False)
+        np.copyto(self._starts_arr, self._free_positions[sampled_indices[: self._num_agents]])
+        np.copyto(self._positions_arr, self._starts_arr)
+        np.copyto(self._goals_arr, self._free_positions[sampled_indices[self._num_agents :]])
+        self._rebuild_goal_owner()
+        self._rebuild_occupancy_owner()
 
     def _flatten_observation(self, agent_id: str, local_obs=None, action_mask=None):
         """Pack ordered observation components into one flat float32 vector."""
@@ -203,37 +240,43 @@ class ReferenceModel(MultiAgentEnv):
             action_mask = self.get_action_mask(local_obs)
 
         goal_delta = self._get_goal_delta(agent_id)
-        parts = [
-            local_obs.astype(np.float32).reshape(-1),
-            goal_delta.astype(np.float32).reshape(-1),
-        ]
+        flat_obs = np.empty(self._single_obs_len, dtype=np.float32)
+        flat_obs[self._obs_slices["local_obs"]] = local_obs.reshape(-1)
+        flat_obs[self._obs_slices["goal_delta"]] = goal_delta
         if self.include_goal_distance:
-            parts.append(np.asarray([np.abs(goal_delta).sum()], dtype=np.float32))
-        parts.append(action_mask.astype(np.float32).reshape(-1))
-
-        flat_obs = np.concatenate(parts).astype(np.float32)
-        if flat_obs.shape != self._single_obs_space.shape:
-            msg = f"Flattened observation has shape {flat_obs.shape}, expected {self._single_obs_space.shape}."
-            raise ValueError(msg)
+            flat_obs[self._obs_slices["goal_distance"]] = np.abs(goal_delta).sum()
+        flat_obs[self._obs_slices["action_mask"]] = action_mask.reshape(-1)
         return flat_obs
 
     def _get_goal_delta(self, agent_id: str) -> np.ndarray:
-        position = np.asarray(self.positions[agent_id], dtype=np.float32)
-        goal = np.asarray(self.goals[agent_id], dtype=np.float32)
-        goal_delta = goal - position
+        agent_idx = self._agent_index[agent_id]
+        goal_delta = (self._goals_arr[agent_idx] - self._positions_arr[agent_idx]).astype(np.float32)
         if self.normalize_goal_delta:
             goal_delta = goal_delta / self._goal_delta_denominator
         return goal_delta
+
+    def _build_full_info(self, agent_id: str, local_obs: np.ndarray, action_mask: np.ndarray) -> dict:
+        """Build detailed per-agent info payload (debug/evaluation mode)."""
+        return {
+            "position": np.asarray(self.positions[agent_id]),
+            "goal": np.asarray(self.goals[agent_id]),
+            "goal_delta": self._get_goal_delta(agent_id),
+            "action_mask": action_mask,
+            "local_obs": local_obs,
+        }
 
     def reset(self, *, seed=None, options=None):
         self.step_count = 0
         self._episode_blocking_count = 0.0
         infos = {aid: {} for aid in self.agents}
         obs = {}
+        self._reached_arr[:] = False
         self.goal_reached_once = dict.fromkeys(self.agents, False)
 
         if self.deterministic:
-            self.positions = self.starts.copy()
+            np.copyto(self._positions_arr, self._starts_arr)
+            self._rebuild_goal_owner()
+            self._rebuild_occupancy_owner()
         else:
             self.generate_starts_goals()
 
@@ -241,13 +284,8 @@ class ReferenceModel(MultiAgentEnv):
             local_obs = self.get_obs(agent_id)
             action_mask = self.get_action_mask(local_obs)
             obs[agent_id] = self._flatten_observation(agent_id, local_obs, action_mask)
-            infos[agent_id] = {
-                "position": np.asarray(self.positions[agent_id]),
-                "goal": np.asarray(self.goals[agent_id]),
-                "goal_delta": self._get_goal_delta(agent_id),
-                "action_mask": action_mask,
-                "local_obs": local_obs,
-            }
+            if self.info_mode == "full":
+                infos[agent_id] = self._build_full_info(agent_id, local_obs, action_mask)
         if self.render_env:
             self.render()
 
@@ -258,139 +296,121 @@ class ReferenceModel(MultiAgentEnv):
         rewards = dict.fromkeys(self.agents, 0.0)
         info = {aid: {} for aid in self.agents}
         obs = {}
-        terminated = {}
-        truncated = {}
-        reached_goal = dict.fromkeys(self.agents, False)
-        intended_next = {}
-        prev_positions = {aid: np.array(self.positions[aid]) for aid in self.agents}
-        goal_reached_step_flags = dict.fromkeys(self.agents, 0.0)
+        reached_goal = self._scratch_reached_goal
+        reached_goal[:] = False
+        intended_next = self._scratch_intended_next
+        prev_positions = self._scratch_prev_positions
+        np.copyto(prev_positions, self._positions_arr)
+        goal_reached_step_flags = self._scratch_goal_reached_step_flags
+        goal_reached_step_flags.fill(0.0)
+        blocking_flags = self._scratch_blocking_flags
+        blocking_flags.fill(0.0)
 
         if not action_dict or any(aid not in action_dict for aid in self.agents):
-            print("action_dict:", action_dict)
-            action_dict = dict.fromkeys(self.agents, 0)
+            action_dict = dict.fromkeys(self.agents, NO_OP)
             logger.warning("No actions provided or missing agent actions. Defaulting to no-op actions: %s", action_dict)
 
-        for agent_id in self.agents:
-            rewards[agent_id] = 0
-            reached_goal[agent_id] = False
-            action = action_dict[agent_id]
+        for agent_idx, agent_id in enumerate(self.agents):
+            action = int(action_dict[agent_id])
+            if action < NO_OP or action > LEFT:
+                msg = f"Invalid action {action} for {agent_id}"
+                raise ValueError(msg)
 
-            pos = self.positions[agent_id]
-            next_pos = self.get_next_position(action, pos)
-            intended_next[agent_id] = np.array(next_pos)
-
-            # Check if the next position is valid (action mask should prevent invalid moves)
-            if (
-                0 <= next_pos[0] < self.grid.shape[0]
-                and 0 <= next_pos[1] < self.grid.shape[1]
-                and self.grid[next_pos[0], next_pos[1]] == 0
-                and not any(
-                    np.array_equal(self.positions[agent], next_pos) for agent in self.positions if agent != agent_id
-                )
-            ):
-                self.positions[agent_id] = next_pos
-            # else:
-            # rewards[agent_id] -= 0.1
-            # print(
-            #     f"Invalid move for agent {agent_id} with action {action} at position {pos}"
-            # )
+            pos_y = int(self._positions_arr[agent_idx, 0])
+            pos_x = int(self._positions_arr[agent_idx, 1])
+            delta = self._action_deltas[action]
+            next_y = pos_y + int(delta[0])
+            next_x = pos_x + int(delta[1])
+            intended_next[agent_idx, 0] = next_y
+            intended_next[agent_idx, 1] = next_x
+            valid_move = (
+                0 <= next_y < self.grid.shape[0]
+                and 0 <= next_x < self.grid.shape[1]
+                and self.grid[next_y, next_x] == self.EMPTY_CELL
+                and (self._occupancy_owner[next_y, next_x] in (self.UNASSIGNED_OWNER, agent_idx))
+            )
+            if valid_move and (next_y != pos_y or next_x != pos_x):
+                self._occupancy_owner[pos_y, pos_x] = self.UNASSIGNED_OWNER
+                self._positions_arr[agent_idx, 0] = next_y
+                self._positions_arr[agent_idx, 1] = next_x
+                self._occupancy_owner[next_y, next_x] = agent_idx
 
             local_obs = self.get_obs(agent_id)
             action_mask = self.get_action_mask(local_obs)
             obs[agent_id] = self._flatten_observation(agent_id, local_obs, action_mask)
-            info[agent_id] = {
-                "position": np.asarray(self.positions[agent_id]),
-                "goal": np.asarray(self.goals[agent_id]),
-                "goal_delta": self._get_goal_delta(agent_id),
-                "action_mask": action_mask,
-                "local_obs": local_obs,
-            }
+            if self.info_mode == "full":
+                info[agent_id] = self._build_full_info(agent_id, local_obs, action_mask)
 
-            if np.array_equal(self.positions[agent_id], self.goals[agent_id]):
-                reached_goal[agent_id] = True
-                if not self.goal_reached_once[agent_id]:
-                    self.goal_reached_once[agent_id] = True
-                    rewards[agent_id] += 0.5
-                    goal_reached_step_flags[agent_id] = 1.0
-                # print(
-                #     f"Agent {agent_id} reached its goal, because {self.positions[f'agent_{agent_id}']} == {self.goals[f'agent_{agent_id}']}"
-                # )
-            # else:
-            # print(
-            #     f"Agent {agent_id} did not reach its goal, because {self.positions[f'agent_{agent_id}']} != {self.goals[f'agent_{agent_id}']}"
-            # )
+            current_y = int(self._positions_arr[agent_idx, 0])
+            current_x = int(self._positions_arr[agent_idx, 1])
+            goal_y = int(self._goals_arr[agent_idx, 0])
+            goal_x = int(self._goals_arr[agent_idx, 1])
+            is_on_goal = current_y == goal_y and current_x == goal_x
+            reached_goal[agent_idx] = is_on_goal
+            if is_on_goal and not self._reached_arr[agent_idx]:
+                self._reached_arr[agent_idx] = True
+                self.goal_reached_once[agent_id] = True
+                rewards[agent_id] += 0.5
+                goal_reached_step_flags[agent_idx] = 1.0
 
-        blocking_flags = dict.fromkeys(self.agents, 0.0)
-        # Intent-based local blocking penalty
-        for blocker_id in self.agents:
-            # Only consider agents that have reached their goal
-            if not self.goal_reached_once[blocker_id]:
+        # Track intent-based local blocking events.
+        for blocker_idx, blocker_id in enumerate(self.agents):
+            if not self._reached_arr[blocker_idx]:
                 continue
-            # Only consider agents that did not move
-            if not np.array_equal(self.positions[blocker_id], prev_positions[blocker_id]):
+            blocker_y = int(self._positions_arr[blocker_idx, 0])
+            blocker_x = int(self._positions_arr[blocker_idx, 1])
+            prev_blocker_y = int(prev_positions[blocker_idx, 0])
+            prev_blocker_x = int(prev_positions[blocker_idx, 1])
+            if blocker_y != prev_blocker_y or blocker_x != prev_blocker_x:
                 continue
-            for other_id in self.agents:
-                if other_id == blocker_id or self.goal_reached_once[other_id]:
+            for other_idx, other_id in enumerate(self.agents):
+                if other_id == blocker_id or self._reached_arr[other_idx]:
                     continue
-                if np.array_equal(intended_next.get(other_id), self.positions[blocker_id]):
-                    rewards[blocker_id] += self.blocking_penalty
-                    blocking_flags[blocker_id] = 1.0
+                if int(intended_next[other_idx, 0]) == blocker_y and int(intended_next[other_idx, 1]) == blocker_x:
+                    blocking_flags[blocker_idx] = 1.0
                     break
-        self._episode_blocking_count += float(sum(blocking_flags.values()))
+        self._episode_blocking_count += float(blocking_flags.sum())
 
-        # Tiny penalty for moving after reaching the goal
-        for agent_id in self.agents:
-            if not self.goal_reached_once[agent_id]:
-                continue
-            if not np.array_equal(self.positions[agent_id], prev_positions[agent_id]):
-                rewards[agent_id] += self.move_after_goal_penalty
-
-        for agent_id in self.agents:
-            info[agent_id]["blocking"] = blocking_flags[agent_id]
-            info[agent_id]["goal_reached_step"] = goal_reached_step_flags[agent_id]
-        goals_reached_total = float(sum(1 for reached in self.goal_reached_once.values() if reached))
+        for agent_idx, agent_id in enumerate(self.agents):
+            info[agent_id]["blocking"] = float(blocking_flags[agent_idx])
+            info[agent_id]["goal_reached_step"] = float(goal_reached_step_flags[agent_idx])
+        goals_reached_total = float(np.sum(self._reached_arr))
         blocking_count_total = float(self._episode_blocking_count)
         for agent_id in self.agents:
             info[agent_id]["goals_reached_total"] = goals_reached_total
             info[agent_id]["blocking_count_total"] = blocking_count_total
         info["__all__"] = {
-            "goals_reached_step": float(sum(goal_reached_step_flags.values())),
+            "goals_reached_step": float(goal_reached_step_flags.sum()),
             "goals_reached_total": goals_reached_total,
-            "blocking_count_step": float(sum(blocking_flags.values())),
+            "blocking_count_step": float(blocking_flags.sum()),
             "blocking_count_total": blocking_count_total,
         }
 
         # Collision penalty (shouldn't happen, but keep it)
         for i, a in enumerate(self.agents):
-            for b in self.agents[i + 1 :]:
-                if np.array_equal(self.positions[a], self.positions[b]):
+            pos_a_y = int(self._positions_arr[i, 0])
+            pos_a_x = int(self._positions_arr[i, 1])
+            for j, b in enumerate(self.agents[i + 1 :], start=i + 1):
+                if pos_a_y == int(self._positions_arr[j, 0]) and pos_a_x == int(self._positions_arr[j, 1]):
                     rewards[a] -= 1
                     rewards[b] -= 1
-                    print(f"Agents {a} and {b} are on the same position {self.positions[a]}")
+                    logger.warning("Agents %s and %s occupy the same position %s", a, b, self.positions[a])
 
         terminated = dict.fromkeys(self.agents, False)
         truncated = dict.fromkeys(self.agents, False)
         # If all agents have reached their goals, end the episode (not truncated)
-        if all(reached_goal.values()):
+        if bool(np.all(reached_goal)):
             for aid in self.agents:
                 rewards[aid] += 1
                 terminated[aid] = True
             terminated["__all__"] = True
             truncated["__all__"] = False
-            # print(
-            #     "All agents reached their goals in",
-            #     self.step_count,
-            #     "steps with a reward of",
-            #     rewards,
-            # )
-            # print("Positions:", self.positions)
-            # print("Goals:", self.goals)
         elif (
             self.step_count >= self.steps_per_episode
         ):  # If the step limit is reached, end the episode and mark it as truncated
             # minus reward at truncation for agents not on their goal
-            for aid in self.agents:
-                if not reached_goal[aid]:
+            for agent_idx, aid in enumerate(self.agents):
+                if not reached_goal[agent_idx]:
                     rewards[aid] -= 1
                 terminated[aid] = True
                 truncated[aid] = True
@@ -403,64 +423,57 @@ class ReferenceModel(MultiAgentEnv):
         if self.render_env:
             self.render()
 
-        # print("Stepping env with number of obs:", len(obs))
         return obs, rewards, terminated, truncated, info
 
     def get_next_position(self, action: int, pos):
         """Return next grid position for action [no-op, up, right, down, left]."""
-        if action == NO_OP:  # no-op
-            next_pos = np.array([pos[0], pos[1]])
-        elif action == UP:  # up
-            next_pos = np.array([pos[0] - 1, pos[1]])
-        elif action == RIGHT:  # right
-            next_pos = np.array([pos[0], pos[1] + 1])
-        elif action == DOWN:  # down
-            next_pos = np.array([pos[0] + 1, pos[1]])
-        elif action == LEFT:  # left
-            next_pos = np.array([pos[0], pos[1] - 1])
-        else:
+        action = int(action)
+        if action < NO_OP or action > LEFT:
             msg = "Invalid action"
             raise ValueError(msg)
 
-        return next_pos
+        pos_arr = np.asarray(pos, dtype=self._coord_dtype)
+        return pos_arr + self._action_deltas[action]
 
     def get_obs(self, agent_id: str):
         """Return local observation grid for one agent using encoded cell constants."""
-        pos = self.positions[agent_id]
-        obs = np.zeros(
+        agent_idx = self._agent_index[agent_id]
+        pos = self._positions_arr[agent_idx]
+        obs = np.full(
             self._local_obs_space.shape,
-            dtype=self._local_obs_space.dtype,
+            fill_value=self.OBSTACLE_CELL,
+            dtype=np.uint8,
         )
+        base_x = int(pos[0]) - self.sensor_range
+        base_y = int(pos[1]) - self.sensor_range
+        grid_rows, grid_cols = self.grid.shape
+        occupancy_owner = self._occupancy_owner
+        goal_owner = self._goal_owner
 
         for i in range(self._local_obs_space.shape[0]):
+            x = base_x + i
+            if x < 0 or x >= grid_rows:
+                continue
             for j in range(self._local_obs_space.shape[1]):
-                # Calculate the corresponding position on the grid
-                x = pos[0] - self.sensor_range + i
-                y = pos[1] - self.sensor_range + j
-
-                # Check if the position is within the grid boundaries
-                if 0 <= x < self.grid.shape[0] and 0 <= y < self.grid.shape[1]:
-                    # Default to empty cell
-                    obs[i, j] = self.EMPTY_CELL
-
-                    # Check if the cell is an obstacle
-                    if self.grid[x, y] == self.OBSTACLE_CELL:
-                        obs[i, j] = self.OBSTACLE_CELL
-                    elif any(
-                        np.array_equal(self.positions[agent], (x, y)) for agent in self.positions if agent != agent_id
-                    ):
-                        obs[i, j] = self.OTHER_AGENT_CELL
-                    # Check if this is current agent's goal and not occupied by another agent
-                    elif np.array_equal(self.goals[agent_id], (x, y)):
-                        obs[i, j] = self.OWN_GOAL_CELL
-                    # Check if this is another agent's goal and not occupied by another agent
-                    elif any(
-                        np.array_equal(self.goals[agent], (x, y)) for agent in self.positions if agent != agent_id
-                    ):
-                        obs[i, j] = self.OTHER_GOAL_CELL
-                else:
-                    # If the cell is outside the grid, treat it as an obstacle
+                y = base_y + j
+                if y < 0 or y >= grid_cols:
+                    continue
+                if self.grid[x, y] == self.OBSTACLE_CELL:
                     obs[i, j] = self.OBSTACLE_CELL
+                    continue
+
+                occ = occupancy_owner[x, y]
+                if occ not in (self.UNASSIGNED_OWNER, agent_idx):
+                    obs[i, j] = self.OTHER_AGENT_CELL
+                    continue
+
+                goal_idx = goal_owner[x, y]
+                if goal_idx == agent_idx:
+                    obs[i, j] = self.OWN_GOAL_CELL
+                elif goal_idx != self.UNASSIGNED_OWNER:
+                    obs[i, j] = self.OTHER_GOAL_CELL
+                else:
+                    obs[i, j] = self.EMPTY_CELL
 
         return obs
 
@@ -473,11 +486,8 @@ class ReferenceModel(MultiAgentEnv):
 
         action_mask[NO_OP] = 1  # No-op action is always possible
 
-        pos = [
-            self.sensor_range,
-            self.sensor_range,
-        ]
-        x, y = pos
+        x = self.sensor_range
+        y = self.sensor_range
 
         if x > 0 and obs[x - 1, y] in self.TRAVERSABLE_LOCAL_VALUES:
             action_mask[UP] = 1  # Move up

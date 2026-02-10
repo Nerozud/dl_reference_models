@@ -1,0 +1,2 @@
+mode,steps,warmup_steps,episodes_completed,elapsed_s,steps_per_s,episodes_per_s,mean_step_ms
+random,10000,2000,100,1.5210436000002119,6574.433500787622,65.74433500787622,0.1521043600000212

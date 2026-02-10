@@ -106,7 +106,8 @@ def get_ppo_config(env_name, env_config=None):
             )
             .training(
                 train_batch_size_per_learner=batch_size,
-                minibatch_size=tune.choice([batch_size, batch_size // 2]),
+                # minibatch_size=tune.choice([batch_size, batch_size // 2]),
+                minibatch_size=batch_size,
                 num_epochs=12,
                 clip_param=0.05,
                 # clip_param=tune.choice([0.05, 0.1, 0.2, 0.3]),

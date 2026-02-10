@@ -156,6 +156,21 @@ class EpisodeMetricsCallback(RLlibCallback):
         if not hasattr(episode, "custom_data") or episode.custom_data is None:
             episode.custom_data = {"goals_reached": 0.0, "blocking_count": 0.0}
         infos = _iter_infos(episode)
+        global_info = next(
+            (
+                info
+                for info in infos
+                if "goals_reached_step" in info or "blocking_count_step" in info
+            ),
+            None,
+        )
+        if global_info is not None:
+            with contextlib.suppress(TypeError, ValueError):
+                episode.custom_data["goals_reached"] += float(global_info.get("goals_reached_step", 0.0))
+            with contextlib.suppress(TypeError, ValueError):
+                episode.custom_data["blocking_count"] += float(global_info.get("blocking_count_step", 0.0))
+            return
+
         episode.custom_data["goals_reached"] += _sum_metric(infos, ["goal_reached_step", "goals_reached_step"])
         episode.custom_data["blocking_count"] += _sum_metric(infos, ["blocking", "blocking_count_step"])
 

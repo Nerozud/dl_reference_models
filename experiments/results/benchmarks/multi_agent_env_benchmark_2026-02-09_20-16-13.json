@@ -1,0 +1,46 @@
+[
+  {
+    "mode": "random",
+    "steps": 20000,
+    "warmup_steps": 3000,
+    "episodes_completed": 200,
+    "elapsed_s": 3.747035999997024,
+    "steps_per_s": 5337.552134544713,
+    "episodes_per_s": 53.37552134544713,
+    "mean_step_ms": 0.18735179999985122,
+    "env_config": {
+      "env_name": "ReferenceModel-2-1",
+      "seed": 123,
+      "deterministic": false,
+      "num_agents": 4,
+      "steps_per_episode": 100,
+      "sensor_range": 2,
+      "blocking_penalty": -0.1,
+      "move_after_goal_penalty": 0.0,
+      "training_execution_mode": "CTDE",
+      "render_env": false
+    }
+  },
+  {
+    "mode": "masked",
+    "steps": 20000,
+    "warmup_steps": 3000,
+    "episodes_completed": 200,
+    "elapsed_s": 5.0745384999972885,
+    "steps_per_s": 3941.2451004186264,
+    "episodes_per_s": 39.412451004186266,
+    "mean_step_ms": 0.25372692499986443,
+    "env_config": {
+      "env_name": "ReferenceModel-2-1",
+      "seed": 123,
+      "deterministic": false,
+      "num_agents": 4,
+      "steps_per_episode": 100,
+      "sensor_range": 2,
+      "blocking_penalty": -0.1,
+      "move_after_goal_penalty": 0.0,
+      "training_execution_mode": "CTDE",
+      "render_env": false
+    }
+  }
+]

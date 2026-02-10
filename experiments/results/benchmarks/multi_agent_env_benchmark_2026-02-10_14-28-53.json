@@ -1,0 +1,23 @@
+[
+  {
+    "mode": "random",
+    "steps": 20000,
+    "warmup_steps": 3000,
+    "episodes_completed": 200,
+    "elapsed_s": 2.8101879999999255,
+    "steps_per_s": 7116.961569831104,
+    "episodes_per_s": 71.16961569831103,
+    "mean_step_ms": 0.1405093999999963,
+    "env_config": {
+      "env_name": "ReferenceModel-2-1",
+      "seed": 123,
+      "deterministic": false,
+      "num_agents": 4,
+      "steps_per_episode": 100,
+      "sensor_range": 2,
+      "info_mode": "lite",
+      "training_execution_mode": "CTDE",
+      "render_env": false
+    }
+  }
+]
