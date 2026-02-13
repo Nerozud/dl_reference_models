@@ -108,10 +108,50 @@ def _sum_metric(infos, keys):
     return total
 
 
-class SuccessRateCallback(RLlibCallback):
-    """Log rolling success rate (window=100) to RLlib metrics."""
+def _completion_ratio_from_env(env_unwrapped):
+    if env_unwrapped is None:
+        return None
+    if hasattr(env_unwrapped, "_completed_once_arr"):
+        values = env_unwrapped._completed_once_arr
+        try:
+            count = len(values)
+            if count > 0:
+                return float(sum(1 for v in values if bool(v))) / float(count)
+        except TypeError:
+            pass
+    if hasattr(env_unwrapped, "goal_reached_once"):
+        values = env_unwrapped.goal_reached_once
+        if isinstance(values, dict):
+            count = len(values)
+            if count > 0:
+                return float(sum(1 for v in values.values() if v)) / float(count)
+        elif isinstance(values, (list, tuple, set)):
+            count = len(values)
+            if count > 0:
+                return float(sum(1 for v in values if v)) / float(count)
+    return None
 
-    def on_episode_end(self, *, episode, metrics_logger, **_kwargs):
+
+class SuccessRateCallback(RLlibCallback):
+    """Log rolling success rate (window=1000) to RLlib metrics."""
+
+    def on_episode_end(
+        self,
+        *,
+        episode,
+        metrics_logger,
+        env_runner=None,
+        env=None,
+        env_index=None,
+        **_kwargs,
+    ):
+        env_unwrapped = _resolve_env(env, env_runner, env_index)
+        if env_unwrapped is not None and bool(getattr(env_unwrapped, "lifelong_mapf", False)):
+            completion_ratio = _completion_ratio_from_env(env_unwrapped)
+            success = completion_ratio if completion_ratio is not None else 0.0
+            metrics_logger.log_value("success_rate", success, reduce="mean", window=1000)
+            return
+
         # Success: terminated (goal reached) and not truncated (time limit).
         is_terminated = getattr(episode, "is_terminated", None)
         is_truncated = getattr(episode, "is_truncated", None)
@@ -130,7 +170,7 @@ class SuccessRateCallback(RLlibCallback):
                 truncated = _coerce_done(state.get("is_truncated", False))
 
         success = 1.0 if terminated and not truncated else 0.0
-        metrics_logger.log_value("success_rate", success, reduce="mean", window=100)
+        metrics_logger.log_value("success_rate", success, reduce="mean", window=1000)
 
 
 class EpisodeMetricsCallback(RLlibCallback):
@@ -168,11 +208,7 @@ class EpisodeMetricsCallback(RLlibCallback):
             }
         infos = _iter_infos(episode)
         global_info = next(
-            (
-                info
-                for info in infos
-                if "goals_reached_step" in info or "blocking_count_step" in info
-            ),
+            (info for info in infos if "goals_reached_step" in info or "blocking_count_step" in info),
             None,
         )
         if global_info is not None:
@@ -224,12 +260,26 @@ class EpisodeMetricsCallback(RLlibCallback):
         livelock_count_total = None
         deadlock_steps_total = None
         livelock_steps_total = None
+        throughput_value = None
+        completion_ratio_value = None
+        lifelong_mapf = False
         if env_unwrapped is not None:
+            lifelong_mapf = bool(getattr(env_unwrapped, "lifelong_mapf", False))
+            if hasattr(env_unwrapped, "_episode_goals_reached_total"):
+                try:
+                    goals_total = float(env_unwrapped._episode_goals_reached_total)
+                except (TypeError, ValueError):
+                    goals_total = None
+            if lifelong_mapf:
+                completion_ratio_value = _completion_ratio_from_env(env_unwrapped)
+                if goals_total is not None:
+                    step_count = max(int(getattr(env_unwrapped, "step_count", 0)), 1)
+                    throughput_value = goals_total / float(step_count)
             if hasattr(env_unwrapped, "goal_reached_once"):
                 values = env_unwrapped.goal_reached_once
-                if isinstance(values, dict):
+                if goals_total is None and isinstance(values, dict):
                     goals_total = float(sum(1 for v in values.values() if v))
-                elif isinstance(values, (list, tuple, set)):
+                elif goals_total is None and isinstance(values, (list, tuple, set)):
                     goals_total = float(sum(1 for v in values if v))
             if hasattr(env_unwrapped, "_episode_blocking_count"):
                 try:
@@ -262,16 +312,24 @@ class EpisodeMetricsCallback(RLlibCallback):
             blocking_total if blocking_total is not None else float(episode.custom_data.get("blocking_count", 0.0))
         )
         deadlock_value = (
-            deadlock_count_total if deadlock_count_total is not None else float(episode.custom_data.get("deadlock_count", 0.0))
+            deadlock_count_total
+            if deadlock_count_total is not None
+            else float(episode.custom_data.get("deadlock_count", 0.0))
         )
         livelock_value = (
-            livelock_count_total if livelock_count_total is not None else float(episode.custom_data.get("livelock_count", 0.0))
+            livelock_count_total
+            if livelock_count_total is not None
+            else float(episode.custom_data.get("livelock_count", 0.0))
         )
         deadlock_steps_value = (
-            deadlock_steps_total if deadlock_steps_total is not None else float(episode.custom_data.get("deadlock_steps", 0.0))
+            deadlock_steps_total
+            if deadlock_steps_total is not None
+            else float(episode.custom_data.get("deadlock_steps", 0.0))
         )
         livelock_steps_value = (
-            livelock_steps_total if livelock_steps_total is not None else float(episode.custom_data.get("livelock_steps", 0.0))
+            livelock_steps_total
+            if livelock_steps_total is not None
+            else float(episode.custom_data.get("livelock_steps", 0.0))
         )
 
         metrics_logger.log_value("goals_reached", goals_value, reduce="mean", window=100)
@@ -280,6 +338,11 @@ class EpisodeMetricsCallback(RLlibCallback):
         metrics_logger.log_value("livelock_count", livelock_value, reduce="mean", window=100)
         metrics_logger.log_value("deadlock_steps", deadlock_steps_value, reduce="mean", window=100)
         metrics_logger.log_value("livelock_steps", livelock_steps_value, reduce="mean", window=100)
+        if lifelong_mapf:
+            if throughput_value is not None:
+                metrics_logger.log_value("throughput", throughput_value, reduce="mean", window=100)
+            if completion_ratio_value is not None:
+                metrics_logger.log_value("completion_ratio", completion_ratio_value, reduce="mean", window=100)
 
 
 class ReferenceModelCallbacks(RLlibCallback):

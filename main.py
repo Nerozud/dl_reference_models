@@ -37,16 +37,16 @@ ALGO_NAME = "PPO"  # PPO, IMPALA, DQN, RANDOM
 MODE = "train"  # train or test, test only works with CTDE for now
 
 ### Only relevant for MODE = test
-TEST_NUM_EPISODES = 5  # number of episodes to run when testing
+TEST_NUM_EPISODES = 50  # number of episodes to run when testing
 SAVE_RESULTS = False  # save results to CSV and heatmap
 # CHECKPOINT_PATH = r"experiments\trained_models\PPO_2025-10-24_19-27-48\PPO-ReferenceModel-1-1-c2997_00000\checkpoint_000000"  # just for MODE = test
 # experiments\trained_models\PPO_2024-11-21_11-17-59\PPO-ReferenceModel-3-1-e280c_00000\checkpoint_000000
-CHECKPOINT_PATH = r"experiments\trained_models\PPO-ReferenceModel-2-1-c9732_00003\checkpoint_000000"
+CHECKPOINT_PATH = r"experiments\trained_models\PPO-ReferenceModel-2-1-b9e26_00001\checkpoint_000000"
 # experiments\trained_models\IMPALA_2024-12-12_01-13-12\IMPALA-ReferenceModel-3-1-e01c6_00000\checkpoint_000000
 CHECKPOINT_RNN = True  # if the checkpoint model has RNN or LSTM layers
 CP_TRAINED_ON_ENV_NAME = "ReferenceModel-2-1"  # the environment the model was trained on
 
-SAVE_VIDEO = True  # record evaluation episodes as a GIF when testing
+SAVE_VIDEO = False  # record evaluation episodes as a GIF when testing
 VIDEO_EPISODES_TO_SAVE = 5  # number of episodes to include in the exported video
 VIDEO_FRAME_RATE = 5  # frames per second for the generated GIF
 VIDEO_FINAL_FRAME_HOLD = 3  # duplicate last frame this many times between episodes
@@ -60,6 +60,7 @@ env_setup = {
     "steps_per_episode": 200,  # consider increasing for larger grids
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
     "info_mode": "lite",  # "lite" for training throughput, "full" for debugging/evaluation payloads
+    "lifelong_mapf": True,
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE uses single agent env
     "render_env": False,
 }
@@ -155,12 +156,26 @@ def test_trained_model(num_episodes: int):
     video_frames = []
     final_frame_hold = max(VIDEO_FINAL_FRAME_HOLD, 0)
 
+    def _done_flag(value):
+        if isinstance(value, dict):
+            return bool(value.get("__all__", False))
+        return bool(value)
+
+    episode_success_values = []
+    episode_goals_reached_totals = []
+    episode_throughputs = []
+    episode_completion_ratios = []
+    lifelong_mapf = bool(env_setup.get("lifelong_mapf", False))
+
     for episode in range(num_episodes):
         start_time = time.process_time()
         obs, infos = env.reset()
         done = False
         episode_reward = 0
         steps = 0
+        last_terminated_all = False
+        last_truncated_all = False
+        last_global_info = {}
         ma_episode = MultiAgentEpisode(
             observation_space=env.observation_spaces,
             action_space=env.action_spaces,
@@ -213,7 +228,10 @@ def test_trained_model(num_episodes: int):
 
             # Step the environment.
             obs, rewards, terminateds, truncateds, infos = env.step(actions_for_env)
-            done = terminateds.get("__all__", False) or truncateds.get("__all__", False)
+            last_terminated_all = _done_flag(terminateds)
+            last_truncated_all = _done_flag(truncateds)
+            last_global_info = infos.get("__all__", {}) if isinstance(infos, dict) else {}
+            done = last_terminated_all or last_truncated_all
             episode_reward += sum(rewards.values())
 
             if env_setup.get("render_env", False):
@@ -272,6 +290,20 @@ def test_trained_model(num_episodes: int):
             "timesteps": steps,
         }
 
+        if lifelong_mapf:
+            goals_reached_total = float(last_global_info.get("goals_reached_total", 0.0))
+            throughput = float(last_global_info.get("throughput", goals_reached_total / float(max(steps, 1))))
+            completion_ratio = float(last_global_info.get("completion_ratio", 0.0))
+            episode_data["goals_reached_total"] = goals_reached_total
+            episode_data["throughput"] = throughput
+            episode_data["completion_ratio"] = completion_ratio
+            episode_goals_reached_totals.append(goals_reached_total)
+            episode_throughputs.append(throughput)
+            episode_completion_ratios.append(completion_ratio)
+            episode_success_values.append(completion_ratio)
+        else:
+            episode_success_values.append(1.0 if last_terminated_all and not last_truncated_all else 0.0)
+
         # Add per-agent rewards and positions
         for agent_id in env.get_agent_ids():
             agent_index = agent_id.split("_")[1]  # Extract agent index
@@ -293,15 +325,15 @@ def test_trained_model(num_episodes: int):
     print("Average reward:", total_reward / num_episodes)
     print("Average timesteps:", total_timesteps / num_episodes)
 
-    # Calculate and print success rate
-    successful_episodes = [
-        result
-        for result in results
-        if result["timesteps"] <= env_setup["steps_per_episode"]
-        and result["total_reward"] == 1.5 * env_setup["num_agents"]
-    ]
-    success_rate = len(successful_episodes) / num_episodes
+    success_rate = float(np.mean(episode_success_values)) if episode_success_values else 0.0
     print("Success rate:", success_rate * 100, "%")
+    if lifelong_mapf:
+        avg_goals_reached_total = float(np.mean(episode_goals_reached_totals)) if episode_goals_reached_totals else 0.0
+        avg_throughput = float(np.mean(episode_throughputs)) if episode_throughputs else 0.0
+        avg_completion_ratio = float(np.mean(episode_completion_ratios)) if episode_completion_ratios else 0.0
+        print("Average goals_reached_total:", avg_goals_reached_total)
+        print("Average throughput:", avg_throughput)
+        print("Average completion_ratio:", avg_completion_ratio)
 
     results_df = pd.DataFrame(results)
 

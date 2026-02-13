@@ -43,6 +43,7 @@ class ReferenceModel(MultiAgentEnv):
         self.agents = self.possible_agents.copy()
         self.render_env = env_config.get("render_env", False)
         self.info_mode = str(env_config.get("info_mode", "lite")).lower()
+        self.lifelong_mapf = bool(env_config.get("lifelong_mapf", False))
         if self.info_mode not in {"lite", "full"}:
             msg = f"Unsupported info_mode '{self.info_mode}'. Expected 'lite' or 'full'."
             raise ValueError(msg)
@@ -80,6 +81,8 @@ class ReferenceModel(MultiAgentEnv):
         self._positions_arr = np.zeros((self._num_agents, 2), dtype=self._coord_dtype)
         self._goals_arr = np.zeros((self._num_agents, 2), dtype=self._coord_dtype)
         self._reached_arr = np.zeros(self._num_agents, dtype=np.bool_)
+        self._completed_once_arr = np.zeros(self._num_agents, dtype=np.bool_)
+        self._episode_goals_reached_total = 0.0
         self._scratch_prev_positions = np.empty_like(self._positions_arr)
         self._scratch_intended_next = np.empty_like(self._positions_arr)
         self._scratch_reached_goal = np.zeros(self._num_agents, dtype=np.bool_)
@@ -257,6 +260,28 @@ class ReferenceModel(MultiAgentEnv):
         self._rebuild_goal_owner()
         self._rebuild_occupancy_owner()
 
+    def _assign_new_goal(self, agent_idx: int) -> np.ndarray:
+        """Assign a new unique, currently unoccupied goal to one agent."""
+        old_goal_y = int(self._goals_arr[agent_idx, 0])
+        old_goal_x = int(self._goals_arr[agent_idx, 1])
+        self._goal_owner[old_goal_y, old_goal_x] = self.UNASSIGNED_OWNER
+
+        free_y = self._free_positions[:, 0]
+        free_x = self._free_positions[:, 1]
+        occupied = self._occupancy_owner[free_y, free_x] != self.UNASSIGNED_OWNER
+        already_goal = self._goal_owner[free_y, free_x] != self.UNASSIGNED_OWNER
+        candidate_mask = (~occupied) & (~already_goal)
+        candidate_indices = np.flatnonzero(candidate_mask)
+        if candidate_indices.size == 0:
+            msg = "No valid cell available for lifelong goal reassignment."
+            raise RuntimeError(msg)
+
+        selected_idx = int(candidate_indices[int(self.rng.integers(candidate_indices.size))])
+        new_goal = self._free_positions[selected_idx]
+        self._goals_arr[agent_idx, :] = new_goal
+        self._goal_owner[int(new_goal[0]), int(new_goal[1])] = agent_idx
+        return new_goal
+
     def _flatten_observation(self, agent_id: str, local_obs=None, action_mask=None):
         """Pack ordered observation components into one flat float32 vector."""
         if local_obs is None:
@@ -373,10 +398,12 @@ class ReferenceModel(MultiAgentEnv):
     def reset(self, *, seed=None, options=None):
         self.step_count = 0
         self._episode_blocking_count = 0.0
+        self._episode_goals_reached_total = 0.0
         self._reset_lock_tracking()
         infos = {aid: {} for aid in self.agents}
         obs = {}
         self._reached_arr[:] = False
+        self._completed_once_arr[:] = False
         self.goal_reached_once = dict.fromkeys(self.agents, False)
 
         if self.deterministic:
@@ -402,6 +429,7 @@ class ReferenceModel(MultiAgentEnv):
         rewards = dict.fromkeys(self.agents, 0.0)
         info = {aid: {} for aid in self.agents}
         obs = {}
+        goal_reassigned = False
         reached_goal = self._scratch_reached_goal
         reached_goal[:] = False
         intended_next = self._scratch_intended_next
@@ -462,11 +490,34 @@ class ReferenceModel(MultiAgentEnv):
             goal_x = int(self._goals_arr[agent_idx, 1])
             is_on_goal = current_y == goal_y and current_x == goal_x
             reached_goal[agent_idx] = is_on_goal
-            if is_on_goal and not self._reached_arr[agent_idx]:
+            if not is_on_goal:
+                continue
+
+            if self.lifelong_mapf:
+                rewards[agent_id] += 0.5
+                goal_reached_step_flags[agent_idx] = 1.0
+                self._episode_goals_reached_total += 1.0
+                self._completed_once_arr[agent_idx] = True
+                self.goal_reached_once[agent_id] = True
+                self._reached_arr[agent_idx] = False
+                self._assign_new_goal(agent_idx)
+                reached_goal[agent_idx] = False
+                goal_reassigned = True
+            elif not self._reached_arr[agent_idx]:
                 self._reached_arr[agent_idx] = True
+                self._completed_once_arr[agent_idx] = True
                 self.goal_reached_once[agent_id] = True
                 rewards[agent_id] += 0.5
                 goal_reached_step_flags[agent_idx] = 1.0
+                self._episode_goals_reached_total += 1.0
+
+        if goal_reassigned:
+            for agent_id in self.agents:
+                local_obs = self.get_obs(agent_id)
+                action_mask = self.get_action_mask(local_obs)
+                obs[agent_id] = self._flatten_observation(agent_id, local_obs, action_mask)
+                if self.info_mode == "full":
+                    info[agent_id] = self._build_full_info(agent_id, local_obs, action_mask)
 
         deadlock_step = False
         livelock_step = False
@@ -475,9 +526,15 @@ class ReferenceModel(MultiAgentEnv):
         if self.enable_lock_metrics:
             moved_flags[:] = np.any(self._positions_arr != prev_positions, axis=1)
             failed_move_flags[:] = (actions_taken != NO_OP) & (~moved_flags)
-            prev_on_goal[:] = np.all(prev_positions == self._goals_arr, axis=1)
+            if self.lifelong_mapf:
+                prev_on_goal[:] = False
+            else:
+                prev_on_goal[:] = np.all(prev_positions == self._goals_arr, axis=1)
             current_on_goal[:] = np.all(self._positions_arr == self._goals_arr, axis=1)
-            goal_progress_flags[:] = (~prev_on_goal) & current_on_goal
+            if self.lifelong_mapf:
+                goal_progress_flags[:] = goal_reached_step_flags > 0.0
+            else:
+                goal_progress_flags[:] = (~prev_on_goal) & current_on_goal
             distance_to_goal[:] = np.abs(self._goals_arr - self._positions_arr).sum(axis=1)
             self._append_lock_history_step(goal_progress_flags, moved_flags, failed_move_flags, distance_to_goal)
             current_off_goal = ~current_on_goal
@@ -514,12 +571,16 @@ class ReferenceModel(MultiAgentEnv):
         for agent_idx, agent_id in enumerate(self.agents):
             info[agent_id]["blocking"] = float(blocking_flags[agent_idx])
             info[agent_id]["goal_reached_step"] = float(goal_reached_step_flags[agent_idx])
-        goals_reached_total = float(np.sum(self._reached_arr))
+        if self.lifelong_mapf:
+            goals_reached_total = float(self._episode_goals_reached_total)
+        else:
+            goals_reached_total = float(np.sum(self._reached_arr))
         blocking_count_total = float(self._episode_blocking_count)
         for agent_id in self.agents:
             info[agent_id]["goals_reached_total"] = goals_reached_total
             info[agent_id]["blocking_count_total"] = blocking_count_total
-        info["__all__"] = {
+        completion_ratio = float(np.mean(self._completed_once_arr))
+        info_all = {
             "goals_reached_step": float(goal_reached_step_flags.sum()),
             "goals_reached_total": goals_reached_total,
             "blocking_count_step": float(blocking_flags.sum()),
@@ -533,6 +594,10 @@ class ReferenceModel(MultiAgentEnv):
             "deadlock_steps_total": float(self._episode_deadlock_steps),
             "livelock_steps_total": float(self._episode_livelock_steps),
         }
+        if self.lifelong_mapf:
+            info_all["completion_ratio"] = completion_ratio
+            info_all["throughput"] = goals_reached_total / float(max(self.step_count, 1))
+        info["__all__"] = info_all
 
         # Collision penalty (shouldn't happen, but keep it)
         for i, a in enumerate(self.agents):
@@ -547,7 +612,7 @@ class ReferenceModel(MultiAgentEnv):
         terminated = dict.fromkeys(self.agents, False)
         truncated = dict.fromkeys(self.agents, False)
         # If all agents have reached their goals, end the episode (not truncated)
-        if bool(np.all(reached_goal)):
+        if not self.lifelong_mapf and bool(np.all(reached_goal)):
             for aid in self.agents:
                 rewards[aid] += 1
                 terminated[aid] = True
@@ -558,7 +623,7 @@ class ReferenceModel(MultiAgentEnv):
         ):  # If the step limit is reached, end the episode and mark it as truncated
             # minus reward at truncation for agents not on their goal
             for agent_idx, aid in enumerate(self.agents):
-                if not reached_goal[agent_idx]:
+                if not self.lifelong_mapf and not reached_goal[agent_idx]:
                     rewards[aid] -= 1
                 terminated[aid] = True
                 truncated[aid] = True
