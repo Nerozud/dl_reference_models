@@ -7,16 +7,17 @@ from ray.air.integrations.wandb import WandbLoggerCallback
 from ray.tune.schedulers.pb2 import PB2
 
 pb2_scheduler = PB2(
-    time_attr="time_total_s",
+    time_attr="training_iteration",
     metric="env_runners/episode_return_mean",
     mode="max",
-    perturbation_interval=1800,
+    perturbation_interval=10,
     hyperparam_bounds={
         "lr": [1e-5, 1e-3],
         "entropy_coeff": [0.0, 0.01],
         "num_epochs": [1, 15],
         "clip_param": [0.05, 0.3],
         "gamma": [0.8, 0.999],
+        "lambda": [0.8, 0.99],
     },
 )
 
