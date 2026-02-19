@@ -56,6 +56,11 @@ def tune_with_callback(config, algo_name, env_name):
                 # "time_total_s": 3600 * 18,
                 # "counters/num_env_steps_sampled": 14360000,
             },
+            checkpoint_config=air.CheckpointConfig(
+                checkpoint_score_attribute="env_runners/episode_return_mean",
+                checkpoint_score_order="max",
+                num_to_keep=5,
+            ),
             callbacks=[
                 WandbLoggerCallback(
                     # project=env_name,
