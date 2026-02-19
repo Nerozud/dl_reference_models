@@ -60,7 +60,7 @@ env_setup = {
     "steps_per_episode": 200,  # consider increasing for larger grids
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
     "info_mode": "lite",  # "lite" for training throughput, "full" for debugging/evaluation payloads
-    "lifelong_mapf": True,
+    "lifelong_mapf": False,
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE uses single agent env
     "render_env": False,
 }

@@ -81,6 +81,12 @@ def test_action_mask_matches_local_observation():
         assert int(action_mask[4]) == int(can_left)
 
 
+def test_action_mask_space_uses_python_int_dim():
+    env = ReferenceModel(_env_config(deterministic=True))
+    assert int(env.action_space.n) == 5
+    assert env._action_mask_space.shape == (5,)
+
+
 def test_info_mode_lite_and_full_payloads_have_same_metrics():
     lite_env = ReferenceModel(_env_config(deterministic=True, info_mode="lite"))
     full_env = ReferenceModel(_env_config(deterministic=True, info_mode="full"))

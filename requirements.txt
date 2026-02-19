@@ -1,4 +1,4 @@
-ray[rllib]==2.53
+ray[rllib]==2.54
 torch
 gymnasium
 numpy

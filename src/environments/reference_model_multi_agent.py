@@ -160,7 +160,8 @@ class ReferenceModel(MultiAgentEnv):
         )
         # Assuming all agents have the same action space
         self._single_act_space = gym.spaces.Discrete(5)
-        self._action_mask_space = gym.spaces.MultiBinary(self._single_act_space.n)
+        action_dim = int(self._single_act_space.n)
+        self._action_mask_space = gym.spaces.MultiBinary(action_dim)
 
         self._single_obs_space, self._obs_slices = self._build_obs_layout()
         self._single_obs_len = int(np.prod(self._single_obs_space.shape))
