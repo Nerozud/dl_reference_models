@@ -92,6 +92,7 @@ class ReferenceModel(gym.Env):
         self.blocking_penalty = env_config.get("blocking_penalty", -0.2)
         self.move_after_goal_penalty = env_config.get("move_after_goal_penalty", -0.05)
         self._episode_blocking_count = 0.0
+        self.validate_observation_space = bool(env_config.get("validate_observation_space", False))
 
         # Initialize a random number generator with the provided seed
         self.seed = env_config.get("seed", None)
@@ -138,7 +139,11 @@ class ReferenceModel(gym.Env):
             "grid": slice(0, flat_grid_len),
             "action_mask": slice(flat_grid_len, flat_grid_len + flat_mask_len),
         }
-        self.observation_space = gym.spaces.Box(low=low, high=high, dtype=np.float32)
+        self.observation_space = gym.spaces.Box(
+            low=np.asarray(low, dtype=np.float32),
+            high=np.asarray(high, dtype=np.float32),
+            dtype=np.float32,
+        )
 
         # Assuming all agents have the same action space
         self.action_space = gym.spaces.MultiDiscrete([5] * self.num_agents)
@@ -187,12 +192,26 @@ class ReferenceModel(gym.Env):
 
     def _flatten_observation(self, obs_grid, action_mask):
         """Pack grid observations and action mask into a single flat Box."""
-        return np.concatenate(
+        flat_obs = np.concatenate(
             [
-                obs_grid.astype(np.float32).flatten(),
-                action_mask.astype(np.float32),
+                np.asarray(obs_grid, dtype=np.float32).reshape(-1),
+                np.asarray(action_mask, dtype=np.float32).reshape(-1),
             ]
         )
+        return flat_obs.astype(np.float32, copy=False)
+
+    def _coerce_and_validate_observation(self, obs: np.ndarray, *, where: str) -> np.ndarray:
+        """Return float32 observation and optionally validate against declared space."""
+        obs = np.asarray(obs, dtype=np.float32)
+        if self.validate_observation_space and not self.observation_space.contains(obs):
+            obs_min = float(np.min(obs))
+            obs_max = float(np.max(obs))
+            msg = (
+                f"{where} produced observation outside observation_space "
+                f"(dtype={obs.dtype}, min={obs_min}, max={obs_max})."
+            )
+            raise ValueError(msg)
+        return obs
 
     def split_flat_observation(self, flat_obs: np.ndarray):
         """Recover observation grid and mask from a flat observation for debugging."""
@@ -214,7 +233,10 @@ class ReferenceModel(gym.Env):
 
         obs_grid = self.get_obs()
         action_mask = self.get_action_mask(obs_grid)
-        obs = self._flatten_observation(obs_grid, action_mask)
+        obs = self._coerce_and_validate_observation(
+            self._flatten_observation(obs_grid, action_mask),
+            where="reset",
+        )
         if self.render_env:
             self.render()
 
@@ -265,7 +287,10 @@ class ReferenceModel(gym.Env):
 
         obs_grid = self.get_obs()
         action_mask = self.get_action_mask(obs_grid)
-        obs = self._flatten_observation(obs_grid, action_mask)
+        obs = self._coerce_and_validate_observation(
+            self._flatten_observation(obs_grid, action_mask),
+            where="step",
+        )
 
         # minus reward for agents on the same position, shouldn't happen
         for i in range(self.num_agents):

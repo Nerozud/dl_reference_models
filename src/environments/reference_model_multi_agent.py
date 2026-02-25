@@ -39,6 +39,7 @@ class ReferenceModel(MultiAgentEnv):
         self.deterministic = env_config.get("deterministic", False)
         self.normalize_goal_delta = env_config.get("normalize_goal_delta", True)
         self.include_goal_distance = env_config.get("include_goal_distance", False)
+        self.validate_observation_space = bool(env_config.get("validate_observation_space", False))
         self.possible_agents = [f"agent_{i}" for i in range(self._num_agents)]
         self.agents = self.possible_agents.copy()
         self.render_env = env_config.get("render_env", False)
@@ -152,6 +153,8 @@ class ReferenceModel(MultiAgentEnv):
         if self.normalize_goal_delta:
             goal_delta_low = goal_delta_low / self._goal_delta_denominator
             goal_delta_high = goal_delta_high / self._goal_delta_denominator
+        goal_delta_low = np.asarray(goal_delta_low, dtype=np.float32)
+        goal_delta_high = np.asarray(goal_delta_high, dtype=np.float32)
         self._goal_delta_space = gym.spaces.Box(
             low=goal_delta_low,
             high=goal_delta_high,
@@ -238,8 +241,8 @@ class ReferenceModel(MultiAgentEnv):
             start = end
 
         obs_space = gym.spaces.Box(
-            low=np.concatenate(low_parts),
-            high=np.concatenate(high_parts),
+            low=np.asarray(np.concatenate(low_parts), dtype=np.float32),
+            high=np.asarray(np.concatenate(high_parts), dtype=np.float32),
             dtype=np.float32,
         )
         return obs_space, obs_slices
@@ -290,21 +293,36 @@ class ReferenceModel(MultiAgentEnv):
         if action_mask is None:
             action_mask = self.get_action_mask(local_obs)
 
-        goal_delta = self._get_goal_delta(agent_id)
+        local_obs = np.asarray(local_obs, dtype=np.float32)
+        action_mask = np.asarray(action_mask, dtype=np.float32)
+        goal_delta = np.asarray(self._get_goal_delta(agent_id), dtype=np.float32)
         flat_obs = np.empty(self._single_obs_len, dtype=np.float32)
         flat_obs[self._obs_slices["local_obs"]] = local_obs.reshape(-1)
         flat_obs[self._obs_slices["goal_delta"]] = goal_delta
         if self.include_goal_distance:
-            flat_obs[self._obs_slices["goal_distance"]] = np.abs(goal_delta).sum()
+            flat_obs[self._obs_slices["goal_distance"]] = np.float32(np.abs(goal_delta).sum(dtype=np.float32))
         flat_obs[self._obs_slices["action_mask"]] = action_mask.reshape(-1)
-        return flat_obs
+        return flat_obs.astype(np.float32, copy=False)
 
     def _get_goal_delta(self, agent_id: str) -> np.ndarray:
         agent_idx = self._agent_index[agent_id]
         goal_delta = (self._goals_arr[agent_idx] - self._positions_arr[agent_idx]).astype(np.float32)
         if self.normalize_goal_delta:
-            goal_delta = goal_delta / self._goal_delta_denominator
-        return goal_delta
+            goal_delta = np.asarray(goal_delta / self._goal_delta_denominator, dtype=np.float32)
+        return goal_delta.astype(np.float32, copy=False)
+
+    def _coerce_and_validate_observation(self, agent_id: str, obs: np.ndarray, *, where: str) -> np.ndarray:
+        """Return float32 per-agent observation and optionally validate against declared space."""
+        obs = np.asarray(obs, dtype=np.float32)
+        if self.validate_observation_space and not self.observation_space.contains(obs):
+            obs_min = float(np.min(obs))
+            obs_max = float(np.max(obs))
+            msg = (
+                f"{where} produced invalid observation for {agent_id} "
+                f"(dtype={obs.dtype}, min={obs_min}, max={obs_max})."
+            )
+            raise ValueError(msg)
+        return obs
 
     def _build_full_info(self, agent_id: str, local_obs: np.ndarray, action_mask: np.ndarray) -> dict:
         """Build detailed per-agent info payload (debug/evaluation mode)."""
@@ -417,7 +435,11 @@ class ReferenceModel(MultiAgentEnv):
         for agent_id in self.agents:
             local_obs = self.get_obs(agent_id)
             action_mask = self.get_action_mask(local_obs)
-            obs[agent_id] = self._flatten_observation(agent_id, local_obs, action_mask)
+            obs[agent_id] = self._coerce_and_validate_observation(
+                agent_id,
+                self._flatten_observation(agent_id, local_obs, action_mask),
+                where="reset",
+            )
             if self.info_mode == "full":
                 infos[agent_id] = self._build_full_info(agent_id, local_obs, action_mask)
         if self.render_env:
@@ -481,7 +503,11 @@ class ReferenceModel(MultiAgentEnv):
 
             local_obs = self.get_obs(agent_id)
             action_mask = self.get_action_mask(local_obs)
-            obs[agent_id] = self._flatten_observation(agent_id, local_obs, action_mask)
+            obs[agent_id] = self._coerce_and_validate_observation(
+                agent_id,
+                self._flatten_observation(agent_id, local_obs, action_mask),
+                where="step",
+            )
             if self.info_mode == "full":
                 info[agent_id] = self._build_full_info(agent_id, local_obs, action_mask)
 
@@ -516,7 +542,11 @@ class ReferenceModel(MultiAgentEnv):
             for agent_id in self.agents:
                 local_obs = self.get_obs(agent_id)
                 action_mask = self.get_action_mask(local_obs)
-                obs[agent_id] = self._flatten_observation(agent_id, local_obs, action_mask)
+                obs[agent_id] = self._coerce_and_validate_observation(
+                    agent_id,
+                    self._flatten_observation(agent_id, local_obs, action_mask),
+                    where="step",
+                )
                 if self.info_mode == "full":
                     info[agent_id] = self._build_full_info(agent_id, local_obs, action_mask)
 

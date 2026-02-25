@@ -42,7 +42,6 @@ def get_ppo_config(env_name, env_config=None):
             )
             .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
-            .resources(num_gpus=1)
             .env_runners(num_env_runners=8, num_envs_per_env_runner=4, sample_timeout_s=600)
             .callbacks(callbacks_class=ReferenceModelCallbacks)
             .rl_module(
@@ -98,7 +97,6 @@ def get_ppo_config(env_name, env_config=None):
             )
             .environment(env_name, render_env=env_config["render_env"], env_config=env_config)
             .framework("torch")
-            .resources(num_gpus=1)
             .learners(num_gpus_per_learner=1)
             .env_runners(num_env_runners=8, num_envs_per_env_runner=4, sample_timeout_s=600)
             .callbacks(callbacks_class=ReferenceModelCallbacks)
