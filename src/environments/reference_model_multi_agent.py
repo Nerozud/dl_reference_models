@@ -1,4 +1,5 @@
 """Multi-agent reference grid environment."""
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -72,9 +73,6 @@ class ReferenceModel(MultiAgentEnv):
         else:
             self.rng = np.random.default_rng()
 
-        # TODO: Implement the environment initialization depending on the env_config
-        # 0 - empty cell, 1 - obstacle,
-        # coords are [y-1, x-1] from upper left, so [0, 4] is the aisle
         self.grid = get_grid.get_grid(env_config["env_name"])
 
         self._free_positions = np.argwhere(self.grid == self.EMPTY_CELL).astype(self._coord_dtype, copy=False)
