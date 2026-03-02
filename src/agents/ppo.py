@@ -1,6 +1,5 @@
 """Proximal Policy Optimization (PPO) agent configuration."""
 
-from ray import tune
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.core.rl_module.multi_rl_module import MultiRLModuleSpec
 from ray.rllib.core.rl_module.rl_module import RLModuleSpec
@@ -22,7 +21,6 @@ from src.trainers.callbacks import ReferenceModelCallbacks
 def get_ppo_config(env_name, env_config=None):
     """Get the PPO configuration."""
     num_agents = env_config.get("num_agents", 2)
-    batch_size = 8000
 
     if env_config.get("training_execution_mode") == "CTE":
         model_config = {
@@ -50,8 +48,8 @@ def get_ppo_config(env_name, env_config=None):
                 )
             )
             .training(
-                train_batch_size_per_learner=batch_size,
-                minibatch_size=tune.choice([batch_size, batch_size // 2]),
+                train_batch_size_per_learner=8192,
+                minibatch_size=1024,
                 num_epochs=10,
                 clip_param=0.2,
                 # clip_param=tune.choice([0.05, 0.1, 0.2, 0.3]),
@@ -104,9 +102,8 @@ def get_ppo_config(env_name, env_config=None):
                 rl_module_spec=MultiRLModuleSpec(rl_module_specs=rl_module_specs),
             )
             .training(
-                train_batch_size_per_learner=batch_size,
-                # minibatch_size=tune.choice([batch_size, batch_size // 2]),
-                minibatch_size=batch_size,
+                train_batch_size_per_learner=8192,
+                minibatch_size=1024,
                 num_epochs=12,
                 clip_param=0.05,
                 # clip_param=tune.choice([0.05, 0.1, 0.2, 0.3]),
