@@ -21,8 +21,11 @@ pb2_scheduler = PB2(
         "num_epochs": [1, 20],
         "clip_param": [0.05, 0.5],
         "gamma": [0.8, 0.999],
-        "lambda_": [0.8, 0.99],
-        "train_batch_size_per_learner": [1024, 16384],
+        "lambda": [0.8, 0.99],
+        "train_batch_size_per_learner": [
+            2048,
+            16384,
+        ],  # make sure lower bound is big enough for batch of all env runners
     },
 )
 
@@ -32,8 +35,9 @@ PB2_SEED_PARAM_KEYS = [
     "num_epochs",
     "clip_param",
     "gamma",
-    "lambda_",
+    "lambda",
     "train_batch_size_per_learner",
+    "_train_batch_size_per_learner",
 ]
 
 
@@ -135,6 +139,7 @@ def tune_with_callback(config, algo_name, env_name):
                     project=_get_wandb_project_name(env_name, scheduler),
                     dir=Path("./experiments").resolve(),
                     group=f"{algo_name}-{config['env_config']['training_execution_mode']}",
+                    log_config=use_actor_reuse,
                 )
             ],
         ),

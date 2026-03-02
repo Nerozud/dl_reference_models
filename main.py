@@ -57,7 +57,7 @@ env_setup = {
     "seed": None,  # int or None, same seed creates same sequence of starts and goals
     "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
     "num_agents": 16,
-    "steps_per_episode": 200,  # consider increasing for larger grids
+    "steps_per_episode": 256,  # consider increasing for larger grids
     "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
     "info_mode": "lite",  # "lite" for training throughput, "full" for debugging/evaluation payloads
     "lifelong_mapf": False,
