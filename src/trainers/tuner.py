@@ -9,6 +9,7 @@ from ray.tune.schedulers import PopulationBasedTraining
 from ray.tune.schedulers.pb2 import PB2
 
 from src.trainers.resettable_rllib_trainable import make_resettable_rllib_trainable
+from src.trainers.wandb_callbacks import PBTSafeWandbLoggerCallback
 
 pb2_scheduler = PB2(
     time_attr="time_total_s",
@@ -22,10 +23,6 @@ pb2_scheduler = PB2(
         "clip_param": [0.05, 0.5],
         "gamma": [0.8, 0.999],
         "lambda": [0.8, 0.99],
-        "train_batch_size_per_learner": [
-            2048,
-            16384,
-        ],  # make sure lower bound is big enough for batch of all env runners
     },
 )
 
@@ -36,8 +33,6 @@ PB2_SEED_PARAM_KEYS = [
     "clip_param",
     "gamma",
     "lambda",
-    "train_batch_size_per_learner",
-    "_train_batch_size_per_learner",
 ]
 
 
@@ -72,6 +67,13 @@ def _get_num_samples(scheduler: Any) -> int:
     if isinstance(scheduler, PB2):
         return 8
     return 1
+
+
+def _get_wandb_callback_cls(scheduler: Any):
+    """Return callback class that handles scheduler-specific W&B logging."""
+    if _is_pbt_like_scheduler(scheduler):
+        return PBTSafeWandbLoggerCallback
+    return WandbLoggerCallback
 
 
 def _get_env_config_value(config, key):
@@ -135,7 +137,7 @@ def tune_with_callback(config, algo_name, env_name):
                 num_to_keep=5,
             ),
             callbacks=[
-                WandbLoggerCallback(
+                _get_wandb_callback_cls(scheduler)(
                     project=_get_wandb_project_name(env_name, scheduler),
                     dir=Path("./experiments").resolve(),
                     group=f"{algo_name}-{config['env_config']['training_execution_mode']}",

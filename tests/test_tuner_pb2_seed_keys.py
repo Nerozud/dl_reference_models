@@ -1,8 +1,10 @@
 """Tests for PB2 initial-seeding parameter handling in the tuner."""
 
+from ray.air.integrations.wandb import WandbLoggerCallback
 from ray.tune.schedulers import PopulationBasedTraining
 
 from src.trainers import tuner
+from src.trainers.wandb_callbacks import PBTSafeWandbLoggerCallback
 
 
 def _sample_param_space():
@@ -84,3 +86,23 @@ def test_get_num_samples_uses_population_for_pb2():
 
 def test_get_num_samples_keeps_default_for_non_pb2():
     assert tuner._get_num_samples(None) == 1
+
+
+def test_get_wandb_callback_cls_uses_pbtsafe_for_pb2():
+    assert tuner._get_wandb_callback_cls(tuner.pb2_scheduler) is PBTSafeWandbLoggerCallback
+
+
+def test_get_wandb_callback_cls_uses_pbtsafe_for_pbt():
+    pbt = PopulationBasedTraining(
+        time_attr="training_iteration",
+        metric="env_runners/episode_return_mean",
+        mode="max",
+        perturbation_interval=10,
+        hyperparam_mutations={"lr": [1e-5, 1e-3]},
+    )
+
+    assert tuner._get_wandb_callback_cls(pbt) is PBTSafeWandbLoggerCallback
+
+
+def test_get_wandb_callback_cls_uses_default_for_none_scheduler():
+    assert tuner._get_wandb_callback_cls(None) is WandbLoggerCallback
