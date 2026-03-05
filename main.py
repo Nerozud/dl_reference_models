@@ -58,7 +58,9 @@ env_setup = {
     "deterministic": False,  # True: given difficult start and goals, False: random starts and goals, depending on seed
     "num_agents": 16,
     "steps_per_episode": 256,  # consider increasing for larger grids
-    "sensor_range": 2,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
+    "sensor_range": 3,  # 1: 3x3, 2: 5x5, 3: 7x7, not relevant for CTE
+    "include_action_mask_in_obs": False,
+    "include_blocking_pressure_in_obs": True,
     "info_mode": "lite",  # "lite" for training throughput, "full" for debugging/evaluation payloads
     "lifelong_mapf": False,
     "training_execution_mode": "CTDE",  # CTDE or CTE or DTE, if CTE uses single agent env

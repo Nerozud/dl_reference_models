@@ -93,6 +93,8 @@ def _build_env_config(deterministic: bool) -> dict:
         "info_mode": "full",
         "training_execution_mode": "CTDE",
         "render_env": False,
+        "include_action_mask_in_obs": True,
+        "include_blocking_pressure_in_obs": False,
     }
 
 
@@ -146,3 +148,26 @@ def test_trace_parity_deterministic():
     digest, summary = _compute_trace_digest(deterministic=True)
     assert digest == EXPECTED_DETERMINISTIC_DIGEST
     assert summary == EXPECTED_DETERMINISTIC_SUMMARY
+
+
+def test_default_observation_contract_uses_blocking_pressure_without_mask():
+    env = ReferenceModel(
+        {
+            "env_name": "ReferenceModel-2-1",
+            "seed": 123,
+            "deterministic": True,
+            "num_agents": 4,
+            "steps_per_episode": 100,
+            "sensor_range": 2,
+            "info_mode": "lite",
+            "training_execution_mode": "CTDE",
+            "render_env": False,
+        }
+    )
+    obs, _infos = env.reset()
+
+    assert "action_mask" not in env._obs_slices
+    assert "blocking_pressure_prev" in env._obs_slices
+    pressure_slice = env._obs_slices["blocking_pressure_prev"]
+    for agent_id in env.agents:
+        np.testing.assert_array_equal(obs[agent_id][pressure_slice], np.array([0.0], dtype=np.float32))

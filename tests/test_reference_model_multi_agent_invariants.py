@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from src.environments.actions import NO_OP, RIGHT
 from src.environments.reference_model_multi_agent import ReferenceModel
 
 
@@ -22,6 +23,19 @@ def _env_config(deterministic: bool = False, info_mode: str = "lite", **override
     }
     config.update(overrides)
     return config
+
+
+def _set_state(env: ReferenceModel, positions: list[tuple[int, int]], goals: list[tuple[int, int]]) -> None:
+    np.copyto(env._positions_arr, np.asarray(positions, dtype=env._coord_dtype))
+    np.copyto(env._starts_arr, np.asarray(positions, dtype=env._coord_dtype))
+    np.copyto(env._goals_arr, np.asarray(goals, dtype=env._coord_dtype))
+    env._rebuild_goal_owner()
+    env._rebuild_occupancy_owner()
+    env._reached_arr[:] = False
+    env._completed_once_arr[:] = False
+    env.goal_reached_once = dict.fromkeys(env.agents, False)
+    env._blocking_pressure_prev_arr.fill(0.0)
+    env.step_count = 0
 
 
 def test_unique_starts_goals_and_disjoint_sets():
@@ -85,6 +99,52 @@ def test_action_mask_space_uses_python_int_dim():
     env = ReferenceModel(_env_config(deterministic=True))
     assert int(env.action_space.n) == 5
     assert env._action_mask_space.shape == (5,)
+
+
+def test_action_mask_slice_absent_when_disabled():
+    env = ReferenceModel(_env_config(deterministic=True, include_action_mask_in_obs=False))
+    assert "action_mask" not in env._obs_slices
+
+
+def test_blocking_pressure_prev_is_zero_on_reset():
+    env = ReferenceModel(_env_config(deterministic=True, include_blocking_pressure_in_obs=True))
+    obs, _ = env.reset()
+
+    assert "blocking_pressure_prev" in env._obs_slices
+    pressure_slice = env._obs_slices["blocking_pressure_prev"]
+    for agent_id in env.agents:
+        np.testing.assert_array_equal(obs[agent_id][pressure_slice], np.array([0.0], dtype=np.float32))
+
+
+def test_blocking_pressure_prev_transitions_for_goal_blocker():
+    env = ReferenceModel(
+        _env_config(
+            env_name="ReferenceModel-1-3",
+            deterministic=False,
+            num_agents=2,
+            steps_per_episode=20,
+            sensor_range=1,
+            include_action_mask_in_obs=False,
+            include_blocking_pressure_in_obs=True,
+        )
+    )
+    env.reset()
+    _set_state(env, positions=[(2, 0), (2, 1)], goals=[(2, 2), (2, 1)])
+    pressure_slice = env._obs_slices["blocking_pressure_prev"]
+
+    blocking_actions = {"agent_0": RIGHT, "agent_1": NO_OP}
+    obs_1, _rewards, _term, _trunc, _info = env.step(blocking_actions)
+    assert obs_1["agent_1"][pressure_slice][0] == pytest.approx(0.0)
+
+    obs_2, _rewards, _term, _trunc, _info = env.step(blocking_actions)
+    assert obs_2["agent_1"][pressure_slice][0] == pytest.approx(1.0)
+
+    no_block_actions = {"agent_0": NO_OP, "agent_1": NO_OP}
+    obs_3, _rewards, _term, _trunc, _info = env.step(no_block_actions)
+    assert obs_3["agent_1"][pressure_slice][0] == pytest.approx(1.0)
+
+    obs_4, _rewards, _term, _trunc, _info = env.step(no_block_actions)
+    assert obs_4["agent_1"][pressure_slice][0] == pytest.approx(0.0)
 
 
 def test_info_mode_lite_and_full_payloads_have_same_metrics():

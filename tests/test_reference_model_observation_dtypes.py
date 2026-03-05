@@ -58,14 +58,20 @@ def test_single_agent_reset_and_step_observation_is_float32_and_within_space():
 
 @pytest.mark.parametrize("normalize_goal_delta", [True, False])
 @pytest.mark.parametrize("include_goal_distance", [False, True])
+@pytest.mark.parametrize("include_action_mask_in_obs", [False, True])
+@pytest.mark.parametrize("include_blocking_pressure_in_obs", [False, True])
 def test_multi_agent_reset_and_step_observations_are_float32_and_within_space(
     normalize_goal_delta: bool,
     include_goal_distance: bool,
+    include_action_mask_in_obs: bool,
+    include_blocking_pressure_in_obs: bool,
 ):
     env = MultiAgentReferenceModel(
         _multi_env_config(
             normalize_goal_delta=normalize_goal_delta,
             include_goal_distance=include_goal_distance,
+            include_action_mask_in_obs=include_action_mask_in_obs,
+            include_blocking_pressure_in_obs=include_blocking_pressure_in_obs,
         )
     )
 
@@ -74,12 +80,22 @@ def test_multi_agent_reset_and_step_observations_are_float32_and_within_space(
     for agent_id, agent_obs in obs.items():
         assert agent_obs.dtype == np.float32
         assert env.observation_space.contains(agent_obs), agent_id
-        action_mask = agent_obs[env._obs_slices["action_mask"]]
-        assert np.all(np.isin(action_mask, np.array([0.0, 1.0], dtype=np.float32)))
+        if include_action_mask_in_obs:
+            assert "action_mask" in env._obs_slices
+            action_mask = agent_obs[env._obs_slices["action_mask"]]
+            assert np.all(np.isin(action_mask, np.array([0.0, 1.0], dtype=np.float32)))
+        else:
+            assert "action_mask" not in env._obs_slices
+
+        if include_blocking_pressure_in_obs:
+            assert "blocking_pressure_prev" in env._obs_slices
+            blocking_pressure = agent_obs[env._obs_slices["blocking_pressure_prev"]]
+            np.testing.assert_array_equal(blocking_pressure, np.array([0.0], dtype=np.float32))
+        else:
+            assert "blocking_pressure_prev" not in env._obs_slices
 
     actions = dict.fromkeys(env.agents, 0)
     next_obs, _rewards, _terminated, _truncated, _step_infos = env.step(actions)
     for agent_id, agent_obs in next_obs.items():
         assert agent_obs.dtype == np.float32
         assert env.observation_space.contains(agent_obs), agent_id
-

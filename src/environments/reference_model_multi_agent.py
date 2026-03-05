@@ -19,7 +19,8 @@ class ReferenceModel(MultiAgentEnv):
     Multi-agent grid world with flat per-agent observations.
 
     Flat observation layout:
-    `local_obs` (flattened) + `goal_delta` + optional `goal_distance` + `action_mask`.
+    `local_obs` (flattened) + `goal_delta` + optional `goal_distance`
+    + optional `blocking_pressure_prev` + optional `action_mask`.
     """
 
     EMPTY_CELL = 0
@@ -40,12 +41,15 @@ class ReferenceModel(MultiAgentEnv):
         self.deterministic = env_config.get("deterministic", False)
         self.normalize_goal_delta = env_config.get("normalize_goal_delta", True)
         self.include_goal_distance = env_config.get("include_goal_distance", False)
+        self.include_action_mask_in_obs = bool(env_config.get("include_action_mask_in_obs", False))
+        self.include_blocking_pressure_in_obs = bool(env_config.get("include_blocking_pressure_in_obs", True))
         self.validate_observation_space = bool(env_config.get("validate_observation_space", False))
         self.possible_agents = [f"agent_{i}" for i in range(self._num_agents)]
         self.agents = self.possible_agents.copy()
         self.render_env = env_config.get("render_env", False)
         self.info_mode = str(env_config.get("info_mode", "lite")).lower()
         self.lifelong_mapf = bool(env_config.get("lifelong_mapf", False))
+        self._needs_action_mask = self.include_action_mask_in_obs or self.info_mode == "full"
         if self.info_mode not in {"lite", "full"}:
             msg = f"Unsupported info_mode '{self.info_mode}'. Expected 'lite' or 'full'."
             raise ValueError(msg)
@@ -82,6 +86,7 @@ class ReferenceModel(MultiAgentEnv):
         self._reached_arr = np.zeros(self._num_agents, dtype=np.bool_)
         self._completed_once_arr = np.zeros(self._num_agents, dtype=np.bool_)
         self._episode_goals_reached_total = 0.0
+        self._blocking_pressure_prev_arr = np.zeros(self._num_agents, dtype=np.float32)
         self._scratch_prev_positions = np.empty_like(self._positions_arr)
         self._scratch_intended_next = np.empty_like(self._positions_arr)
         self._scratch_reached_goal = np.zeros(self._num_agents, dtype=np.bool_)
@@ -163,6 +168,11 @@ class ReferenceModel(MultiAgentEnv):
         self._single_act_space = gym.spaces.Discrete(5)
         action_dim = int(self._single_act_space.n)
         self._action_mask_space = gym.spaces.MultiBinary(action_dim)
+        self._blocking_pressure_space = gym.spaces.Box(
+            low=np.zeros(1, dtype=np.float32),
+            high=np.ones(1, dtype=np.float32),
+            dtype=np.float32,
+        )
 
         self._single_obs_space, self._obs_slices = self._build_obs_layout()
         self._single_obs_len = int(np.prod(self._single_obs_space.shape))
@@ -201,30 +211,39 @@ class ReferenceModel(MultiAgentEnv):
             x, y = self._goals_arr[idx]
             self._goal_owner[x, y] = idx
 
+    def _build_obs_component_spaces(self):
+        """Return ordered observation components with their spaces."""
+        component_spaces = [
+            ("local_obs", self._local_obs_space),
+            ("goal_delta", self._goal_delta_space),
+        ]
+        if self.include_goal_distance:
+            max_manhattan = float(np.abs(self._goal_delta_space.high).sum())
+            component_spaces.append(
+                (
+                    "goal_distance",
+                    gym.spaces.Box(
+                        low=np.zeros(1, dtype=np.float32),
+                        high=np.asarray([max_manhattan], dtype=np.float32),
+                        dtype=np.float32,
+                    ),
+                )
+            )
+        if self.include_blocking_pressure_in_obs:
+            component_spaces.append(("blocking_pressure_prev", self._blocking_pressure_space))
+        if self.include_action_mask_in_obs:
+            component_spaces.append(("action_mask", self._action_mask_space))
+        return component_spaces
+
     def _build_obs_layout(self):
         """Build flat observation space and component slices."""
-        component_order = ["local_obs", "goal_delta"]
-        component_spaces = {
-            "local_obs": self._local_obs_space,
-            "goal_delta": self._goal_delta_space,
-        }
-        if self.include_goal_distance:
-            component_order.append("goal_distance")
-            max_manhattan = float(np.abs(self._goal_delta_space.high).sum())
-            component_spaces["goal_distance"] = gym.spaces.Box(
-                low=np.zeros(1, dtype=np.float32),
-                high=np.asarray([max_manhattan], dtype=np.float32),
-                dtype=np.float32,
-            )
-        component_order.append("action_mask")
-        component_spaces["action_mask"] = self._action_mask_space
+        component_spaces = self._build_obs_component_spaces()
 
         low_parts = []
         high_parts = []
         obs_slices = {}
         start = 0
-        for name in component_order:
-            space = component_spaces[name]
+        for name, space in component_spaces:
             if isinstance(space, gym.spaces.MultiBinary):
                 size = int(np.prod(space.shape))
                 low = np.zeros(size, dtype=np.float32)
@@ -286,20 +305,26 @@ class ReferenceModel(MultiAgentEnv):
 
     def _flatten_observation(self, agent_id: str, local_obs=None, action_mask=None):
         """Pack ordered observation components into one flat float32 vector."""
+        agent_idx = self._agent_index[agent_id]
         if local_obs is None:
             local_obs = self.get_obs(agent_id)
-        if action_mask is None:
+        if action_mask is None and "action_mask" in self._obs_slices:
             action_mask = self.get_action_mask(local_obs)
 
         local_obs = np.asarray(local_obs, dtype=np.float32)
-        action_mask = np.asarray(action_mask, dtype=np.float32)
         goal_delta = np.asarray(self._get_goal_delta(agent_id), dtype=np.float32)
         flat_obs = np.empty(self._single_obs_len, dtype=np.float32)
         flat_obs[self._obs_slices["local_obs"]] = local_obs.reshape(-1)
         flat_obs[self._obs_slices["goal_delta"]] = goal_delta
-        if self.include_goal_distance:
+        if "goal_distance" in self._obs_slices:
             flat_obs[self._obs_slices["goal_distance"]] = np.float32(np.abs(goal_delta).sum(dtype=np.float32))
-        flat_obs[self._obs_slices["action_mask"]] = action_mask.reshape(-1)
+        if "blocking_pressure_prev" in self._obs_slices:
+            flat_obs[self._obs_slices["blocking_pressure_prev"]] = self._blocking_pressure_prev_arr[agent_idx]
+        if "action_mask" in self._obs_slices:
+            if action_mask is None:
+                action_mask = self.get_action_mask(local_obs)
+            action_mask = np.asarray(action_mask, dtype=np.float32)
+            flat_obs[self._obs_slices["action_mask"]] = action_mask.reshape(-1)
         return flat_obs.astype(np.float32, copy=False)
 
     def _get_goal_delta(self, agent_id: str) -> np.ndarray:
@@ -421,6 +446,7 @@ class ReferenceModel(MultiAgentEnv):
         obs = {}
         self._reached_arr[:] = False
         self._completed_once_arr[:] = False
+        self._blocking_pressure_prev_arr.fill(0.0)
         self.goal_reached_once = dict.fromkeys(self.agents, False)
 
         if self.deterministic:
@@ -432,7 +458,7 @@ class ReferenceModel(MultiAgentEnv):
 
         for agent_id in self.agents:
             local_obs = self.get_obs(agent_id)
-            action_mask = self.get_action_mask(local_obs)
+            action_mask = self.get_action_mask(local_obs) if self._needs_action_mask else None
             obs[agent_id] = self._coerce_and_validate_observation(
                 agent_id,
                 self._flatten_observation(agent_id, local_obs, action_mask),
@@ -500,7 +526,7 @@ class ReferenceModel(MultiAgentEnv):
                 self._occupancy_owner[next_y, next_x] = agent_idx
 
             local_obs = self.get_obs(agent_id)
-            action_mask = self.get_action_mask(local_obs)
+            action_mask = self.get_action_mask(local_obs) if self._needs_action_mask else None
             obs[agent_id] = self._coerce_and_validate_observation(
                 agent_id,
                 self._flatten_observation(agent_id, local_obs, action_mask),
@@ -539,7 +565,7 @@ class ReferenceModel(MultiAgentEnv):
         if goal_reassigned:
             for agent_id in self.agents:
                 local_obs = self.get_obs(agent_id)
-                action_mask = self.get_action_mask(local_obs)
+                action_mask = self.get_action_mask(local_obs) if self._needs_action_mask else None
                 obs[agent_id] = self._coerce_and_validate_observation(
                     agent_id,
                     self._flatten_observation(agent_id, local_obs, action_mask),
@@ -595,6 +621,7 @@ class ReferenceModel(MultiAgentEnv):
                 if int(intended_next[other_idx, 0]) == blocker_y and int(intended_next[other_idx, 1]) == blocker_x:
                     blocking_flags[blocker_idx] = 1.0
                     break
+        self._blocking_pressure_prev_arr[:] = blocking_flags
         self._episode_blocking_count += float(blocking_flags.sum())
 
         for agent_idx, agent_id in enumerate(self.agents):
